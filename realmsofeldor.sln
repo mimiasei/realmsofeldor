@@ -1,14 +1,36 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealmsOfEldor.Data", "RealmsOfEldor.Data.csproj", "{05656C4F-1139-0570-334C-219BD1069CBD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealmsOfEldor.Core", "RealmsOfEldor.Core.csproj", "{993A032D-6560-D578-7D04-85446CAF8AED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealmsOfEldor.Tests", "RealmsOfEldor.Tests.csproj", "{20E89E66-0184-C9CD-99AE-DEF1E6E1E8D9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealmsOfEldor.Controllers", "RealmsOfEldor.Controllers.csproj", "{3DB041C3-A70E-38C8-2003-55F24838B45A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-
+		{05656C4F-1139-0570-334C-219BD1069CBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05656C4F-1139-0570-334C-219BD1069CBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05656C4F-1139-0570-334C-219BD1069CBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05656C4F-1139-0570-334C-219BD1069CBD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{993A032D-6560-D578-7D04-85446CAF8AED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{993A032D-6560-D578-7D04-85446CAF8AED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{993A032D-6560-D578-7D04-85446CAF8AED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{993A032D-6560-D578-7D04-85446CAF8AED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{20E89E66-0184-C9CD-99AE-DEF1E6E1E8D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20E89E66-0184-C9CD-99AE-DEF1E6E1E8D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20E89E66-0184-C9CD-99AE-DEF1E6E1E8D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20E89E66-0184-C9CD-99AE-DEF1E6E1E8D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3DB041C3-A70E-38C8-2003-55F24838B45A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DB041C3-A70E-38C8-2003-55F24838B45A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DB041C3-A70E-38C8-2003-55F24838B45A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DB041C3-A70E-38C8-2003-55F24838B45A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

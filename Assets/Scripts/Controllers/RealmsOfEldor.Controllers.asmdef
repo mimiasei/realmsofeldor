@@ -1,0 +1,18 @@
+{
+    "name": "RealmsOfEldor.Controllers",
+    "rootNamespace": "RealmsOfEldor.Controllers",
+    "references": [
+        "RealmsOfEldor.Core",
+        "RealmsOfEldor.Data",
+        "RealmsOfEldor.Utilities"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

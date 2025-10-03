@@ -1,0 +1,17 @@
+{
+    "name": "RealmsOfEldor.Database",
+    "rootNamespace": "RealmsOfEldor.Database",
+    "references": [
+        "RealmsOfEldor.Core",
+        "RealmsOfEldor.Data"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
