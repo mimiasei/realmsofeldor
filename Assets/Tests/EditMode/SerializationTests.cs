@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using Newtonsoft.Json;
+using System.Linq;
 using RealmsOfEldor.Core;
 using RealmsOfEldor.Core.Serialization;
 
@@ -73,7 +74,7 @@ namespace RealmsOfEldor.Tests
             gameState.Initialize(playerCount: 2, isHuman: new[] { true, false });
 
             // Add a hero with position
-            var hero = gameState.AddHero(heroTypeId: 1, ownerId: 0, position: new Position(5, 10));
+            var hero = gameState.AddHero(typeId: 1, owner: 0, position: new Position(5, 10));
 
             var settings = new JsonSerializerSettings
             {
@@ -98,7 +99,7 @@ namespace RealmsOfEldor.Tests
             // Create and serialize a game state
             var originalState = new GameState { GameName = "Saved Game" };
             originalState.Initialize(playerCount: 2, isHuman: new[] { true, false });
-            var hero = originalState.AddHero(heroTypeId: 1, ownerId: 0, position: new Position(15, 20));
+            var hero = originalState.AddHero(typeId: 1, owner: 0, position: new Position(15, 20));
             hero.GainExperience(500);
 
             var settings = new JsonSerializerSettings
@@ -131,8 +132,8 @@ namespace RealmsOfEldor.Tests
             var hero = gameState.AddHero(1, 0, new Position(0, 0));
 
             // Add creatures to army
-            hero.Army.AddCreature(creatureId: 1, count: 10, slotIndex: 0);
-            hero.Army.AddCreature(creatureId: 2, count: 5, slotIndex: 1);
+            hero.Army.AddCreatures(creatureId: 1, count: 10, preferredSlot: 0);
+            hero.Army.AddCreatures(creatureId: 2, count: 5, preferredSlot: 1);
 
             var settings = new JsonSerializerSettings
             {

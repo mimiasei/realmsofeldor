@@ -1,14 +1,14 @@
 {
     "name": "RealmsOfEldor.Core",
     "rootNamespace": "RealmsOfEldor.Core",
-    "references": [
-        "Unity.Nuget.Newtonsoft-Json"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
-    "precompiledReferences": [],
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll"
+    ],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],

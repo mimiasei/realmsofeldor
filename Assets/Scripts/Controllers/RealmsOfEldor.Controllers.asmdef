@@ -5,14 +5,15 @@
         "RealmsOfEldor.Core",
         "RealmsOfEldor.Data",
         "RealmsOfEldor.Utilities",
-        "Unity.Nuget.Newtonsoft-Json",
         "UniTask"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
-    "precompiledReferences": [],
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll"
+    ],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],
