@@ -129,4 +129,235 @@ public abstract class MapObject
 
 ---
 
+## Phase 4: Adventure Map UI Research (2025-10-04)
+
+### VCMI Adventure Map UI Architecture
+
+Based on analysis of VCMI source code in `/tmp/vcmi-temp/client/adventureMap/`:
+
+#### Key Files Analyzed:
+- `AdventureMapInterface.h/cpp` - Main controller coordinating all systems
+- `CInfoBar.h/cpp` - Hero/town selection panel with state machine
+- `CResDataBar.h/cpp` - Resource display bar with date
+- `AdventureMapShortcuts.h/cpp` - Keyboard shortcut system
+
+#### Core UI Components:
+
+**1. CResDataBar - Resource Display**
+- Shows all 7 resources: gold, wood, ore, mercury, sulfur, crystal, gems
+- Displays current date: Month X, Week Y, Day Z
+- Fixed positions for resource text overlays on background image
+- Right-click popup for detailed resource breakdown
+- Updates via direct text rendering in showAll()
+
+Unity Translation:
+```csharp
+public class ResourceBarUI : MonoBehaviour
+{
+    [SerializeField] private TextMeshProUGUI[] resourceTexts;  // 7 resources
+    [SerializeField] private TextMeshProUGUI dateText;
+    [SerializeField] private GameEventChannel gameEvents;
+
+    void OnEnable() => gameEvents.OnResourceChanged += UpdateResourceDisplay;
+    void UpdateResourceDisplay(PlayerColor player, ResourceType type, int amount);
+}
+```
+
+**2. CInfoBar - Context-Sensitive Info Panel**
+Fixed size: 192x192 pixels
+
+States (EState enum):
+- EMPTY - No selection
+- HERO - Selected hero (portrait, stats, artifacts)
+- TOWN - Selected town (icon, buildings, garrison)
+- DATE - Day/week transition animation
+- GAME - Game status overview
+- AITURN - Enemy turn indicator (hourglass)
+- COMPONENT - Pickup notifications (timed, queued)
+
+Key features:
+- Polymorphic CVisibleInfo subclasses for each state
+- Timer system for auto-dismissing components (3s default)
+- Queue for multiple pickups
+- Click to interact (open hero/town screen)
+
+Unity Translation:
+```csharp
+public class InfoBarUI : MonoBehaviour
+{
+    public enum InfoBarState { Empty, Hero, Town, Date, EnemyTurn, Pickup }
+
+    [SerializeField] private GameObject heroPanelPrefab;
+    [SerializeField] private GameObject townPanelPrefab;
+    [SerializeField] private GameObject datePanelPrefab;
+    private Queue<PickupInfo> pickupQueue;
+
+    public void ShowHeroInfo(Hero hero);
+    public void ShowTownInfo(Town town);
+    public void ShowDateAnimation();
+    public async UniTask PushPickup(Component comp, string message, float duration);
+}
+```
+
+**3. AdventureMapShortcuts - Keyboard Controls**
+Centralized shortcut system with state-based availability:
+
+Key shortcuts:
+- Space - End turn
+- E - Sleep/wake hero
+- H - Next hero
+- T - Next town
+- V - Visit object
+- M - Marketplace
+- D - Dig for grail
+- S - Spellbook
+- Arrow keys - Direct hero movement (8-directional)
+- Ctrl+S/L - Save/load
+
+Availability conditions:
+```cpp
+bool optionHeroSelected();    // Hero must be selected
+bool optionHeroCanMove();     // Hero has movement points
+bool optionCanEndTurn();      // All heroes moved or asleep
+bool optionCanVisitObject();  // Hero adjacent to visitable
+```
+
+Unity Translation:
+```csharp
+public class AdventureMapInput : MonoBehaviour
+{
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space) && CanEndTurn())
+            EndTurn();
+        if (Input.GetKeyDown(KeyCode.H) && HasHeroes())
+            SelectNextHero();
+        // ... etc
+    }
+
+    private bool CanEndTurn() => gameState.AllHeroesMoved();
+    private bool HasHeroes() => gameState.GetCurrentPlayer().Heroes.Count > 0;
+}
+```
+
+**4. AdventureMapInterface - Main Controller**
+Central hub coordinating all systems:
+
+Responsibilities:
+- Input routing (clicks, hovers, shortcuts)
+- State management (normal, spell casting, world view)
+- Turn management (player/AI/hotseat coordination)
+- Object interaction (hero-object encounters)
+- Camera control (center on hero/town/events)
+- UI updates (triggers refreshes on state changes)
+
+Key methods:
+```cpp
+void onTileLeftClicked(const int3 & targetPosition);
+void onTileRightClicked(const int3 & mapPos);
+void onSelectionChanged(const CArmedInstance *sel);
+void onHeroMovementStarted(const CGHeroInstance * hero);
+void centerOnTile(int3 on);
+void enterCastingMode(const CSpell * sp);
+```
+
+Unity Translation:
+```csharp
+public class AdventureMapController : MonoBehaviour
+{
+    public void OnTileClicked(Position pos);
+    public void OnHeroSelected(Hero hero);
+    public void OnEndTurnClicked();
+    private void MoveSelectedHero(Position target);
+    private bool ValidateMovement(Hero hero, Position target);
+}
+```
+
+### UI Layout (HOMM3 Pattern)
+```
+┌────────────────────────────────────────────────┐
+│  [Gold][Wood][Ore]... [Month: X, Week: Y]     │
+├────────────────────────────────────────────────┤
+│                                                │
+│         Main Map View (Scrollable)             │
+│                                                │
+├──────────┬─────────────────────────────────────┤
+│ InfoBar  │  Buttons: Sleep | Spellbook | Hero │
+│ 192x192  │           EndTurn | Menu            │
+└──────────┴─────────────────────────────────────┘
+```
+
+### Event-Driven Architecture
+
+VCMI Pattern:
+```cpp
+// Logic broadcasts
+adventureInt->onHeroChanged(hero);
+
+// UI listens
+void AdventureMapInterface::onHeroChanged(const CGHeroInstance * hero)
+{
+    infoBar->showHeroSelection(hero);
+    heroList->updateHero(hero);
+}
+```
+
+Unity Translation:
+```csharp
+// GameStateManager broadcasts
+gameEventChannel.RaiseHeroMoved(hero, oldPos, newPos);
+
+// UI subscribes
+void OnEnable() => gameEvents.OnHeroMoved += HandleHeroMoved;
+void HandleHeroMoved(Hero hero, Position oldPos, Position newPos) { UpdateUI(); }
+```
+
+### Input Handling Flow
+
+**Click on Map Tile**:
+1. MapRenderer detects click → converts screen to map position
+2. Raises OnTileClicked event (MapEventChannel)
+3. AdventureMapController receives event
+4. Validates: Is tile visible? Hero selected? Tile reachable?
+5. If valid: Calculate path → Send move command
+6. GameStateManager updates hero position → Raises OnHeroMoved
+7. HeroController animates movement (DOTween)
+8. MapRenderer updates tile states
+9. InfoBarUI updates hero stats (movement points)
+
+Movement validation:
+```csharp
+bool CanMoveHeroToTile(Hero hero, Position target)
+{
+    if (!gameMap.IsInBounds(target)) return false;
+    if (hero.MovementPoints <= 0) return false;
+    if (!gameMap.GetTile(target).IsPassable()) return false;
+
+    var path = pathfinder.FindPath(hero.Position, target);
+    return path != null && CalculatePathCost(path) <= hero.MovementPoints;
+}
+```
+
+### Key Takeaways for Unity
+
+1. **Separation**: Core logic (C#) ↔ UI (MonoBehaviours) ↔ Events
+2. **Event-Driven UI**: No Update() for static elements, subscribe to changes
+3. **State-Based Input**: Check conditions before executing shortcuts
+4. **Modular Panels**: InfoBar switches between hero/town/date/pickup states
+5. **Input Validation**: Always validate on GameState, not UI state
+
+### Implementation Order
+
+1. ✅ Research complete
+2. Create UIEventChannel (hero selection, button clicks)
+3. Implement ResourceBarUI (subscribe to OnResourceChanged)
+4. Implement InfoBarUI (state machine for hero/town/date)
+5. Implement DayCounterUI + EndTurnButton
+6. Create AdventureMapInputController (tile clicks → movement)
+7. Add keyboard shortcuts (Unity Input System)
+8. Wire all UI to event channels
+9. Write unit tests
+
+---
+
 *Research complete. Ready for implementation.*

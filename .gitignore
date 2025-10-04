@@ -2,3 +2,46 @@ Library/
 Temp/
 Build/
 
+# A* Pathfinding Project - Exclude unnecessary files
+# Keep ONLY: Core, Generators, Pathfinders, TurnBased, Utilities, Editor, Modifiers (.asmdef)
+# Total kept: ~2.2MB (Core 716K + Generators 328K + Editor 1.1M + small folders)
+# Total excluded: ~11.8MB (Examples 9MB + Docs 1.3MB + Legacy + Navmesh + etc.)
+
+# Example scenes and assets (9MB) - NOT NEEDED for tile-based game
+Assets/AstarPathfindingProject/ExampleScenes/
+
+# Documentation (1.3MB) - available online at arongranberg.com/astar/docs
+Assets/AstarPathfindingProject/Documentation/
+
+# Legacy code - deprecated, not needed
+Assets/AstarPathfindingProject/Legacy/
+
+# Navmesh - we use GridGraph for tile-based pathfinding, not Navmesh
+Assets/AstarPathfindingProject/Navmesh/
+
+# Package tools - development/build tools, not runtime
+Assets/AstarPathfindingProject/PackageTools/
+
+# Plugins - platform-specific binaries (auto-generated if needed)
+Assets/AstarPathfindingProject/Plugins/
+
+# Behaviors - helper scripts we don't use (we have custom HeroController)
+Assets/AstarPathfindingProject/Behaviors/
+
+# Resources - just editor handle graphics
+Assets/AstarPathfindingProject/Resources/
+
+# Changelog and readme duplicates
+Assets/AstarPathfindingProject/CHANGELOG.md
+Assets/AstarPathfindingProject/CHANGELOG.md.meta
+Assets/AstarPathfindingProject/Readme.txt
+Assets/AstarPathfindingProject/Readme.txt.meta
+Assets/AstarPathfindingProject/Readme_upgrading.txt
+Assets/AstarPathfindingProject/Readme_upgrading.txt.meta
+Assets/AstarPathfindingProject/package.json
+Assets/AstarPathfindingProject/package.json.meta
+Assets/AstarPathfindingProject/defines.csv
+Assets/AstarPathfindingProject/defines.csv.meta
+Assets/AstarPathfindingProject/link.xml
+Assets/AstarPathfindingProject/link.xml.meta
+
