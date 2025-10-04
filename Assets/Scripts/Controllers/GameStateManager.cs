@@ -1,4 +1,7 @@
 using UnityEngine;
+using Newtonsoft.Json;
+using Cysharp.Threading.Tasks;
+using System.Threading;
 using RealmsOfEldor.Core;
 using RealmsOfEldor.Data;
 
@@ -184,26 +187,36 @@ namespace RealmsOfEldor.Controllers
         #region Save/Load
 
         /// <summary>
-        /// Save game to JSON
+        /// Save game to JSON using Newtonsoft.Json
+        /// Supports dictionaries, complex types, and better serialization than Unity's JsonUtility
         /// </summary>
         public void SaveGame(string filename)
         {
             try
             {
-                string json = JsonUtility.ToJson(gameState, true);
+                var settings = new JsonSerializerSettings
+                {
+                    Formatting = Formatting.Indented,
+                    TypeNameHandling = TypeNameHandling.Auto,
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                    NullValueHandling = NullValueHandling.Ignore
+                };
+
+                string json = JsonConvert.SerializeObject(gameState, settings);
                 string path = System.IO.Path.Combine(Application.persistentDataPath, filename);
                 System.IO.File.WriteAllText(path, json);
 
-                Debug.Log($"Game saved to {path}");
+                Debug.Log($"Game saved to {path} ({json.Length} bytes)");
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"Failed to save game: {e.Message}");
+                Debug.LogError($"Failed to save game: {e.Message}\n{e.StackTrace}");
             }
         }
 
         /// <summary>
-        /// Load game from JSON
+        /// Load game from JSON using Newtonsoft.Json
+        /// Supports dictionaries, complex types, and better deserialization than Unity's JsonUtility
         /// </summary>
         public bool LoadGame(string filename)
         {
@@ -217,9 +230,22 @@ namespace RealmsOfEldor.Controllers
                 }
 
                 string json = System.IO.File.ReadAllText(path);
-                gameState = JsonUtility.FromJson<GameState>(json);
 
-                Debug.Log($"Game loaded from {path}");
+                var settings = new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.Auto,
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+                };
+
+                gameState = JsonConvert.DeserializeObject<GameState>(json, settings);
+
+                if (gameState == null)
+                {
+                    Debug.LogError("Failed to deserialize game state - result was null");
+                    return false;
+                }
+
+                Debug.Log($"Game loaded from {path}: {gameState.GameName}, Day {gameState.CurrentDay}");
 
                 if (gameEvents != null)
                 {
@@ -230,7 +256,97 @@ namespace RealmsOfEldor.Controllers
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"Failed to load game: {e.Message}");
+                Debug.LogError($"Failed to load game: {e.Message}\n{e.StackTrace}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Save game to JSON asynchronously using UniTask
+        /// Non-blocking I/O operation for better performance
+        /// </summary>
+        public async UniTask SaveGameAsync(string filename, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var settings = new JsonSerializerSettings
+                {
+                    Formatting = Formatting.Indented,
+                    TypeNameHandling = TypeNameHandling.Auto,
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                    NullValueHandling = NullValueHandling.Ignore
+                };
+
+                // Serialize on background thread
+                var json = await UniTask.RunOnThreadPool(() =>
+                    JsonConvert.SerializeObject(gameState, settings),
+                    cancellationToken: cancellationToken);
+
+                string path = System.IO.Path.Combine(Application.persistentDataPath, filename);
+
+                // Write to file asynchronously
+                await UniTask.SwitchToThreadPool();
+                await System.IO.File.WriteAllTextAsync(path, json, cancellationToken);
+                await UniTask.SwitchToMainThread();
+
+                Debug.Log($"Game saved async to {path} ({json.Length} bytes)");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"Failed to save game async: {e.Message}\n{e.StackTrace}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Load game from JSON asynchronously using UniTask
+        /// Non-blocking I/O operation for better performance
+        /// </summary>
+        public async UniTask<bool> LoadGameAsync(string filename, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                string path = System.IO.Path.Combine(Application.persistentDataPath, filename);
+                if (!System.IO.File.Exists(path))
+                {
+                    Debug.LogError($"Save file not found: {path}");
+                    return false;
+                }
+
+                // Read file asynchronously
+                await UniTask.SwitchToThreadPool();
+                var json = await System.IO.File.ReadAllTextAsync(path, cancellationToken);
+                await UniTask.SwitchToMainThread();
+
+                var settings = new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.Auto,
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+                };
+
+                // Deserialize on background thread
+                gameState = await UniTask.RunOnThreadPool(() =>
+                    JsonConvert.DeserializeObject<GameState>(json, settings),
+                    cancellationToken: cancellationToken);
+
+                if (gameState == null)
+                {
+                    Debug.LogError("Failed to deserialize game state - result was null");
+                    return false;
+                }
+
+                Debug.Log($"Game loaded async from {path}: {gameState.GameName}, Day {gameState.CurrentDay}");
+
+                if (gameEvents != null)
+                {
+                    gameEvents.RaiseGameLoaded();
+                }
+
+                return true;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"Failed to load game async: {e.Message}\n{e.StackTrace}");
                 return false;
             }
         }

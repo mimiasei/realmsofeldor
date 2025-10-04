@@ -1,4 +1,6 @@
 using UnityEngine;
+using Cysharp.Threading.Tasks;
+using System.Threading;
 
 namespace RealmsOfEldor.Controllers
 {
@@ -199,17 +201,18 @@ namespace RealmsOfEldor.Controllers
             ClampCameraToBounds();
         }
 
-        /// <summary>
-        /// Smoothly moves camera to a position.
-        /// </summary>
-        public void MoveTo(Vector3 target, float duration = 0.5f)
-        {
-            StopAllCoroutines();
-            StartCoroutine(MoveToCoroutine(target, duration));
-        }
+        private CancellationTokenSource moveCts;
 
-        private System.Collections.IEnumerator MoveToCoroutine(Vector3 target, float duration)
+        /// <summary>
+        /// Smoothly moves camera to a position using UniTask.
+        /// </summary>
+        public async UniTask MoveToAsync(Vector3 target, float duration = 0.5f, CancellationToken cancellationToken = default)
         {
+            // Cancel any existing movement
+            moveCts?.Cancel();
+            moveCts?.Dispose();
+            moveCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, this.GetCancellationTokenOnDestroy());
+
             var startPos = transform.position;
             target.z = startPos.z; // Preserve Z
 
@@ -226,11 +229,19 @@ namespace RealmsOfEldor.Controllers
                 transform.position = pos;
                 ClampCameraToBounds();
 
-                yield return null;
+                await UniTask.Yield(PlayerLoopTiming.Update, moveCts.Token);
             }
 
             transform.position = new Vector3(target.x, target.y, startPos.z);
             ClampCameraToBounds();
+        }
+
+        /// <summary>
+        /// Smoothly moves camera to a position (fire-and-forget).
+        /// </summary>
+        public void MoveTo(Vector3 target, float duration = 0.5f)
+        {
+            MoveToAsync(target, duration).Forget();
         }
 
         /// <summary>

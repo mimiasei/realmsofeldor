@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using RealmsOfEldor.Core;
+using System.Linq;
 
 namespace RealmsOfEldor.Tests
 {

@@ -1,4 +1,6 @@
 using System;
+using Newtonsoft.Json;
+using RealmsOfEldor.Core.Serialization;
 
 namespace RealmsOfEldor.Core
 {
@@ -8,6 +10,7 @@ namespace RealmsOfEldor.Core
     /// Use PositionExtensions for Unity type conversions
     /// </summary>
     [Serializable]
+    [JsonConverter(typeof(PositionJsonConverter))]
     public struct Position : IEquatable<Position>
     {
         public int X;

@@ -363,3 +363,198 @@ Comprehensive test coverage for map system:
 **Next Phase**: Phase 4 - Adventure Map UI (resource bar, hero panel, movement controls)
 
 ---
+
+## 2025-10-04 - Newtonsoft.Json Integration
+
+### Package Installation
+- **Newtonsoft.Json** (`com.unity.nuget.newtonsoft-json: 3.2.1`) - Installed via Package Manager
+- **UniTask** (`com.cysharp.unitask`) - Installed via Git URL
+- **Cinemachine** (`com.unity.cinemachine: 3.1.4`) - Installed for future camera improvements
+- **DOTween** - Installed via Asset Store (for animations)
+
+### Serialization Improvements
+Replaced Unity's `JsonUtility` with Newtonsoft.Json for superior serialization capabilities:
+
+**Why Newtonsoft.Json?**
+- ✅ Supports `Dictionary<>` serialization (JsonUtility doesn't)
+- ✅ Supports polymorphic types with `TypeNameHandling`
+- ✅ Better control over serialization behavior
+- ✅ Industry-standard JSON library
+- ✅ Handles circular references gracefully
+
+**Files Updated:**
+
+- **GameStateManager.cs**: Updated Save/Load methods
+  - Added `JsonSerializerSettings` with proper configuration
+  - `TypeNameHandling.Auto` for polymorphic support
+  - `ReferenceLoopHandling.Ignore` to prevent circular reference issues
+  - `Formatting.Indented` for readable save files
+  - Better error logging with stack traces
+
+- **PositionJsonConverter.cs**: Custom converter for Position struct
+  - Serializes as compact JSON: `{"x":5,"y":10}`
+  - Handles null values gracefully
+  - Case-insensitive property name matching
+
+- **ResourceSetJsonConverter.cs**: Custom converter for ResourceSet struct
+  - Serializes with named properties for readability
+  - Example: `{"gold":1000,"wood":20,"ore":15,...}`
+  - Switch-based deserialization for performance
+
+- **Position.cs**: Added `[JsonConverter(typeof(PositionJsonConverter))]` attribute
+- **Resources.cs**: Added `[JsonConverter(typeof(ResourceSetJsonConverter))]` attribute
+
+### Unit Tests
+- **SerializationTests.cs**: 9 comprehensive tests
+  - Position serialization/deserialization
+  - ResourceSet serialization/deserialization
+  - GameState with dictionaries
+  - Hero with army serialization
+  - Player with resources
+  - Round-trip save/load validation
+
+**Test Coverage**: All core types now properly serialize and deserialize
+
+### Architecture Benefits
+- GameState can now save/load complex nested structures
+- Hero dictionaries, Player collections all supported
+- Save files are human-readable JSON
+- No more `[Serializable]` limitations from Unity
+- Future-proof for complex game data
+
+### Files Created
+- Core/Serialization/PositionJsonConverter.cs (~50 lines)
+- Core/Serialization/ResourceSetJsonConverter.cs (~75 lines)
+- Tests/EditMode/SerializationTests.cs (~180 lines)
+
+**Total New Files**: 3
+**Total New Lines**: ~305
+
+**Total Project Files**: 44
+**Total Project LOC**: ~6555+
+
+---
+
+## 2025-10-04 - UniTask Integration
+
+### Async/Await Improvements
+Replaced Unity coroutines with modern async/await patterns using UniTask for better performance and cleaner code.
+
+**Why UniTask?**
+- ✅ Zero GC allocation (unlike coroutines which allocate)
+- ✅ Better performance than standard C# Task
+- ✅ Proper cancellation token support
+- ✅ Thread pool integration for CPU-intensive operations
+- ✅ Easier error handling with try/catch
+- ✅ Can await in any method (not just coroutines)
+- ✅ Better debugging experience
+
+**Files Updated:**
+
+- **CameraController.cs**: Replaced coroutine with UniTask
+  - `MoveToAsync()`: Async camera movement with cancellation support
+  - `MoveTo()`: Fire-and-forget wrapper for backwards compatibility
+  - `CancellationTokenSource` properly managed with `GetCancellationTokenOnDestroy()`
+  - Automatic cleanup on object destruction
+  - No more `StopAllCoroutines()` needed
+
+- **GameStateManager.cs**: Added async save/load methods
+  - `SaveGameAsync()`: Non-blocking save with thread pool serialization
+    - JSON serialization runs on background thread (no frame drops)
+    - File I/O runs asynchronously
+    - Automatically switches back to main thread after completion
+  - `LoadGameAsync()`: Non-blocking load with thread pool deserialization
+    - File reading runs asynchronously
+    - JSON deserialization runs on background thread
+    - Returns to main thread for Unity API calls
+  - Synchronous `SaveGame()`/`LoadGame()` still available for compatibility
+  - Full cancellation token support
+
+- **AsyncHelpers.cs**: Utility class for common async patterns
+  - `DelaySeconds()`: Better alternative to WaitForSeconds (zero allocation)
+  - `WaitUntil()` / `WaitWhile()`: Conditional waits
+  - `DelayedAction()`: Execute action after delay
+  - `RepeatAction()`: Periodic action execution
+  - `FadeCanvasGroup()`: Smooth UI fading
+  - `LerpValue()`: Generic value interpolation over time
+  - `WhenAll()` / `WhenAny()`: Parallel task execution
+  - `LoadSceneAsync()`: Scene loading with progress
+  - `TryWithTimeout()`: Timeout handling
+  - `RetryAsync()`: Automatic retry logic with exponential backoff
+
+### Performance Benefits
+
+**Before (Coroutines):**
+```csharp
+IEnumerator MoveToCoroutine(Vector3 target, float duration)
+{
+    // Allocates IEnumerator object every call
+    yield return null; // Allocates YieldInstruction
+}
+```
+
+**After (UniTask):**
+```csharp
+async UniTask MoveToAsync(Vector3 target, float duration, CancellationToken ct)
+{
+    // Zero allocation
+    await UniTask.Yield(PlayerLoopTiming.Update, ct);
+}
+```
+
+### Usage Examples
+
+**Async Save/Load:**
+```csharp
+// Non-blocking save (no frame drops)
+await GameStateManager.Instance.SaveGameAsync("savegame.json");
+
+// Non-blocking load with timeout
+var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+await GameStateManager.Instance.LoadGameAsync("savegame.json", cts.Token);
+```
+
+**Camera Movement:**
+```csharp
+// Await camera movement
+await cameraController.MoveToAsync(targetPos, duration: 1f);
+
+// Or fire-and-forget (old API)
+cameraController.MoveTo(targetPos);
+```
+
+**Helper Utilities:**
+```csharp
+// Delay action
+await AsyncHelpers.DelaySeconds(2f);
+
+// Fade UI
+await AsyncHelpers.FadeCanvasGroup(uiGroup, targetAlpha: 0f, duration: 0.5f);
+
+// Parallel operations
+await AsyncHelpers.WhenAll(
+    SaveGameAsync("slot1.json"),
+    SaveGameAsync("slot2.json"),
+    SaveGameAsync("slot3.json")
+);
+```
+
+### Architecture Benefits
+- Main thread never blocks on I/O operations
+- Large save files don't cause frame drops
+- Cancellation support prevents memory leaks
+- Cleaner code without IEnumerator boilerplate
+- Better error handling with standard try/catch
+- Can compose async operations easily
+
+### Files Created
+- Utilities/AsyncHelpers.cs (~200 lines)
+
+**Total New Files**: 1
+**Total New Lines**: ~200
+**Files Modified**: 2 (CameraController, GameStateManager)
+
+**Total Project Files**: 45
+**Total Project LOC**: ~6755+
+
+---

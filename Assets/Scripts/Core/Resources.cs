@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
+using RealmsOfEldor.Core.Serialization;
 
 namespace RealmsOfEldor.Core
 {
@@ -8,6 +10,7 @@ namespace RealmsOfEldor.Core
     /// Resource storage structure matching HOMM3 resource system
     /// </summary>
     [Serializable]
+    [JsonConverter(typeof(ResourceSetJsonConverter))]
     public struct ResourceSet
     {
         public int Wood;
