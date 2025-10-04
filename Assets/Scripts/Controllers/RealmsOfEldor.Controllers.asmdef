@@ -4,7 +4,9 @@
     "references": [
         "RealmsOfEldor.Core",
         "RealmsOfEldor.Data",
-        "RealmsOfEldor.Utilities"
+        "RealmsOfEldor.Utilities",
+        "Unity.Nuget.Newtonsoft-Json",
+        "UniTask"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

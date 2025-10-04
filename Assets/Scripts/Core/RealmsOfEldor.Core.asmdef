@@ -1,7 +1,9 @@
 {
     "name": "RealmsOfEldor.Core",
     "rootNamespace": "RealmsOfEldor.Core",
-    "references": [],
+    "references": [
+        "Unity.Nuget.Newtonsoft-Json"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

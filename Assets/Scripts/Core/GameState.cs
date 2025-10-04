@@ -25,7 +25,10 @@ namespace RealmsOfEldor.Core
 
         // ID generators
         private int nextHeroId = 1;
+        // nextPlayerId reserved for future use (dynamic player addition)
+        #pragma warning disable CS0414
         private int nextPlayerId = 0;
+        #pragma warning restore CS0414
 
         /// <summary>
         /// Initialize a new game

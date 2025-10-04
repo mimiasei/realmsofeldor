@@ -51,6 +51,7 @@
     <Compile Include="Assets\Tests\EditMode\ArmyTests.cs" />
     <Compile Include="Assets\Tests\EditMode\GameStateTests.cs" />
     <Compile Include="Assets\Tests\EditMode\HeroTests.cs" />
+    <Compile Include="Assets\Tests\EditMode\SerializationTests.cs" />
     <Compile Include="Assets\Tests\EditMode\ResourceTests.cs" />
   </ItemGroup>
   <ItemGroup>

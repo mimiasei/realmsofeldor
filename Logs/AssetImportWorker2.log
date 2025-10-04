@@ -762,3 +762,27 @@ Memory consumption went from 156.9 MB to 150.5 MB.
 Total: 12.261100 ms (FindLiveObjects: 0.962100 ms CreateObjectMapping: 1.530800 ms MarkObjects: 5.608800 ms  DeleteObjects: 4.158200 ms)
 
 Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+'Packages/com.unity.cinemachine/Editor/Obsolete/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Packages/com.unity.cinemachine/Editor/Editors/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+Refreshing native plugins compatible for Editor in 2.87 ms, found 4 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 38 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 7349 unused Assets / (7.1 MB). Loaded Objects now: 8039.
+Memory consumption went from 158.4 MB to 151.3 MB.
+Total: 17.514900 ms (FindLiveObjects: 0.983600 ms CreateObjectMapping: 1.811100 ms MarkObjects: 10.101100 ms  DeleteObjects: 4.617500 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+'Packages/com.unity.cinemachine/Editor/Obsolete/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Packages/com.unity.cinemachine/Editor/Editors/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+Refreshing native plugins compatible for Editor in 2.94 ms, found 4 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 38 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 7349 unused Assets / (7.0 MB). Loaded Objects now: 8039.
+Memory consumption went from 159.8 MB to 152.8 MB.
+Total: 13.435100 ms (FindLiveObjects: 0.886300 ms CreateObjectMapping: 1.700700 ms MarkObjects: 5.958000 ms  DeleteObjects: 4.889200 ms)
+
+Prepare: number of updated asset objects reloaded= 0
