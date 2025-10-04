@@ -1363,3 +1363,151 @@ BasicPathfinder compilation errors - couldn't find `GameMap` type (7 errors).
 **Status**: ResourceBarUI now correctly uses player ID instead of PlayerColor.
 
 ---
+
+## 2025-10-04 - Unity Scene Setup Tools for Phase 3 Map Visualization
+
+### Editor Tools Created
+
+**AdventureMapSceneSetup.cs** (~210 lines) - Scene setup automation
+- Menu: "Realms of Eldor/Setup/Create Adventure Map Scene"
+- Automatically creates AdventureMap.unity scene with:
+  - Grid + 3 Tilemaps (Terrain, Objects, Highlights)
+  - Main Camera with CameraController component
+  - UI Canvas with CanvasScaler (1920x1080 reference)
+  - EventSystem for UI input
+  - GameManagers object (DontDestroyOnLoad)
+  - MapRenderer component pre-configured on Grid
+- Uses reflection to set SerializeField references
+- One-click scene generation
+
+**TerrainDataGenerator.cs** (~90 lines) - TerrainData asset generation
+- Menu: "Realms of Eldor/Generate/Terrain Data Assets"
+- Generates TerrainData ScriptableObjects for all 10 terrain types:
+  - Grass (green, 100 movement cost)
+  - Dirt (brown, 125 movement cost)
+  - Sand (tan, 150 movement cost)
+  - Snow (white, 150 movement cost)
+  - Swamp (dark green, 175 movement cost)
+  - Rough (gray, 125 movement cost)
+  - Water (blue, impassable)
+  - Rock (dark gray, impassable)
+  - Lava (red-orange, impassable)
+  - Subterranean (dark blue-gray, 100 movement cost)
+- Sets movement costs, passability, water flags, minimap colors
+- Skips existing assets (non-destructive)
+
+**EventChannelGenerator.cs** (~55 lines) - Event channel asset generation
+- Menu: "Realms of Eldor/Generate/Event Channel Assets"
+- Creates ScriptableObject instances for all event channels:
+  - GameEventChannel
+  - MapEventChannel
+  - BattleEventChannel
+  - UIEventChannel
+- Skips existing assets (non-destructive)
+
+**PlaceholderSpriteGenerator.cs** (~110 lines) - Terrain sprite generation
+- Menu: "Realms of Eldor/Generate/Placeholder Terrain Sprites"
+- Generates 128x128 PNG placeholder sprites for all terrain types
+- Features:
+  - Color-coded tiles matching TerrainData
+  - Random color variation for visual interest
+  - Black borders for tile clarity
+  - Configured as sprites with 128 pixels-per-unit
+  - Point filtering for pixel-perfect rendering
+- Creates Assets/Sprites/Terrain/*.png files
+
+### Runtime Components
+
+**MapTestInitializer.cs** (~210 lines) - Test map generator
+- MonoBehaviour component to initialize sample maps
+- Features:
+  - Configurable map size (default 30x30)
+  - Random terrain generation with:
+    - Water patches (circular)
+    - Rough terrain spots
+    - Dirt paths (horizontal/vertical)
+    - Snow patches (top-right corner)
+    - Swamp near water (coastal)
+  - Alternative checkerboard pattern (for testing)
+  - Sample object placement:
+    - 5 random resource piles
+    - 3 random mines
+    - 2 random creature dwellings
+  - Automatic coastal tile calculation
+  - MapRenderer initialization and rendering
+  - Context menu: "Regenerate Map" (Play mode only)
+- Attach to GameObject in scene and assign MapRenderer + MapEventChannel
+
+### Unity Editor Setup Instructions
+
+**To visualize the Phase 3 map system:**
+
+1. **Generate Assets** (first time only):
+   - Menu: "Realms of Eldor/Generate/Placeholder Terrain Sprites"
+   - Menu: "Realms of Eldor/Generate/Terrain Data Assets"
+   - Menu: "Realms of Eldor/Generate/Event Channel Assets"
+
+2. **Create Scene**:
+   - Menu: "Realms of Eldor/Setup/Create Adventure Map Scene"
+   - Scene saved to: Assets/Scenes/AdventureMap.unity
+
+3. **Link TerrainData to Sprites**:
+   - Open each TerrainData asset in Assets/Data/Terrain/
+   - Assign corresponding sprite from Assets/Sprites/Terrain/ to "Tile Variants" array
+   - Example: GrassTerrainData → assign GrassTile sprite
+
+4. **Configure MapRenderer**:
+   - Select "Grid" GameObject in AdventureMap scene
+   - Find MapRenderer component
+   - Assign all TerrainData assets to "Terrain Data" array (10 items)
+   - Assign MapEventChannel from Assets/Data/EventChannels/
+
+5. **Add Test Initializer**:
+   - Create empty GameObject named "MapTest"
+   - Add MapTestInitializer component
+   - Assign MapRenderer (from Grid GameObject)
+   - Assign MapEventChannel (from Assets/Data/EventChannels/)
+
+6. **Play**:
+   - Press Play in Unity Editor
+   - Map should generate and render automatically
+   - Use WASD/arrows to pan camera
+   - Use mouse wheel to zoom
+
+### Files Created
+
+**Editor Tools** (4 files, ~465 lines):
+- Scripts/Editor/SceneSetup/AdventureMapSceneSetup.cs
+- Scripts/Editor/DataGeneration/TerrainDataGenerator.cs
+- Scripts/Editor/DataGeneration/EventChannelGenerator.cs
+- Scripts/Editor/DataGeneration/PlaceholderSpriteGenerator.cs
+
+**Runtime Components** (1 file, ~210 lines):
+- Scripts/Controllers/MapTestInitializer.cs
+
+**Total**: 5 files, ~675 lines of code
+
+### Architecture Benefits
+
+- **One-Click Setup**: No manual GameObject creation or component wiring
+- **Non-Destructive**: Generators skip existing assets
+- **Reflection-Based**: Editor scripts can set private SerializeField values
+- **Placeholder Assets**: Simple colored tiles allow immediate testing without art
+- **Testable**: MapTestInitializer creates various map scenarios
+- **Documented**: Clear instructions for Unity Editor workflow
+
+### Next Steps
+
+After running the setup in Unity Editor:
+- Replace placeholder sprites with actual tile art
+- Create prefabs for map objects (Resource, Mine, Dwelling) with visuals
+- Add hero prefabs for movement testing
+- Test AdventureMapInputController integration
+- Add UI components (ResourceBarUI, InfoBarUI, TurnControlUI)
+
+**Status**: Unity scene setup automation complete. Ready for manual Unity Editor configuration and testing.
+
+**Total Project Files**: 68
+**Total Project LOC**: ~12,175+
+
+---
