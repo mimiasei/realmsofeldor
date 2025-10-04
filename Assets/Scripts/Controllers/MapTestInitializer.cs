@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 using RealmsOfEldor.Core;
 using RealmsOfEldor.Data;
@@ -67,11 +68,7 @@ namespace RealmsOfEldor.Controllers
             // Calculate coastal tiles
             gameMap.CalculateCoastalTiles();
 
-            // Render the map
-            mapRenderer.Initialize(gameMap, mapEvents);
-            mapRenderer.RenderFullMap();
-
-            // Raise map loaded event
+            // Raise map loaded event - this triggers MapRenderer to render via event subscription
             mapEvents.RaiseMapLoaded(gameMap);
 
             Debug.Log($"<color=green>✓ Test map initialized with {gameMap.Width}x{gameMap.Height} tiles</color>");
@@ -229,7 +226,7 @@ namespace RealmsOfEldor.Controllers
                 }
             }
 
-            Debug.Log($"✓ Added {gameMap.GetAllObjects().Count} sample objects to map");
+            Debug.Log($"✓ Added {gameMap.GetAllObjects().Count()} sample objects to map");
         }
 
         // Editor helper to regenerate map

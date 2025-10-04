@@ -52,6 +52,7 @@
     <Compile Include="Assets\Scripts\Controllers\HeroController.cs" />
     <Compile Include="Assets\Scripts\Controllers\GameStateManager.cs" />
     <Compile Include="Assets\Scripts\Controllers\AstarPathfindingAdapter.cs" />
+    <Compile Include="Assets\Scripts\Controllers\MapTestInitializer.cs" />
     <Compile Include="Assets\Scripts\Controllers\CameraController.cs" />
     <Compile Include="Assets\Scripts\Controllers\MapRenderer.cs" />
   </ItemGroup>

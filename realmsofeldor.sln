@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageToolsEditor", "PackageToolsEditor.csproj", "{A381A4AF-4767-4DB0-0F22-F92DE6AE1442}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealmsOfEldor.Editor", "RealmsOfEldor.Editor.csproj", "{8CED7FEB-5012-9BCC-005D-054559610344}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-firstpass", "Assembly-CSharp-firstpass.csproj", "{17B5DB09-D3ED-EEE7-3354-DDBA7F01C60B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealmsOfEldor.Utilities", "RealmsOfEldor.Utilities.csproj", "{E195E1F1-82D6-2DFF-FBF1-88D3BC9B4E28}"
@@ -24,8 +26,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealmsOfEldor.UI", "RealmsOfEldor.UI.csproj", "{D12A2E39-6544-8005-C88A-34FD9F4939E9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealmsOfEldor.Database", "RealmsOfEldor.Database.csproj", "{0862C6A7-928C-5A12-9852-59E1428349FC}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealmsOfEldor.Editor", "RealmsOfEldor.Editor.csproj", "{8CED7FEB-5012-9BCC-005D-054559610344}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,6 +49,10 @@ Global
 		{A381A4AF-4767-4DB0-0F22-F92DE6AE1442}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A381A4AF-4767-4DB0-0F22-F92DE6AE1442}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A381A4AF-4767-4DB0-0F22-F92DE6AE1442}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8CED7FEB-5012-9BCC-005D-054559610344}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8CED7FEB-5012-9BCC-005D-054559610344}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8CED7FEB-5012-9BCC-005D-054559610344}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8CED7FEB-5012-9BCC-005D-054559610344}.Release|Any CPU.Build.0 = Release|Any CPU
 		{17B5DB09-D3ED-EEE7-3354-DDBA7F01C60B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{17B5DB09-D3ED-EEE7-3354-DDBA7F01C60B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{17B5DB09-D3ED-EEE7-3354-DDBA7F01C60B}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -81,10 +85,6 @@ Global
 		{0862C6A7-928C-5A12-9852-59E1428349FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0862C6A7-928C-5A12-9852-59E1428349FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0862C6A7-928C-5A12-9852-59E1428349FC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8CED7FEB-5012-9BCC-005D-054559610344}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8CED7FEB-5012-9BCC-005D-054559610344}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8CED7FEB-5012-9BCC-005D-054559610344}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8CED7FEB-5012-9BCC-005D-054559610344}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

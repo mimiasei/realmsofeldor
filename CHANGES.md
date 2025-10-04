@@ -1511,3 +1511,40 @@ After running the setup in Unity Editor:
 **Total Project LOC**: ~12,175+
 
 ---
+
+## 2025-10-04 - Scene Setup Compilation Fixes
+
+### Issues Fixed
+
+1. **RealmsOfEldor.Editor.asmdef missing Controllers reference**
+   - Added `"RealmsOfEldor.Controllers"` to Editor assembly references
+   - Allows AdventureMapSceneSetup.cs to use MapRenderer type
+
+2. **MapTestInitializer.cs incorrect MapRenderer usage**
+   - Removed non-existent `Initialize()` and `RenderFullMap()` calls
+   - MapRenderer uses event-driven architecture - subscribes to MapEventChannel
+   - Fixed to call `mapEvents.RaiseMapLoaded(gameMap)` which triggers rendering
+   - Added `using System.Linq;` for `.Count()` extension method
+
+**Files Modified**: 3 (RealmsOfEldor.Editor.asmdef, MapTestInitializer.cs)
+
+**Errors Fixed**: 4 compilation errors
+
+---
+
+## 2025-10-04 - EventChannelGenerator Namespace Fix
+
+### Issue Fixed
+
+**EventChannelGenerator.cs missing namespace reference**
+- Added `using RealmsOfEldor.Data.EventChannels;` to imports
+- UIEventChannel is in `RealmsOfEldor.Data.EventChannels` namespace, not `RealmsOfEldor.Data`
+- BattleEventChannel is also in same namespace
+
+**Files Modified**: 1 (EventChannelGenerator.cs)
+
+**Errors Fixed**: 1 compilation error
+
+**Status**: All scene setup tools now compile successfully.
+
+---
