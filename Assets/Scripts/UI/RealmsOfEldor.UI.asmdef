@@ -3,9 +3,11 @@
     "rootNamespace": "RealmsOfEldor.UI",
     "references": [
         "RealmsOfEldor.Core",
-        "RealmsOfEldor.Data",
         "RealmsOfEldor.Controllers",
-        "RealmsOfEldor.Utilities"
+        "RealmsOfEldor.Data",
+        "RealmsOfEldor.Utilities",
+        "UniTask",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

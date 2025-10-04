@@ -1,3 +1,4 @@
+#if ASTAR_EXISTS
 using System.Collections.Generic;
 using UnityEngine;
 using Pathfinding;
@@ -60,9 +61,9 @@ namespace RealmsOfEldor.Controllers
         /// </summary>
         private void RegisterDelegates()
         {
-            RealmsOfEldor.Core.Pathfinding.BasicPathfinder.AstarFindPath = FindPath;
-            RealmsOfEldor.Core.Pathfinding.BasicPathfinder.AstarGetReachable = GetReachablePositions;
-            RealmsOfEldor.Core.Pathfinding.BasicPathfinder.AstarCalculatePathCost = CalculatePathCost;
+            BasicPathfinder.AstarFindPath = FindPath;
+            BasicPathfinder.AstarGetReachable = GetReachablePositions;
+            BasicPathfinder.AstarCalculatePathCost = CalculatePathCost;
         }
 
         /// <summary>
@@ -70,9 +71,9 @@ namespace RealmsOfEldor.Controllers
         /// </summary>
         private void UnregisterDelegates()
         {
-            RealmsOfEldor.Core.Pathfinding.BasicPathfinder.AstarFindPath = null;
-            RealmsOfEldor.Core.Pathfinding.BasicPathfinder.AstarGetReachable = null;
-            RealmsOfEldor.Core.Pathfinding.BasicPathfinder.AstarCalculatePathCost = null;
+            BasicPathfinder.AstarFindPath = null;
+            BasicPathfinder.AstarGetReachable = null;
+            BasicPathfinder.AstarCalculatePathCost = null;
         }
 
         /// <summary>
@@ -342,3 +343,4 @@ namespace RealmsOfEldor.Controllers
 #endif
     }
 }
+#endif

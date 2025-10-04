@@ -1,6 +1,7 @@
+using System.Collections.Generic;
 using UnityEngine;
 using RealmsOfEldor.Core;
-using RealmsOfEldor.Core.Pathfinding;
+using RealmsOfEldor.Data;
 using RealmsOfEldor.Data.EventChannels;
 using RealmsOfEldor.Utilities;
 
@@ -28,6 +29,9 @@ namespace RealmsOfEldor.Controllers
         [Header("References")]
         [SerializeField] private MapRenderer mapRenderer;
         [SerializeField] private CameraController cameraController;
+
+        // TODO: Remove this when GameState.Map is properly implemented
+        private GameMap gameMap;
 
         [Header("Input Settings")]
         [SerializeField] private bool enableKeyboardShortcuts = true;
@@ -59,8 +63,7 @@ namespace RealmsOfEldor.Controllers
 
             if (gameEvents != null)
             {
-                gameEvents.OnPlayerTurnStarted += HandlePlayerTurnStarted;
-                gameEvents.OnPlayerTurnEnded += HandlePlayerTurnEnded;
+                gameEvents.OnTurnChanged += HandleTurnChanged;
             }
         }
 
@@ -84,8 +87,7 @@ namespace RealmsOfEldor.Controllers
 
             if (gameEvents != null)
             {
-                gameEvents.OnPlayerTurnStarted -= HandlePlayerTurnStarted;
-                gameEvents.OnPlayerTurnEnded -= HandlePlayerTurnEnded;
+                gameEvents.OnTurnChanged -= HandleTurnChanged;
             }
         }
 
@@ -199,8 +201,8 @@ namespace RealmsOfEldor.Controllers
             if (GameStateManager.Instance == null)
                 return;
 
-            var gameMap = GameStateManager.Instance.State.Map;
-            if (!gameMap.IsInBounds(tilePos))
+            // TODO: Replace with GameStateManager.Instance.State.Map when available
+            if (gameMap == null || !gameMap.IsInBounds(tilePos))
                 return;
 
             // Check for hero at position
@@ -231,7 +233,7 @@ namespace RealmsOfEldor.Controllers
             if (selectedHero == null || GameStateManager.Instance == null)
                 return;
 
-            var gameMap = GameStateManager.Instance.State.Map;
+            // TODO: Replace with GameStateManager.Instance.State.Map when available
 
             // Use BasicPathfinder to find path
             var path = BasicPathfinder.FindPath(gameMap, selectedHero.Position, targetPos);
@@ -243,19 +245,19 @@ namespace RealmsOfEldor.Controllers
 
             // Check movement cost
             var movementCost = BasicPathfinder.CalculatePathCost(gameMap, path);
-            if (movementCost > selectedHero.MovementPoints)
+            if (movementCost > selectedHero.Movement)
             {
-                uiEvents?.RaiseShowStatusMessage($"Not enough movement! Need {movementCost}, have {selectedHero.MovementPoints}");
+                uiEvents?.RaiseShowStatusMessage($"Not enough movement! Need {movementCost}, have {selectedHero.Movement}");
                 return;
             }
 
             // Execute movement
             var oldPos = selectedHero.Position;
             selectedHero.Position = targetPos;
-            selectedHero.MovementPoints -= movementCost;
+            selectedHero.Movement -= movementCost;
 
             // Raise event
-            gameEvents?.RaiseHeroMoved(selectedHero, oldPos, targetPos);
+            gameEvents?.RaiseHeroMoved(selectedHero.Id, targetPos);
 
             // Update UI
             uiEvents?.RaiseShowHeroInfo(selectedHero);
@@ -296,13 +298,13 @@ namespace RealmsOfEldor.Controllers
             if (selectedHero == null)
                 return;
 
-            Debug.Log($"{selectedHero.Name} visits {mapObject.ObjectType} at {mapObject.Position}");
+            Debug.Log($"{selectedHero.CustomName} visits {mapObject.ObjectType} at {mapObject.Position}");
 
             // Trigger object interaction
             mapObject.OnVisit(selectedHero);
 
             // Raise event
-            mapEvents?.RaiseObjectVisited(mapObject, selectedHero);
+            mapEvents?.RaiseObjectVisited(selectedHero, mapObject);
         }
 
         // ===== Hero Selection =====
@@ -330,17 +332,30 @@ namespace RealmsOfEldor.Controllers
             if (GameStateManager.Instance == null)
                 return;
 
-            var currentPlayer = GameStateManager.Instance.State.GetCurrentPlayer();
-            if (currentPlayer == null || currentPlayer.Heroes.Count == 0)
+            var gameState = GameStateManager.Instance.State;
+            var currentPlayer = gameState.GetCurrentPlayer();
+            if (currentPlayer == null || currentPlayer.HeroIds.Count == 0)
+                return;
+
+            // Get actual hero objects from GameState
+            var playerHeroes = new List<Hero>();
+            foreach (var heroId in currentPlayer.HeroIds)
+            {
+                var hero = gameState.GetHero(heroId);
+                if (hero != null)
+                    playerHeroes.Add(hero);
+            }
+
+            if (playerHeroes.Count == 0)
                 return;
 
             // Find next hero
             var currentIndex = selectedHero != null
-                ? currentPlayer.Heroes.IndexOf(selectedHero)
+                ? playerHeroes.FindIndex(h => h.Id == selectedHero.Id)
                 : -1;
 
-            var nextIndex = (currentIndex + 1) % currentPlayer.Heroes.Count;
-            SelectHero(currentPlayer.Heroes[nextIndex]);
+            var nextIndex = (currentIndex + 1) % playerHeroes.Count;
+            SelectHero(playerHeroes[nextIndex]);
         }
 
         // ===== Spell Casting =====
@@ -366,7 +381,7 @@ namespace RealmsOfEldor.Controllers
             if (selectedHero == null || castingSpellId == -1)
                 return;
 
-            Debug.Log($"{selectedHero.Name} casts spell {castingSpellId} at {targetPos}");
+            Debug.Log($"{selectedHero.CustomName} casts spell {castingSpellId} at {targetPos}");
 
             // TODO: Implement spell casting when spell system is ready
 
@@ -410,15 +425,19 @@ namespace RealmsOfEldor.Controllers
             ToggleHeroSleep();
         }
 
-        private void HandlePlayerTurnStarted(PlayerColor player)
+        private void HandleTurnChanged(int playerId)
         {
-            currentState = InputState.Normal;
-        }
-
-        private void HandlePlayerTurnEnded(PlayerColor player)
-        {
-            currentState = InputState.Disabled;
-            ClearSelection();
+            // Enable input when it's the human player's turn
+            // For now, assume player 0 is human
+            if (playerId == 0)
+            {
+                currentState = InputState.Normal;
+            }
+            else
+            {
+                currentState = InputState.Disabled;
+                ClearSelection();
+            }
         }
 
         // ===== Action Methods =====
@@ -437,7 +456,7 @@ namespace RealmsOfEldor.Controllers
                 return;
 
             // TODO: Implement hero sleep state when ready
-            Debug.Log($"Toggle sleep for {selectedHero.Name}");
+            Debug.Log($"Toggle sleep for {selectedHero.CustomName}");
         }
 
         private void OpenSpellbook()
@@ -446,7 +465,7 @@ namespace RealmsOfEldor.Controllers
                 return;
 
             // TODO: Open spellbook UI when ready
-            Debug.Log($"Open spellbook for {selectedHero.Name}");
+            Debug.Log($"Open spellbook for {selectedHero.CustomName}");
         }
 
         // ===== Validation Methods =====
@@ -456,7 +475,7 @@ namespace RealmsOfEldor.Controllers
             if (GameStateManager.Instance == null)
                 return false;
 
-            var gameMap = GameStateManager.Instance.State.Map;
+            // TODO: Replace with GameStateManager.Instance.State.Map when available
 
             // Use BasicPathfinder for validation
             return BasicPathfinder.CanReachPosition(gameMap, hero, targetPos);
@@ -474,8 +493,20 @@ namespace RealmsOfEldor.Controllers
             if (GameStateManager.Instance == null)
                 return null;
 
-            var currentPlayer = GameStateManager.Instance.State.GetCurrentPlayer();
-            return currentPlayer?.Heroes.Find(h => h.Position == pos);
+            var gameState = GameStateManager.Instance.State;
+            var currentPlayer = gameState.GetCurrentPlayer();
+            if (currentPlayer == null)
+                return null;
+
+            // Find hero at position from player's hero IDs
+            foreach (var heroId in currentPlayer.HeroIds)
+            {
+                var hero = gameState.GetHero(heroId);
+                if (hero != null && hero.Position.Equals(pos))
+                    return hero;
+            }
+
+            return null;
         }
 
         private bool IsAdjacent(Position pos1, Position pos2)

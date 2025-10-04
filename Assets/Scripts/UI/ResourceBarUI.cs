@@ -1,6 +1,8 @@
 using UnityEngine;
 using TMPro;
 using RealmsOfEldor.Core;
+using RealmsOfEldor.Controllers;
+using RealmsOfEldor.Data;
 using RealmsOfEldor.Data.EventChannels;
 
 namespace RealmsOfEldor.UI
@@ -31,15 +33,15 @@ namespace RealmsOfEldor.UI
         [SerializeField] private string resourceFormat = "{0}";
         [SerializeField] private string dateFormat = "M:{0}, W:{1}, D:{2}";
 
-        private PlayerColor currentPlayer;
+        private int currentPlayerId = 0; // Track which player we're displaying resources for
 
         void OnEnable()
         {
             if (gameEvents != null)
             {
-                gameEvents.OnResourceChanged += HandleResourceChanged;
-                gameEvents.OnDayChanged += HandleDayChanged;
-                gameEvents.OnPlayerTurnStarted += HandlePlayerTurnStarted;
+                gameEvents.OnResourcesChanged += HandleResourcesChanged;
+                gameEvents.OnDayAdvanced += HandleDayAdvanced;
+                gameEvents.OnTurnChanged += HandleTurnChanged;
             }
 
             // Initial display
@@ -51,29 +53,30 @@ namespace RealmsOfEldor.UI
         {
             if (gameEvents != null)
             {
-                gameEvents.OnResourceChanged -= HandleResourceChanged;
-                gameEvents.OnDayChanged -= HandleDayChanged;
-                gameEvents.OnPlayerTurnStarted -= HandlePlayerTurnStarted;
+                gameEvents.OnResourcesChanged -= HandleResourcesChanged;
+                gameEvents.OnDayAdvanced -= HandleDayAdvanced;
+                gameEvents.OnTurnChanged -= HandleTurnChanged;
             }
         }
 
-        private void HandleResourceChanged(PlayerColor player, ResourceType type, int newAmount)
+        private void HandleResourcesChanged(int playerId, ResourceSet newResources)
         {
             // Only update if it's the current player's resources
-            if (player != currentPlayer)
+            // For now, assume player 0 is the human player
+            if (playerId != 0)
                 return;
 
-            UpdateResourceDisplay(type, newAmount);
+            RefreshAllResources();
         }
 
-        private void HandleDayChanged(int day)
+        private void HandleDayAdvanced(int day)
         {
             RefreshDate();
         }
 
-        private void HandlePlayerTurnStarted(PlayerColor player)
+        private void HandleTurnChanged(int playerId)
         {
-            currentPlayer = player;
+            // Update display when turn changes
             RefreshAllResources();
             RefreshDate();
         }
@@ -119,7 +122,7 @@ namespace RealmsOfEldor.UI
             if (Controllers.GameStateManager.Instance == null)
                 return;
 
-            var player = Controllers.GameStateManager.Instance.GetPlayer(currentPlayer);
+            var player = Controllers.GameStateManager.Instance.State.GetPlayer(currentPlayerId);
             if (player == null)
                 return;
 
@@ -176,9 +179,9 @@ namespace RealmsOfEldor.UI
         /// <summary>
         /// Sets the current player whose resources to display.
         /// </summary>
-        public void SetCurrentPlayer(PlayerColor player)
+        public void SetCurrentPlayer(int playerId)
         {
-            currentPlayer = player;
+            currentPlayerId = playerId;
             RefreshAllResources();
         }
 

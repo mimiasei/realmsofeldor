@@ -48,7 +48,10 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.2.6f2\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\Tests\EditMode\MapObjectTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\BasicPathfinderTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\GameMapTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\MapTileTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
@@ -569,6 +572,10 @@
     </Reference>
     <Reference Include="DOTween">
       <HintPath>Assets\Plugins\Demigiant\DOTween\DOTween.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Pathfinding.Ionic.Zip.Reduced">
+      <HintPath>Assets\AstarPathfindingProject\Plugins\DotNetZip\Pathfinding.Ionic.Zip.Reduced.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="netstandard">
@@ -1366,8 +1373,11 @@
     <ProjectReference Include="RealmsOfEldor.Data.csproj" />
     <ProjectReference Include="RealmsOfEldor.Editor.csproj" />
     <ProjectReference Include="RealmsOfEldor.Controllers.csproj" />
+    <ProjectReference Include="AstarPathfindingProject.csproj" />
+    <ProjectReference Include="PackageToolsEditor.csproj" />
     <ProjectReference Include="RealmsOfEldor.Database.csproj" />
     <ProjectReference Include="RealmsOfEldor.Utilities.csproj" />
+    <ProjectReference Include="AstarPathfindingProjectEditor.csproj" />
     <ProjectReference Include="RealmsOfEldor.UI.csproj" />
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />

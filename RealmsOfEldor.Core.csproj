@@ -51,12 +51,15 @@
     <Compile Include="Assets\Scripts\Core\Resources.cs" />
     <Compile Include="Assets\Scripts\Core\Position.cs" />
     <Compile Include="Assets\Scripts\Core\Serialization\ResourceSetJsonConverter.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\MapObject.cs" />
     <Compile Include="Assets\Scripts\Core\GameState.cs" />
     <Compile Include="Assets\Scripts\Core\Pathfinding\BasicPathfinder.cs" />
     <Compile Include="Assets\Scripts\Core\Player.cs" />
     <Compile Include="Assets\Scripts\Core\Army.cs" />
     <Compile Include="Assets\Scripts\Core\Hero.cs" />
     <Compile Include="Assets\Scripts\Core\Serialization\PositionJsonConverter.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\GameMap.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\MapTile.cs" />
     <Compile Include="Assets\Scripts\Core\GameTypes.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -129,6 +132,10 @@
     </Reference>
     <Reference Include="DOTweenUpgradeManager">
       <HintPath>Assets\Plugins\Demigiant\DOTween\Editor\DOTweenUpgradeManager.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Pathfinding.Ionic.Zip.Reduced">
+      <HintPath>Assets\AstarPathfindingProject\Plugins\DotNetZip\Pathfinding.Ionic.Zip.Reduced.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="netstandard">

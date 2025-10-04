@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using RealmsOfEldor.Core;
+using RealmsOfEldor.Controllers;
+using RealmsOfEldor.Data;
 using RealmsOfEldor.Data.EventChannels;
 
 namespace RealmsOfEldor.UI
@@ -38,9 +40,8 @@ namespace RealmsOfEldor.UI
         {
             if (gameEvents != null)
             {
-                gameEvents.OnDayChanged += HandleDayChanged;
-                gameEvents.OnPlayerTurnStarted += HandlePlayerTurnStarted;
-                gameEvents.OnPlayerTurnEnded += HandlePlayerTurnEnded;
+                gameEvents.OnDayAdvanced += HandleDayAdvanced;
+                gameEvents.OnTurnChanged += HandleTurnChanged;
             }
 
             if (endTurnButton != null)
@@ -55,9 +56,8 @@ namespace RealmsOfEldor.UI
         {
             if (gameEvents != null)
             {
-                gameEvents.OnDayChanged -= HandleDayChanged;
-                gameEvents.OnPlayerTurnStarted -= HandlePlayerTurnStarted;
-                gameEvents.OnPlayerTurnEnded -= HandlePlayerTurnEnded;
+                gameEvents.OnDayAdvanced -= HandleDayAdvanced;
+                gameEvents.OnTurnChanged -= HandleTurnChanged;
             }
 
             if (endTurnButton != null)
@@ -66,22 +66,17 @@ namespace RealmsOfEldor.UI
             }
         }
 
-        private void HandleDayChanged(int day)
+        private void HandleDayAdvanced(int day)
         {
             UpdateDayDisplay(day);
         }
 
-        private void HandlePlayerTurnStarted(PlayerColor player)
+        private void HandleTurnChanged(int playerId)
         {
-            canEndTurn = true;
+            // Enable end turn button when it's the human player's turn (assume player 0)
+            canEndTurn = (playerId == 0);
             UpdateEndTurnButton();
             RefreshDisplay();
-        }
-
-        private void HandlePlayerTurnEnded(PlayerColor player)
-        {
-            canEndTurn = false;
-            UpdateEndTurnButton();
         }
 
         /// <summary>
@@ -94,7 +89,7 @@ namespace RealmsOfEldor.UI
 
             var gameState = Controllers.GameStateManager.Instance.State;
             UpdateDayDisplay(gameState.CurrentDay);
-            UpdateTurnDisplay(gameState.CurrentTurn);
+            UpdateTurnDisplay(gameState.CurrentPlayerTurn);
             UpdateEndTurnButton();
         }
 

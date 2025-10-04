@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace RealmsOfEldor.Core.Pathfinding
+namespace RealmsOfEldor.Core
 {
     /// <summary>
     /// Pathfinding implementation for hero movement.
@@ -181,7 +181,7 @@ namespace RealmsOfEldor.Core.Pathfinding
             if (map == null || hero == null || !map.IsInBounds(target))
                 return false;
 
-            if (hero.MovementPoints <= 0)
+            if (hero.Movement <= 0)
                 return false;
 
             var path = FindPath(map, hero.Position, target);
@@ -189,7 +189,7 @@ namespace RealmsOfEldor.Core.Pathfinding
                 return false;
 
             var cost = CalculatePathCost(map, path);
-            return cost <= hero.MovementPoints;
+            return cost <= hero.Movement;
         }
 
         /// <summary>

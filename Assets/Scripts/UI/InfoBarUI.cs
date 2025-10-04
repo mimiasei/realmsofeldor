@@ -4,6 +4,8 @@ using UnityEngine.UI;
 using TMPro;
 using Cysharp.Threading.Tasks;
 using RealmsOfEldor.Core;
+using RealmsOfEldor.Controllers;
+using RealmsOfEldor.Data;
 using RealmsOfEldor.Data.EventChannels;
 
 namespace RealmsOfEldor.UI
@@ -187,20 +189,20 @@ namespace RealmsOfEldor.UI
                 return;
 
             // Basic info
-            if (heroNameText != null) heroNameText.text = currentHero.Name;
-            if (heroClassText != null) heroClassText.text = currentHero.HeroClass.ToString();
+            if (heroNameText != null) heroNameText.text = currentHero.CustomName;
+            if (heroClassText != null) heroClassText.text = "Hero"; // TODO: Get from HeroTypeData via TypeId
             if (levelText != null) levelText.text = $"Lvl {currentHero.Level}";
             if (experienceText != null) experienceText.text = $"XP: {currentHero.Experience}";
 
             // Primary stats
-            if (attackText != null) attackText.text = currentHero.GetAttack().ToString();
-            if (defenseText != null) defenseText.text = currentHero.GetDefense().ToString();
-            if (spellPowerText != null) spellPowerText.text = currentHero.GetSpellPower().ToString();
-            if (knowledgeText != null) knowledgeText.text = currentHero.GetKnowledge().ToString();
+            if (attackText != null) attackText.text = currentHero.GetTotalAttack().ToString();
+            if (defenseText != null) defenseText.text = currentHero.GetTotalDefense().ToString();
+            if (spellPowerText != null) spellPowerText.text = currentHero.GetTotalSpellPower().ToString();
+            if (knowledgeText != null) knowledgeText.text = currentHero.Knowledge.ToString();
 
             // Movement and mana
-            if (movementText != null) movementText.text = $"{currentHero.MovementPoints}/{currentHero.MaxMovementPoints}";
-            if (manaText != null) manaText.text = $"{currentHero.Mana}/{currentHero.GetMaxMana()}";
+            if (movementText != null) movementText.text = $"{currentHero.Movement}/{currentHero.MaxMovement}";
+            if (manaText != null) manaText.text = $"{currentHero.Mana}/{currentHero.MaxMana}";
 
             // Portrait (placeholder - would load from hero sprite database)
             // if (heroPortrait != null) heroPortrait.sprite = GetHeroSprite(currentHero.TypeId);
@@ -311,18 +313,24 @@ namespace RealmsOfEldor.UI
 
         // ===== Event Handlers =====
 
-        private void HandleHeroMoved(Hero hero, Position oldPos, Position newPos)
+        private void HandleHeroMoved(int heroId, Position newPos)
         {
             // Update movement points if this is the currently displayed hero
-            if (currentHero == hero && currentState == InfoBarState.Hero)
+            if (currentHero != null && currentHero.Id == heroId && currentState == InfoBarState.Hero)
+            {
+                currentHero.Position = newPos;
                 UpdateHeroDisplay();
+            }
         }
 
-        private void HandleHeroLeveledUp(Hero hero)
+        private void HandleHeroLeveledUp(int heroId, int newLevel)
         {
             // Update stats if this is the currently displayed hero
-            if (currentHero == hero && currentState == InfoBarState.Hero)
+            if (currentHero != null && currentHero.Id == heroId && currentState == InfoBarState.Hero)
+            {
+                currentHero.Level = newLevel;
                 UpdateHeroDisplay();
+            }
         }
 
         // ===== Utility Methods =====
@@ -349,7 +357,7 @@ namespace RealmsOfEldor.UI
             {
                 case InfoBarState.Hero:
                     // TODO: Open hero details screen
-                    Debug.Log($"Open hero screen for {currentHero.Name}");
+                    Debug.Log($"Open hero screen for {currentHero.CustomName}");
                     break;
                 case InfoBarState.Town:
                     // TODO: Open town screen

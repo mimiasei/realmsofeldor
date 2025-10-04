@@ -48,11 +48,13 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.2.6f2\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\Data\TerrainData.cs" />
     <Compile Include="Assets\Scripts\Data\EventChannels\BattleEventChannel.cs" />
     <Compile Include="Assets\Scripts\Data\CreatureData.cs" />
     <Compile Include="Assets\Scripts\Data\EventChannels\UIEventChannel.cs" />
     <Compile Include="Assets\Scripts\Data\HeroTypeData.cs" />
     <Compile Include="Assets\Scripts\Data\EventChannels\GameEventChannel.cs" />
+    <Compile Include="Assets\Scripts\Data\MapEventChannel.cs" />
     <Compile Include="Assets\Scripts\Data\SpellData.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -625,6 +627,10 @@
     </Reference>
     <Reference Include="DOTweenUpgradeManager">
       <HintPath>Assets\Plugins\Demigiant\DOTween\Editor\DOTweenUpgradeManager.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Pathfinding.Ionic.Zip.Reduced">
+      <HintPath>Assets\AstarPathfindingProject\Plugins\DotNetZip\Pathfinding.Ionic.Zip.Reduced.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="netstandard">

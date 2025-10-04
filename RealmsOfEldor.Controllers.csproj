@@ -51,6 +51,9 @@
     <Compile Include="Assets\Scripts\Controllers\AdventureMapInputController.cs" />
     <Compile Include="Assets\Scripts\Controllers\HeroController.cs" />
     <Compile Include="Assets\Scripts\Controllers\GameStateManager.cs" />
+    <Compile Include="Assets\Scripts\Controllers\AstarPathfindingAdapter.cs" />
+    <Compile Include="Assets\Scripts\Controllers\CameraController.cs" />
+    <Compile Include="Assets\Scripts\Controllers\MapRenderer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Controllers\RealmsOfEldor.Controllers.asmdef" />
@@ -622,6 +625,10 @@
     </Reference>
     <Reference Include="DOTweenUpgradeManager">
       <HintPath>Assets\Plugins\Demigiant\DOTween\Editor\DOTweenUpgradeManager.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Pathfinding.Ionic.Zip.Reduced">
+      <HintPath>Assets\AstarPathfindingProject\Plugins\DotNetZip\Pathfinding.Ionic.Zip.Reduced.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="netstandard">

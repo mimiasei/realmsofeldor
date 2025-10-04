@@ -2,6 +2,7 @@ using UnityEngine;
 using DG.Tweening;
 using Cysharp.Threading.Tasks;
 using RealmsOfEldor.Core;
+using RealmsOfEldor.Data;
 using RealmsOfEldor.Data.EventChannels;
 using RealmsOfEldor.Utilities;
 
@@ -90,7 +91,7 @@ namespace RealmsOfEldor.Controllers
         public void Initialize(Hero hero, Vector3 worldPosition)
         {
             heroData = hero;
-            heroInstanceId = hero.InstanceId;
+            heroInstanceId = hero.Id;
             transform.position = worldPosition;
 
             UpdateVisuals();
@@ -123,7 +124,7 @@ namespace RealmsOfEldor.Controllers
         {
             if (isMoving)
             {
-                Debug.LogWarning($"Hero {heroData?.Name} is already moving!");
+                Debug.LogWarning($"Hero {heroData?.CustomName} is already moving!");
                 return;
             }
 
@@ -150,7 +151,7 @@ namespace RealmsOfEldor.Controllers
 
             currentMovementTween = sequence;
 
-            await sequence.AsyncWaitForCompletion().AsUniTask();
+            await UniTask.WaitWhile(() => sequence.IsActive());
 
             // Reset Y position after bobbing
             transform.position = new Vector3(transform.position.x, targetWorldPosition.y, transform.position.z);
@@ -214,7 +215,7 @@ namespace RealmsOfEldor.Controllers
         {
             if (uiEvents != null && heroData != null)
             {
-                var tooltipText = $"{heroData.Name} (Lvl {heroData.Level})\nMP: {heroData.MovementPoints}/{heroData.MaxMovementPoints}";
+                var tooltipText = $"{heroData.CustomName} (Lvl {heroData.Level})\nMP: {heroData.Movement}/{heroData.MaxMovement}";
                 uiEvents.RaiseShowTooltip(tooltipText);
             }
         }
@@ -229,19 +230,20 @@ namespace RealmsOfEldor.Controllers
 
         // ===== Event Handlers =====
 
-        private void HandleHeroMoved(Hero hero, Position oldPos, Position newPos)
+        private void HandleHeroMoved(int heroId, Position newPos)
         {
-            if (hero.InstanceId != heroInstanceId)
+            if (heroId != heroInstanceId)
                 return;
 
             // Movement animation is handled by AdventureMapController
-            // This just updates the hero data reference
-            heroData = hero;
+            // This just updates the position
+            if (heroData != null)
+                heroData.Position = newPos;
         }
 
-        private void HandleHeroTeleported(Hero hero, Position oldPos, Position newPos)
+        private void HandleHeroTeleported(Hero hero, Position destination)
         {
-            if (hero.InstanceId != heroInstanceId)
+            if (hero.Id != heroInstanceId)
                 return;
 
             heroData = hero;
@@ -249,12 +251,12 @@ namespace RealmsOfEldor.Controllers
             // Instant teleport (no animation)
             // World position conversion would be done by MapRenderer
             // For now, just log
-            Debug.Log($"{hero.Name} teleported from {oldPos} to {newPos}");
+            Debug.Log($"{hero.CustomName} teleported to {destination}");
         }
 
-        private void HandleHeroDefeated(Hero hero)
+        private void HandleHeroDefeated(int heroId)
         {
-            if (hero.InstanceId != heroInstanceId)
+            if (heroId != heroInstanceId)
                 return;
 
             // Play defeat animation and destroy
@@ -266,7 +268,14 @@ namespace RealmsOfEldor.Controllers
             // Fade out animation
             if (spriteRenderer != null)
             {
-                await spriteRenderer.DOFade(0f, 0.5f).AsyncWaitForCompletion().AsUniTask();
+                var startColor = spriteRenderer.color;
+                var fadeTween = DOTween.To(
+                    () => spriteRenderer.color,
+                    x => spriteRenderer.color = x,
+                    new Color(startColor.r, startColor.g, startColor.b, 0f),
+                    0.5f
+                );
+                await UniTask.WaitWhile(() => fadeTween.IsActive());
             }
 
             // Destroy the game object
@@ -290,7 +299,7 @@ namespace RealmsOfEldor.Controllers
             // Draw hero name
             if (heroData != null)
             {
-                UnityEditor.Handles.Label(transform.position + Vector3.up * 0.5f, heroData.Name);
+                UnityEditor.Handles.Label(transform.position + Vector3.up * 0.5f, heroData.CustomName);
             }
         }
 #endif

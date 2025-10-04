@@ -256,8 +256,8 @@ namespace RealmsOfEldor.Tests
         [Test]
         public void CanReachPosition_NullMap_ReturnsFalse()
         {
-            var hero = new Hero(1, 1, "Test", HeroClass.Knight);
-            hero.MovementPoints = 1000;
+            var hero = new Hero { Id = 1, TypeId = 1, CustomName = "Test" };
+            hero.Movement = 1000;
 
             Assert.IsFalse(BasicPathfinder.CanReachPosition(null, hero, new Position(1, 1)));
         }
@@ -271,9 +271,9 @@ namespace RealmsOfEldor.Tests
         [Test]
         public void CanReachPosition_NoMovementPoints_ReturnsFalse()
         {
-            var hero = new Hero(1, 1, "Test", HeroClass.Knight);
+            var hero = new Hero { Id = 1, TypeId = 1, CustomName = "Test" };
             hero.Position = new Position(5, 5);
-            hero.MovementPoints = 0;
+            hero.Movement = 0;
 
             Assert.IsFalse(BasicPathfinder.CanReachPosition(map, hero, new Position(5, 6)));
         }
@@ -281,9 +281,9 @@ namespace RealmsOfEldor.Tests
         [Test]
         public void CanReachPosition_AdjacentWithMovement_ReturnsTrue()
         {
-            var hero = new Hero(1, 1, "Test", HeroClass.Knight);
+            var hero = new Hero { Id = 1, TypeId = 1, CustomName = "Test" };
             hero.Position = new Position(5, 5);
-            hero.MovementPoints = 1000;
+            hero.Movement = 1000;
 
             Assert.IsTrue(BasicPathfinder.CanReachPosition(map, hero, new Position(5, 6)));
         }
@@ -291,9 +291,9 @@ namespace RealmsOfEldor.Tests
         [Test]
         public void CanReachPosition_OutOfBounds_ReturnsFalse()
         {
-            var hero = new Hero(1, 1, "Test", HeroClass.Knight);
+            var hero = new Hero { Id = 1, TypeId = 1, CustomName = "Test" };
             hero.Position = new Position(5, 5);
-            hero.MovementPoints = 1000;
+            hero.Movement = 1000;
 
             Assert.IsFalse(BasicPathfinder.CanReachPosition(map, hero, new Position(100, 100)));
         }
