@@ -14,6 +14,7 @@ namespace RealmsOfEldor.Controllers
         [Header("Required References")]
         [SerializeField] private MapRenderer mapRenderer;
         [SerializeField] private MapEventChannel mapEvents;
+        [SerializeField] private CameraController cameraController;
 
         [Header("Map Settings")]
         [SerializeField] private int mapWidth = 30;
@@ -67,6 +68,13 @@ namespace RealmsOfEldor.Controllers
 
             // Calculate coastal tiles
             gameMap.CalculateCoastalTiles();
+
+            // Configure camera bounds if camera controller is assigned
+            if (cameraController != null)
+            {
+                cameraController.SetMapBounds(mapWidth, mapHeight);
+                Debug.Log($"✓ Camera bounds set to {mapWidth}x{mapHeight}");
+            }
 
             // Raise map loaded event - this triggers MapRenderer to render via event subscription
             mapEvents.RaiseMapLoaded(gameMap);

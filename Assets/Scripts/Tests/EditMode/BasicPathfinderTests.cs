@@ -1,7 +1,6 @@
 using NUnit.Framework;
 using System.Collections.Generic;
 using RealmsOfEldor.Core;
-using RealmsOfEldor.Core.Pathfinding;
 
 namespace RealmsOfEldor.Tests
 {

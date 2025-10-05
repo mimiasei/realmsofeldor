@@ -85,6 +85,7 @@ namespace RealmsOfEldor.Controllers
         // Event handlers
         private void HandleMapLoaded(GameMap map)
         {
+            Debug.Log($"MapRenderer: HandleMapLoaded called - map size {map.Width}x{map.Height}");
             currentMap = map;
             RenderFullMap();
         }
@@ -147,25 +148,39 @@ namespace RealmsOfEldor.Controllers
         // Rendering methods
         private void RenderFullMap()
         {
-            if (currentMap == null) return;
+            if (currentMap == null)
+            {
+                Debug.LogError("MapRenderer: RenderFullMap called but currentMap is null!");
+                return;
+            }
+
+            Debug.Log($"MapRenderer: RenderFullMap starting - {currentMap.Width}x{currentMap.Height} tiles");
+            Debug.Log($"MapRenderer: terrainTilemap = {(terrainTilemap != null ? "OK" : "NULL")}");
+            Debug.Log($"MapRenderer: terrainLookup has {terrainLookup.Count} entries");
 
             ClearMap();
 
             // Render all terrain tiles
+            var tilesRendered = 0;
             for (var x = 0; x < currentMap.Width; x++)
             {
                 for (var y = 0; y < currentMap.Height; y++)
                 {
                     var pos = new Position(x, y);
                     UpdateTile(pos);
+                    tilesRendered++;
                 }
             }
+
+            Debug.Log($"MapRenderer: Rendered {tilesRendered} tiles");
 
             // Render all objects
             foreach (var obj in currentMap.GetAllObjects())
             {
                 AddObjectRendering(obj);
             }
+
+            Debug.Log($"<color=green>MapRenderer: RenderFullMap complete!</color>");
         }
 
         private void UpdateTile(Position pos)

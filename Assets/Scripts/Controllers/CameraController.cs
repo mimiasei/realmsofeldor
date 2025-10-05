@@ -202,8 +202,24 @@ namespace RealmsOfEldor.Controllers
             var minY = mapMinBounds.y + camHeight / 2f;
             var maxY = mapMaxBounds.y - camHeight / 2f;
 
-            position.x = Mathf.Clamp(position.x, minX, maxX);
-            position.y = Mathf.Clamp(position.y, minY, maxY);
+            // If camera is larger than map, center it instead of clamping
+            if (minX >= maxX)
+            {
+                position.x = (mapMinBounds.x + mapMaxBounds.x) / 2f;
+            }
+            else
+            {
+                position.x = Mathf.Clamp(position.x, minX, maxX);
+            }
+
+            if (minY >= maxY)
+            {
+                position.y = (mapMinBounds.y + mapMaxBounds.y) / 2f;
+            }
+            else
+            {
+                position.y = Mathf.Clamp(position.y, minY, maxY);
+            }
 
             return position;
         }

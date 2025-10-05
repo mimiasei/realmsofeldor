@@ -116,9 +116,11 @@ namespace RealmsOfEldor.Editor
             type.GetField("scrollSpeed", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
                 ?.SetValue(cameraController, 2f);
             type.GetField("minZoom", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?.SetValue(cameraController, 2f);
+                ?.SetValue(cameraController, 5f);
             type.GetField("maxZoom", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?.SetValue(cameraController, 10f);
+                ?.SetValue(cameraController, 30f);
+            type.GetField("zoomSpeed", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(cameraController, 1f);
 
             Debug.Log("✓ Camera with CameraController created");
         }
@@ -196,11 +198,13 @@ namespace RealmsOfEldor.Editor
         private static void CreateGameManagers()
         {
             var managersObj = new GameObject("GameManagers");
-            Object.DontDestroyOnLoad(managersObj);
+            // Note: DontDestroyOnLoad cannot be called in editor scripts
+            // User should call this at runtime or add a script that calls it in Awake()
 
             // Add placeholder comment component
             var comment = managersObj.AddComponent<SceneComment>();
-            comment.comment = "Add GameStateManager, CreatureDatabase, HeroDatabase, SpellDatabase here";
+            comment.comment = "Add GameStateManager, CreatureDatabase, HeroDatabase, SpellDatabase here.\n" +
+                             "Note: Add a script with DontDestroyOnLoad(gameObject) in Awake() if needed.";
 
             Debug.Log("✓ GameManagers object created (add database singletons here)");
         }

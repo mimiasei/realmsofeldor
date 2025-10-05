@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd4aaed3df43df948962fcec023638a4, type: 3}
+  m_Name: HeroType
+  m_EditorClassIdentifier: RealmsOfEldor.Data::RealmsOfEldor.Data.HeroTypeData
+  heroTypeId: 0
+  heroName: Sir Arthur
+  heroClass: 0
+  faction: 0
+  startAttack: 1
+  startDefense: 1
+  startSpellPower: 1
+  startKnowledge: 1
+  statGrowth:
+    attackChance: 30
+    defenseChance: 30
+    spellPowerChance: 20
+    knowledgeChance: 20
+  startingArmy: []
+  startingSkills: []
+  startingSpells: []
+  startsWithSpellbook: 0
+  specialtyName: 
+  specialtyDescription: 
+  portrait: {fileID: 0}
+  smallPortrait: {fileID: 0}
+  mapSprite: {fileID: 0}
+  mapAnimator: {fileID: 0}
+  selectionSound: {fileID: 0}

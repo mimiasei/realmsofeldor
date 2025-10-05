@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e8b4a5c3f2d1e9b6c8a5f4d2e1c9b7a, type: 3}
+  m_Name: SnowTerrainData
+  m_EditorClassIdentifier: RealmsOfEldor.Data::RealmsOfEldor.Data.TerrainData
+  terrainType: 3
+  terrainName: Snow
+  tileVariants:
+  - {fileID: 11400000, guid: 1558f85a0ab08494b8c51e1a04279ed3, type: 2}
+  minimapColor: {r: 1, g: 1, b: 1, a: 1}
+  movementCost: 150
+  isPassable: 1
+  isWater: 0
+  movementSound: {fileID: 0}
