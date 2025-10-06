@@ -73,7 +73,6 @@ namespace RealmsOfEldor.Controllers
             if (cameraController != null)
             {
                 cameraController.SetMapBounds(mapWidth, mapHeight);
-                Debug.Log($"✓ Camera bounds set to {mapWidth}x{mapHeight}");
             }
 
             // Raise map loaded event - this triggers MapRenderer to render via event subscription

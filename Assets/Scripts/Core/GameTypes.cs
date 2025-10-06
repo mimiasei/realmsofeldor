@@ -1,4 +1,5 @@
 using System;
+using RealmsOfEldor.Data;
 
 namespace RealmsOfEldor.Core
 {
@@ -74,22 +75,7 @@ namespace RealmsOfEldor.Core
         Elementalist = 17
     }
 
-    /// <summary>
-    /// Faction types (town alignments)
-    /// </summary>
-    public enum Faction
-    {
-        Castle = 0,
-        Rampart = 1,
-        Tower = 2,
-        Inferno = 3,
-        Necropolis = 4,
-        Dungeon = 5,
-        Stronghold = 6,
-        Fortress = 7,
-        Conflux = 8,
-        Neutral = 9
-    }
+    // Faction moved to RealmsOfEldor.Data.GameDataTypes
 
     /// <summary>
     /// Primary stats for heroes
@@ -223,17 +209,5 @@ namespace RealmsOfEldor.Core
         Defender = 1
     }
 
-    /// <summary>
-    /// Creature tiers (1-7 like HOMM3)
-    /// </summary>
-    public enum CreatureTier
-    {
-        Tier1 = 1,
-        Tier2 = 2,
-        Tier3 = 3,
-        Tier4 = 4,
-        Tier5 = 5,
-        Tier6 = 6,
-        Tier7 = 7
-    }
+    // CreatureTier moved to RealmsOfEldor.Data.GameDataTypes
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
 using RealmsOfEldor.Core.Serialization;
+using RealmsOfEldor.Data;
 
 namespace RealmsOfEldor.Core
 {
@@ -142,25 +143,5 @@ namespace RealmsOfEldor.Core
         }
     }
 
-    /// <summary>
-    /// Resource cost structure for buildings, creatures, etc.
-    /// </summary>
-    [Serializable]
-    public struct ResourceCost
-    {
-        public ResourceSet Cost;
-
-        public ResourceCost(ResourceSet cost)
-        {
-            Cost = cost;
-        }
-
-        public bool CanPay(ResourceSet available)
-        {
-            return available.CanAfford(Cost);
-        }
-
-        public static implicit operator ResourceSet(ResourceCost cost) => cost.Cost;
-        public static implicit operator ResourceCost(ResourceSet resources) => new ResourceCost(resources);
-    }
+    // ResourceCost moved to RealmsOfEldor.Data.GameDataTypes (simplified version)
 }

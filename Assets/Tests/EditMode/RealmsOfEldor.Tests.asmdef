@@ -4,7 +4,8 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "RealmsOfEldor.Core"
+        "RealmsOfEldor.Core",
+        "RealmsOfEldor.Data"
     ],
     "includePlatforms": [
         "Editor"

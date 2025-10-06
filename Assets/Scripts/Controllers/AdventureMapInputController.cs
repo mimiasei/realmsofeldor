@@ -30,7 +30,6 @@ namespace RealmsOfEldor.Controllers
         [SerializeField] private MapRenderer mapRenderer;
         [SerializeField] private CameraController cameraController;
 
-        // TODO: Remove this when GameState.Map is properly implemented
         private GameMap gameMap;
 
         [Header("Input Settings")]
@@ -48,6 +47,7 @@ namespace RealmsOfEldor.Controllers
             if (mapEvents != null)
             {
                 mapEvents.OnTileSelected += HandleTileClicked;
+                mapEvents.OnMapLoaded += HandleMapLoaded;
             }
 
             if (uiEvents != null)
@@ -72,6 +72,7 @@ namespace RealmsOfEldor.Controllers
             if (mapEvents != null)
             {
                 mapEvents.OnTileSelected -= HandleTileClicked;
+                mapEvents.OnMapLoaded -= HandleMapLoaded;
             }
 
             if (uiEvents != null)
@@ -196,12 +197,17 @@ namespace RealmsOfEldor.Controllers
             HandleNormalTileClick(tilePos);
         }
 
+        private void HandleMapLoaded(GameMap map)
+        {
+            gameMap = map;
+            Debug.Log($"AdventureMapInputController: Map loaded ({map.Width}x{map.Height})");
+        }
+
         private void HandleNormalTileClick(Position tilePos)
         {
             if (GameStateManager.Instance == null)
                 return;
 
-            // TODO: Replace with GameStateManager.Instance.State.Map when available
             if (gameMap == null || !gameMap.IsInBounds(tilePos))
                 return;
 
@@ -233,7 +239,8 @@ namespace RealmsOfEldor.Controllers
             if (selectedHero == null || GameStateManager.Instance == null)
                 return;
 
-            // TODO: Replace with GameStateManager.Instance.State.Map when available
+            if (gameMap == null)
+                return;
 
             // Use BasicPathfinder to find path
             var path = BasicPathfinder.FindPath(gameMap, selectedHero.Position, targetPos);
@@ -472,10 +479,8 @@ namespace RealmsOfEldor.Controllers
 
         private bool CanMoveHeroToPosition(Hero hero, Position targetPos)
         {
-            if (GameStateManager.Instance == null)
+            if (GameStateManager.Instance == null || gameMap == null)
                 return false;
-
-            // TODO: Replace with GameStateManager.Instance.State.Map when available
 
             // Use BasicPathfinder for validation
             return BasicPathfinder.CanReachPosition(gameMap, hero, targetPos);

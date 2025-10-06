@@ -1,9 +1,7 @@
 {
     "name": "RealmsOfEldor.Data",
     "rootNamespace": "RealmsOfEldor.Data",
-    "references": [
-        "RealmsOfEldor.Core"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

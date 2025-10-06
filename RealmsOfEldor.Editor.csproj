@@ -52,9 +52,12 @@
     <Compile Include="Assets\Scripts\Editor\DataGeneration\PlaceholderSpriteGenerator.cs" />
     <Compile Include="Assets\Scripts\Editor\Phase3SetupWindow.cs" />
     <Compile Include="Assets\Scripts\Editor\SceneSetup\AdventureMapSceneSetup.cs" />
+    <Compile Include="Assets\Scripts\Editor\SceneSetup\URPActivationTool.cs" />
     <Compile Include="Assets\Scripts\Editor\DataGeneration\TileAssetGenerator.cs" />
+    <Compile Include="Assets\Scripts\Editor\SceneSetup\Phase4SetupWindow.cs" />
     <Compile Include="Assets\Scripts\Editor\DataGeneration\TerrainDataGenerator.cs" />
     <Compile Include="Assets\Scripts\Editor\SampleDataGenerator.cs" />
+    <Compile Include="Assets\Scripts\Editor\SceneSetup\Phase4UISetup.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Editor\RealmsOfEldor.Editor.asmdef" />
@@ -1140,6 +1143,14 @@
       <HintPath>C:\Program Files\Unity\Hub\Editor\6000.2.6f2\Editor\Data\UnityReferenceAssemblies\unity-4.8-api\Facades\System.Xml.XPath.XDocument.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>Library\ScriptAssemblies\Unity.TextMeshPro.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Universal.Runtime">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
       <Private>False</Private>
@@ -1163,6 +1174,7 @@
     <ProjectReference Include="RealmsOfEldor.Database.csproj" />
     <ProjectReference Include="RealmsOfEldor.Controllers.csproj" />
     <ProjectReference Include="RealmsOfEldor.Utilities.csproj" />
+    <ProjectReference Include="RealmsOfEldor.UI.csproj" />
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   <ItemGroup>

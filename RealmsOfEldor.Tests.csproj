@@ -1093,6 +1093,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="RealmsOfEldor.Core.csproj" />
+    <ProjectReference Include="RealmsOfEldor.Data.csproj" />
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   <ItemGroup>

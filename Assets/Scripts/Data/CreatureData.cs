@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using RealmsOfEldor.Core;
 
 namespace RealmsOfEldor.Data
 {

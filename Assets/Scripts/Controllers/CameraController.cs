@@ -57,7 +57,11 @@ namespace RealmsOfEldor.Controllers
         // Keyboard WASD/Arrow keys panning
         private void HandleKeyboardPan()
         {
-            if (!enableKeyboardPan) return;
+            if (!enableKeyboardPan)
+            {
+                Debug.LogWarning("HandleKeyboardPan: enableKeyboardPan is FALSE");
+                return;
+            }
 
             var moveDir = Vector3.zero;
 

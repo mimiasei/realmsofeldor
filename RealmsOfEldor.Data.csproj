@@ -54,8 +54,8 @@
     <Compile Include="Assets\Scripts\Data\EventChannels\UIEventChannel.cs" />
     <Compile Include="Assets\Scripts\Data\HeroTypeData.cs" />
     <Compile Include="Assets\Scripts\Data\EventChannels\GameEventChannel.cs" />
-    <Compile Include="Assets\Scripts\Data\MapEventChannel.cs" />
     <Compile Include="Assets\Scripts\Data\SpellData.cs" />
+    <Compile Include="Assets\Scripts\Data\GameDataTypes.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Data\RealmsOfEldor.Data.asmdef" />
@@ -1131,7 +1131,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="RealmsOfEldor.Core.csproj" />
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   <ItemGroup>

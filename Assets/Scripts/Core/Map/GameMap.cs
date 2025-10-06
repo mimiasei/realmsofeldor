@@ -16,8 +16,12 @@ namespace RealmsOfEldor.Core
         private MapTile[,] tiles;
         private Dictionary<int, MapObject> objects;
         private int nextObjectId;
+        private Random variantRng; // Shared Random instance for variant selection
 
-        public GameMap(int width, int height)
+        // Delegate to get variant count for a terrain type (injected by Unity layer)
+        public static Func<TerrainType, int> GetTerrainVariantCount { get; set; }
+
+        public GameMap(int width, int height, int? randomSeed = null)
         {
             if (width <= 0 || height <= 0)
                 throw new ArgumentException("Map dimensions must be positive");
@@ -27,13 +31,15 @@ namespace RealmsOfEldor.Core
             tiles = new MapTile[width, height];
             objects = new Dictionary<int, MapObject>();
             nextObjectId = 1;
+            variantRng = randomSeed.HasValue ? new Random(randomSeed.Value) : new Random();
 
-            // Initialize with default grass terrain
+            // Initialize with default grass terrain (use random variants)
             for (var x = 0; x < width; x++)
             {
                 for (var y = 0; y < height; y++)
                 {
-                    tiles[x, y] = new MapTile(TerrainType.Grass, 0, 100);
+                    // Use SetTerrain to leverage random variant selection
+                    SetTerrain(new Position(x, y), TerrainType.Grass);
                 }
             }
         }
@@ -72,12 +78,22 @@ namespace RealmsOfEldor.Core
         }
 
         // Terrain modification
-        public void SetTerrain(Position pos, TerrainType terrain, int visualVariant = 0, int movementCost = 100)
+        public void SetTerrain(Position pos, TerrainType terrain, int visualVariant = -1, int movementCost = 100)
         {
             if (!IsInBounds(pos))
                 throw new ArgumentOutOfRangeException(nameof(pos), "Position is out of map bounds");
 
             var tile = tiles[pos.X, pos.Y];
+
+            // If visualVariant not specified (-1), generate random variant based on available variants
+            if (visualVariant < 0)
+            {
+                var variantCount = GetTerrainVariantCount?.Invoke(terrain) ?? 8;
+
+                // Use shared Random instance for consistent randomization
+                visualVariant = variantRng.Next(0, variantCount);
+            }
+
             tile.SetTerrain(terrain, visualVariant, movementCost);
             tiles[pos.X, pos.Y] = tile;
         }

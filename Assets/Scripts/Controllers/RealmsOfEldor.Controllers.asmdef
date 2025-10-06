@@ -4,6 +4,7 @@
     "references": [
         "RealmsOfEldor.Core",
         "RealmsOfEldor.Data",
+        "RealmsOfEldor.Database",
         "RealmsOfEldor.Utilities",
         "UniTask"
     ],

@@ -15,7 +15,7 @@ MonoBehaviour:
   terrainType: 8
   terrainName: Water
   tileVariants:
-  - {fileID: 11400000, guid: eb5444a5ed020ff458ee5402abf1baee, type: 2}
+  - {fileID: 11400000, guid: bfbc8078e9e684548ab131e28a7349a7, type: 2}
   minimapColor: {r: 0.056737266, g: 0.34078833, b: 0.8018868, a: 1}
   movementCost: 100
   isPassable: 1

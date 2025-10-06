@@ -360,4 +360,560 @@ bool CanMoveHeroToTile(Hero hero, Position target)
 
 ---
 
-*Research complete. Ready for implementation.*
+## Phase 5: Hero Panel UI Research (2025-10-05)
+
+### VCMI Hero Panel Implementation
+
+Based on analysis of VCMI source code in `/tmp/vcmi-temp/client/windows/` and `/tmp/vcmi-temp/client/adventureMap/`:
+
+#### Key Files Analyzed:
+- `CHeroWindow.h/cpp` - Full hero window (opened on double-click)
+- `CInfoBar.h/cpp` - Adventure map hero info panel
+- `MiscWidgets.h` - MoraleLuckBox, CHeroTooltip components
+- `CGarrisonInt.h` - Army garrison display
+- `CArtifactsOfHeroBase.h` - Artifact slots and display
+
+### 1. Full Hero Window (CHeroWindow)
+
+**Window Layout** (`CHeroWindow.h:50-115`):
+```cpp
+class CHeroWindow : public CStatusbarWindow
+{
+    // Header
+    std::shared_ptr<CLabel> name;           // Hero name
+    std::shared_ptr<CLabel> title;          // "Level X ClassName"
+    std::shared_ptr<CAnimImage> banner;     // Player color crest
+    std::shared_ptr<CAnimImage> portraitImage;
+
+    // Primary Skills (Attack, Defense, Power, Knowledge)
+    std::vector<std::shared_ptr<LRClickableAreaWTextComp>> primSkillAreas;
+    std::vector<std::shared_ptr<CAnimImage>> primSkillImages;
+    std::vector<std::shared_ptr<CLabel>> primSkillValues;
+
+    // Hero Stats
+    std::shared_ptr<CLabel> expValue;       // Experience points
+    std::shared_ptr<CLabel> manaValue;      // Mana current/max
+
+    // Specialty
+    std::shared_ptr<CAnimImage> specImage;
+    std::shared_ptr<CLabel> specName;
+
+    // Morale & Luck
+    std::shared_ptr<MoraleLuckBox> morale;
+    std::shared_ptr<MoraleLuckBox> luck;
+
+    // Secondary Skills (up to 8 visible, slider if more)
+    std::vector<std::shared_ptr<CSecSkillPlace>> secSkills;
+    std::vector<std::shared_ptr<CLabel>> secSkillNames;
+    std::vector<std::shared_ptr<CLabel>> secSkillValues;
+    std::shared_ptr<CSlider> secSkillSlider;
+
+    // Army & Artifacts
+    std::shared_ptr<CGarrisonInt> garr;     // 7 creature slots
+    std::shared_ptr<CArtifactsOfHeroMain> arts;  // 19 equipment slots + backpack
+
+    // Buttons
+    std::shared_ptr<CButton> quitButton;
+    std::shared_ptr<CButton> dismissButton;
+    std::shared_ptr<CButton> questlogButton;
+    std::shared_ptr<CButton> commanderButton;
+    std::shared_ptr<CButton> backpackButton;
+};
+```
+
+**Data Display** (`CHeroWindow.cpp:188-326`):
+
+Primary Skills (lines 241-246):
+```cpp
+for(size_t g=0; g<primSkillAreas.size(); ++g) {
+    int value = curHero->getPrimSkillLevel(static_cast<PrimarySkill>(g));
+    primSkillAreas[g]->component.value = value;
+    primSkillValues[g]->setText(std::to_string(value));
+}
+```
+
+Secondary Skills (lines 248-267):
+```cpp
+for(size_t g=0; g < secSkills.size(); ++g) {
+    int offset = secSkillSlider ? secSkillSlider->getValue() * 2 : 0;
+    if(curHero->secSkills.size() < g + offset + 1) break;
+
+    SecondarySkill skill = curHero->secSkills[g + offset].first;
+    int level = curHero->getSecSkillLevel(skill);
+
+    secSkillNames[g]->setText(skill.toEntity(LIBRARY)->getNameTranslated());
+    secSkillValues[g]->setText(LIBRARY->generaltexth->levels[level-1]);
+    secSkills[g]->setSkill(skill, level);
+}
+```
+
+Experience & Mana (lines 269-287):
+```cpp
+expValue->setText(std::to_string(curHero->exp));
+manaValue->setText(curHero->mana + "/" + curHero->manaLimit());
+
+// Experience tooltip shows level-up progress
+expArea->text = "Level %d | Next: %d XP | Current: %d XP";
+spellPointsArea->text = "%s has %d/%d spell points";
+```
+
+Morale & Luck (lines 322-323):
+```cpp
+morale->set(curHero);  // Calculates from army + bonuses
+luck->set(curHero);    // Calculates from artifacts + bonuses
+```
+
+### 2. Adventure Map Info Panel (CInfoBar)
+
+**VisibleHeroInfo** (`CInfoBar.cpp:53-62`):
+```cpp
+CInfoBar::VisibleHeroInfo::VisibleHeroInfo(const CGHeroInstance * hero)
+{
+    background = std::make_shared<CPicture>(ImagePath::builtin("ADSTATHR"));
+
+    // Two modes: Basic tooltip or Interactive with garrison
+    if(settings["gameTweaks"]["infoBarCreatureManagement"].Bool())
+        heroTooltip = std::make_shared<CInteractableHeroTooltip>(Point(0,0), hero);
+    else
+        heroTooltip = std::make_shared<CHeroTooltip>(Point(0,0), hero);
+}
+```
+
+**CHeroTooltip** (`MiscWidgets.h:88-102`):
+```cpp
+class CHeroTooltip : public CArmyTooltip
+{
+    std::shared_ptr<CAnimImage> portrait;
+    std::vector<std::shared_ptr<CLabel>> labels;      // Name, stats text
+    std::shared_ptr<CAnimImage> morale;
+    std::shared_ptr<CAnimImage> luck;
+
+    // Shows: Portrait, Name, Primary skills, Morale, Luck, Army (from CArmyTooltip)
+};
+```
+
+**CInteractableHeroTooltip** (`MiscWidgets.h:104-117`):
+```cpp
+class CInteractableHeroTooltip : public CIntObject
+{
+    std::shared_ptr<CLabel> title;
+    std::shared_ptr<CAnimImage> portrait;
+    std::vector<std::shared_ptr<CLabel>> labels;
+    std::shared_ptr<CAnimImage> morale;
+    std::shared_ptr<CAnimImage> luck;
+    std::shared_ptr<CGarrisonInt> garrison;  // INTERACTIVE: Can click/drag creatures
+};
+```
+
+### 3. Hero Data Structure (CGHeroInstance)
+
+From `/tmp/vcmi-temp/lib/mapObjects/CGHeroInstance.h`:
+
+**Core Properties** (lines 89-96):
+```cpp
+class CGHeroInstance : public CArmedInstance, public CArtifactSet
+{
+    TExpType exp;                           // Experience points
+    ui32 level;                             // Current level
+    si32 mana;                              // Current spell points
+    std::vector<std::pair<SecondarySkill,ui8>> secSkills;  // (skill, level) pairs
+    EHeroGender gender;
+    std::set<SpellID> spells;              // Known spells
+    ui32 movement;                          // Movement points remaining
+};
+```
+
+**Key Methods**:
+```cpp
+int getPrimSkillLevel(PrimarySkill id) const;
+ui8 getSecSkillLevel(const SecondarySkill & skill) const;
+si32 manaLimit() const;
+int getCurrentLuck(int stack=-1, bool town=false) const;
+std::string getNameTranslated() const;
+std::string getClassNameTranslated() const;
+HeroTypeID getPortraitSource() const;
+```
+
+### 4. Artifact Display System
+
+**Equipment Slots** (`CArtifactsOfHeroBase.h:63-72`):
+```cpp
+const std::vector<Point> slotPos = {
+    Point(509,30),  // HEAD
+    Point(568,242), // SHOULDERS
+    Point(509,80),  // NECK
+    Point(383,69),  // RIGHT_HAND
+    Point(562,184), // LEFT_HAND
+    Point(509,131), // TORSO
+    Point(431,69),  // RIGHT_RING
+    Point(610,184), // LEFT_RING
+    Point(515,295), // FEET
+    // ... 19 slots total + backpack scrolling
+};
+```
+
+**Artifact Management**:
+```cpp
+class CArtifactsOfHeroBase
+{
+    ArtPlaceMap artWorn;                    // 19 worn slots
+    std::vector<ArtPlacePtr> backpack;      // Unlimited scrollable backpack
+    std::shared_ptr<CButton> leftBackpackRoll;
+    std::shared_ptr<CButton> rightBackpackRoll;
+
+    void updateWornSlots();
+    void updateBackpackSlots();
+    void scrollBackpack(bool left);
+};
+```
+
+### 5. Army Garrison Display
+
+**CGarrisonSlot** (`CGarrisonInt.h:33-74`):
+```cpp
+class CGarrisonSlot : public CIntObject
+{
+    SlotID ID;                              // 0-6 slot index
+    const CStackInstance * myStack;         // nullptr if empty
+    const CCreature * creature;
+
+    std::shared_ptr<CAnimImage> creatureImage;
+    std::shared_ptr<CAnimImage> selectionImage;
+    std::shared_ptr<CLabel> stackCount;     // "42"
+
+    void clickPressed() override;           // Select/swap/split
+    void showPopupWindow() override;        // Right-click creature info
+    bool split();                           // Split stack into two
+};
+```
+
+**CGarrisonInt** (`CGarrisonInt.h:83-100`):
+```cpp
+class CGarrisonInt : public CIntObject
+{
+    std::vector<std::shared_ptr<CGarrisonSlot>> availableSlots;  // 7 slots
+    CGarrisonSlot * highlighted;            // Currently selected slot
+    bool inSplittingMode;
+
+    void splitClick();                      // Toggle split mode
+    void createSlots();
+    void recreateSlots();                   // Update after changes
+};
+```
+
+### Unity Translation
+
+**1. HeroPanelUI** (Adventure Map Info Panel):
+```csharp
+public class HeroPanelUI : MonoBehaviour
+{
+    [Header("Hero Info")]
+    [SerializeField] private Image portraitImage;
+    [SerializeField] private TextMeshProUGUI heroNameText;
+    [SerializeField] private TextMeshProUGUI levelClassText;
+
+    [Header("Primary Skills")]
+    [SerializeField] private TextMeshProUGUI attackText;
+    [SerializeField] private TextMeshProUGUI defenseText;
+    [SerializeField] private TextMeshProUGUI powerText;
+    [SerializeField] private TextMeshProUGUI knowledgeText;
+
+    [Header("Stats")]
+    [SerializeField] private TextMeshProUGUI manaText;           // "50/100"
+    [SerializeField] private Image moraleIcon;                   // Morale face icon
+    [SerializeField] private Image luckIcon;                     // Luck clover icon
+
+    [Header("Army")]
+    [SerializeField] private GarrisonSlotUI[] armySlots;         // 7 slots
+
+    public void ShowHero(Hero hero)
+    {
+        heroNameText.text = hero.Name;
+        levelClassText.text = $"Level {hero.Level} {hero.HeroClass.Name}";
+        attackText.text = hero.GetPrimarySkill(PrimarySkill.Attack).ToString();
+        defenseText.text = hero.GetPrimarySkill(PrimarySkill.Defense).ToString();
+        powerText.text = hero.GetPrimarySkill(PrimarySkill.Power).ToString();
+        knowledgeText.text = hero.GetPrimarySkill(PrimarySkill.Knowledge).ToString();
+        manaText.text = $"{hero.Mana}/{hero.MaxMana}";
+
+        UpdateMoraleIcon(hero.CalculateMorale());
+        UpdateLuckIcon(hero.CalculateLuck());
+        UpdateArmyDisplay(hero.Army);
+    }
+}
+```
+
+**2. HeroWindowUI** (Full Hero Screen):
+```csharp
+public class HeroWindowUI : MonoBehaviour
+{
+    [Header("References")]
+    [SerializeField] private HeroPanelUI heroPanel;
+    [SerializeField] private SecondarySkillsUI secondarySkills;
+    [SerializeField] private ArtifactSlotsUI artifactSlots;
+    [SerializeField] private GarrisonUI garrison;
+
+    [Header("Buttons")]
+    [SerializeField] private Button dismissButton;
+    [SerializeField] private Button questLogButton;
+    [SerializeField] private Button spellbookButton;
+    [SerializeField] private Button backpackButton;
+
+    public void Open(Hero hero)
+    {
+        heroPanel.ShowHero(hero);
+        secondarySkills.ShowSkills(hero.SecondarySkills);
+        artifactSlots.ShowEquipment(hero.Equipment);
+        garrison.ShowArmy(hero.Army);
+
+        dismissButton.interactable = CanDismissHero(hero);
+    }
+
+    private bool CanDismissHero(Hero hero)
+    {
+        // Can't dismiss if: Last hero + no towns, or mission critical
+        return !hero.IsMissionCritical &&
+               (gameState.GetTownCount() > 0 || gameState.GetHeroCount() > 1);
+    }
+}
+```
+
+**3. GarrisonSlotUI**:
+```csharp
+public class GarrisonSlotUI : MonoBehaviour, IPointerClickHandler
+{
+    [SerializeField] private Image creatureIcon;
+    [SerializeField] private TextMeshProUGUI countText;
+    [SerializeField] private Image selectionBorder;
+
+    private CreatureStack stack;
+
+    public void SetStack(CreatureStack stack)
+    {
+        this.stack = stack;
+
+        if (stack == null || stack.Count == 0)
+        {
+            creatureIcon.gameObject.SetActive(false);
+            countText.gameObject.SetActive(false);
+        }
+        else
+        {
+            creatureIcon.gameObject.SetActive(true);
+            creatureIcon.sprite = stack.Creature.Icon;
+            countText.text = stack.Count.ToString();
+        }
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left)
+            garrison.OnSlotClicked(this);
+        else if (eventData.button == PointerEventData.InputButton.Right)
+            ShowCreatureTooltip();
+    }
+}
+```
+
+**4. SecondarySkillsUI**:
+```csharp
+public class SecondarySkillsUI : MonoBehaviour
+{
+    [SerializeField] private SkillSlotUI[] skillSlots;     // 8 visible slots
+    [SerializeField] private Scrollbar scrollbar;           // If hero has >8 skills
+
+    public void ShowSkills(List<SecondarySkill> skills)
+    {
+        scrollbar.gameObject.SetActive(skills.Count > 8);
+
+        for (int i = 0; i < skillSlots.Length; i++)
+        {
+            if (i < skills.Count)
+                skillSlots[i].SetSkill(skills[i]);
+            else
+                skillSlots[i].Clear();
+        }
+    }
+}
+
+public class SkillSlotUI : MonoBehaviour
+{
+    [SerializeField] private Image icon;
+    [SerializeField] private TextMeshProUGUI nameText;
+    [SerializeField] private TextMeshProUGUI levelText;   // "Basic" / "Advanced" / "Expert"
+
+    public void SetSkill(SecondarySkill skill)
+    {
+        icon.sprite = skill.Icon;
+        nameText.text = skill.Name;
+        levelText.text = skill.Level.ToString();  // "Basic", "Advanced", "Expert"
+    }
+}
+```
+
+**5. ArtifactSlotsUI**:
+```csharp
+public class ArtifactSlotsUI : MonoBehaviour
+{
+    [SerializeField] private ArtifactSlotUI[] wornSlots;   // 19 equipment slots
+    [SerializeField] private ArtifactSlotUI[] backpackSlots; // 5 visible + scroll
+    [SerializeField] private Button scrollLeftButton;
+    [SerializeField] private Button scrollRightButton;
+
+    private int backpackScrollOffset = 0;
+
+    public void ShowEquipment(HeroEquipment equipment)
+    {
+        // Update worn slots (head, shoulders, neck, etc.)
+        for (int i = 0; i < 19; i++)
+        {
+            var artifact = equipment.GetSlot((ArtifactSlot)i);
+            wornSlots[i].SetArtifact(artifact);
+        }
+
+        // Update backpack with scroll
+        UpdateBackpackDisplay(equipment.Backpack);
+    }
+
+    private void UpdateBackpackDisplay(List<Artifact> backpack)
+    {
+        for (int i = 0; i < backpackSlots.Length; i++)
+        {
+            int index = backpackScrollOffset + i;
+            var artifact = (index < backpack.Count) ? backpack[index] : null;
+            backpackSlots[i].SetArtifact(artifact);
+        }
+
+        scrollLeftButton.interactable = backpackScrollOffset > 0;
+        scrollRightButton.interactable = backpackScrollOffset + 5 < backpack.Count;
+    }
+}
+```
+
+### Key Data Flow
+
+**1. Hero Selection on Adventure Map**:
+```
+User clicks hero
+  → AdventureMapController.OnHeroSelected(hero)
+  → gameEventChannel.RaiseHeroSelected(hero)
+  → HeroPanelUI.OnHeroSelected(hero) subscribes
+  → HeroPanelUI.ShowHero(hero) updates display
+```
+
+**2. Opening Full Hero Window**:
+```
+User double-clicks hero OR clicks portrait in info panel
+  → UIManager.OpenHeroWindow(hero)
+  → Instantiate HeroWindowUI prefab
+  → HeroWindowUI.Open(hero) populates all sections
+```
+
+**3. Hero Stat Updates** (e.g., after level up):
+```
+Hero gains level
+  → Hero.LevelUp() updates exp, level, skills
+  → gameEventChannel.RaiseHeroStatsChanged(hero)
+  → HeroPanelUI updates if hero is selected
+  → HeroWindowUI updates if window is open
+```
+
+**4. Army Slot Interaction** (drag & drop):
+```
+User clicks garrison slot
+  → GarrisonSlotUI.OnPointerClick()
+  → GarrisonUI.SelectSlot(slot)
+  → Highlight selected slot
+User clicks another slot
+  → GarrisonUI.SwapSlots(fromSlot, toSlot)
+  → hero.Army.SwapStacks(fromIndex, toIndex)
+  → gameEventChannel.RaiseArmyChanged(hero)
+  → Refresh garrison display
+```
+
+### Visual Layout Patterns
+
+**Info Panel (192x192px)** - Compact view:
+```
+┌────────────────────┐
+│ [Portrait] [Name]  │
+│            [Class] │
+│ ATT DEF POW KNW    │
+│  12  10   8   6    │
+│ [Morale] [Luck]    │
+│ Mana: 50/100       │
+│ [Army slots 1-7]   │
+└────────────────────┘
+```
+
+**Full Hero Window** - Detailed view:
+```
+┌─────────────────────────────────────────┐
+│ [Banner] Hero Name - Level X ClassName  │
+├──────────────┬──────────────────────────┤
+│ [Portrait]   │ Primary Skills:          │
+│              │ ATT [12] DEF [10]        │
+│ [Specialty]  │ POW [8]  KNW [6]         │
+│ Description  │                          │
+│              │ EXP: 5000                │
+│ [Morale][Luck] Mana: 50/100            │
+├──────────────┴──────────────────────────┤
+│ Secondary Skills:                       │
+│ [Wisdom    ] Advanced                   │
+│ [Logistics ] Basic                      │
+│ ... (up to 8, scroll if more)           │
+├─────────────────────────────────────────┤
+│       Artifact Slots (19 worn)          │
+│  [Head] [Neck] [Shoulders] ...          │
+│  [Backpack: <  [][][][][] > ]          │
+├─────────────────────────────────────────┤
+│       Army Garrison (7 slots)           │
+│  [Creature][Count] ...                  │
+├─────────────────────────────────────────┤
+│ [Dismiss] [Quest] [Spellbook] [Close]   │
+└─────────────────────────────────────────┘
+```
+
+### Implementation Checklist
+
+**Phase 5A: Basic Hero Panel (Info Bar)**
+- [ ] Create HeroPanelUI prefab (192x192)
+- [ ] Add portrait, name, level display
+- [ ] Add primary skill text fields (4)
+- [ ] Add morale/luck icons
+- [ ] Add mana text display
+- [ ] Create 7 GarrisonSlotUI elements
+- [ ] Wire up OnHeroSelected event subscription
+- [ ] Test with sample hero data
+
+**Phase 5B: Full Hero Window**
+- [ ] Create HeroWindowUI prefab (full screen)
+- [ ] Reuse HeroPanelUI component for header
+- [ ] Create SecondarySkillsUI (8 slots + scrollbar)
+- [ ] Create ArtifactSlotsUI (19 worn + 5 backpack visible)
+- [ ] Create full GarrisonUI with drag & drop
+- [ ] Add buttons: Dismiss, Quest Log, Spellbook, Close
+- [ ] Implement dismiss validation
+- [ ] Wire up double-click to open window
+- [ ] Add unit tests
+
+**Phase 5C: Interactive Features**
+- [ ] Garrison slot drag & drop (swap stacks)
+- [ ] Garrison split mode (divide stack)
+- [ ] Artifact drag & drop (equip/unequip)
+- [ ] Right-click tooltips (skills, artifacts, creatures)
+- [ ] Hover descriptions
+- [ ] Keyboard shortcuts (D=dismiss, Q=quest, S=spellbook)
+
+### Key Takeaways
+
+1. **Two-Tier Display**: Info panel (compact) + full window (detailed)
+2. **Data Binding**: Hero object → UI components via events
+3. **Modular Components**: Garrison, artifacts, skills are reusable
+4. **Interactive vs Static**: Info panel can be static or interactive (garrison)
+5. **Validation Logic**: Dismiss checks, slot interactions validated on game state
+6. **Scroll Support**: Secondary skills (>8) and backpack (unlimited) need scrolling
+
+---
+
+*Research complete. Ready for hero panel implementation.*

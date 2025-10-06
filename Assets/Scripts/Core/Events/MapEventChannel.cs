@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using RealmsOfEldor.Core;
+using RealmsOfEldor.Core.Map;
 
-namespace RealmsOfEldor.Data
+namespace RealmsOfEldor.Core.Events
 {
     /// <summary>
     /// ScriptableObject event channel for map-related events.

@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13b75c95f34a00d4e8c04f76b73312e6, type: 3}
+  m_Name: WaterAnimatedTile
+  m_EditorClassIdentifier: Unity.2D.Tilemap.Extras::UnityEngine.Tilemaps.AnimatedTile
+  m_AnimatedSprites:
+  - {fileID: 1181718152068082004, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: -791063079, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: -826724915, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: 287525028, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: -30604204, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: 1842883308, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: -1148123334, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: 1244709875, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: 1797278272, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: 469621736, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: -1953861644, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: -1219635413, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: 1609222856, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: 703094709, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: 1715587653, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: -19153411, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: 530287637, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: 60956615, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: 197302444, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: 639383915, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  - {fileID: -1285080717, guid: 37c2deb683b38e743aac3dd4e9511932, type: 3}
+  m_MinSpeed: 8
+  m_MaxSpeed: 8
+  m_AnimationStartTime: 0
+  m_AnimationStartFrame: 0
+  m_TileColliderType: 0
+  m_TileAnimationFlags: 0

@@ -3,7 +3,8 @@
     "rootNamespace": "RealmsOfEldor.Utilities",
     "references": [
         "RealmsOfEldor.Core",
-        "UniTask"
+        "UniTask",
+        "RealmsOfEldor.Data"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

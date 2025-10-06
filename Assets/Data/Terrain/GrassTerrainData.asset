@@ -15,7 +15,13 @@ MonoBehaviour:
   terrainType: 2
   terrainName: Grass
   tileVariants:
-  - {fileID: 11400000, guid: ec2f183b0143bd1459958fa99b9890aa, type: 2}
+  - {fileID: 11400000, guid: d385b4e1599de9347b59d13489bbac4b, type: 2}
+  - {fileID: 11400000, guid: 6fac9572a779da044aa7f0f797af6973, type: 2}
+  - {fileID: 11400000, guid: aa7df3c8a51ec564db74b1625fc0768b, type: 2}
+  - {fileID: 11400000, guid: 3957dd979128c7e46a03d4b18e897f5d, type: 2}
+  - {fileID: 11400000, guid: 3ca196e5bca43be4cad81585d572efd5, type: 2}
+  - {fileID: 11400000, guid: a220fc2f13ebf804290697bfb5dc962d, type: 2}
+  - {fileID: 11400000, guid: eb6fe44f646d9ae4dbb51bd74beda70a, type: 2}
   minimapColor: {r: 0.040202044, g: 0.4433962, b: 0, a: 1}
   movementCost: 100
   isPassable: 1

@@ -15,7 +15,8 @@ MonoBehaviour:
   terrainType: 0
   terrainName: Dirt
   tileVariants:
-  - {fileID: 11400000, guid: fbfbe000a50d9244b8e9876aa7ca269d, type: 2}
+  - {fileID: 11400000, guid: 71d39198e4b03954fad4a41f562ecd58, type: 2}
+  - {fileID: 11400000, guid: 4e349f6426844ec4586b6dd631cfb5ae, type: 2}
   minimapColor: {r: 0.33962262, g: 0.1251489, b: 0.0240299, a: 1}
   movementCost: 100
   isPassable: 1

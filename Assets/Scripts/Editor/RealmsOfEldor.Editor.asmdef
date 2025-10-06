@@ -6,7 +6,10 @@
         "RealmsOfEldor.Data",
         "RealmsOfEldor.Database",
         "RealmsOfEldor.Controllers",
-        "RealmsOfEldor.Utilities"
+        "RealmsOfEldor.Utilities",
+        "RealmsOfEldor.UI",
+        "Unity.TextMeshPro",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [
         "Editor"

@@ -19,6 +19,8 @@ namespace RealmsOfEldor.Controllers
 
         [Header("Terrain Configuration")]
         [SerializeField] private Data.TerrainData[] terrainDataArray;
+        [SerializeField] private bool autoLoadTerrainData = true;
+        [SerializeField] private string terrainDataPath = "Assets/Data/Terrain";
 
         [Header("Object Prefabs")]
         [SerializeField] private GameObject resourcePrefab;
@@ -41,6 +43,14 @@ namespace RealmsOfEldor.Controllers
             terrainLookup = new Dictionary<TerrainType, Data.TerrainData>();
             objectInstances = new Dictionary<int, GameObject>();
 
+            // Auto-load terrain data from Resources if enabled (SSOT: find all TerrainData assets)
+            #if UNITY_EDITOR
+            if (autoLoadTerrainData && (terrainDataArray == null || terrainDataArray.Length == 0))
+            {
+                LoadTerrainDataFromAssets();
+            }
+            #endif
+
             // Build terrain lookup
             if (terrainDataArray != null)
             {
@@ -50,6 +60,47 @@ namespace RealmsOfEldor.Controllers
                         terrainLookup[terrainData.terrainType] = terrainData;
                 }
             }
+
+            // Inject variant count function into GameMap (SSOT: TerrainData knows variant count)
+            GameMap.GetTerrainVariantCount = GetVariantCountForTerrain;
+        }
+
+        #if UNITY_EDITOR
+        /// <summary>
+        /// Auto-loads all TerrainData assets from the specified path.
+        /// DRY/SSOT: Automatically finds TerrainData instead of manual assignment.
+        /// </summary>
+        private void LoadTerrainDataFromAssets()
+        {
+            var guids = UnityEditor.AssetDatabase.FindAssets("t:TerrainData", new[] { terrainDataPath });
+            var terrainDataList = new System.Collections.Generic.List<Data.TerrainData>();
+
+            foreach (var guid in guids)
+            {
+                var path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+                var terrainData = UnityEditor.AssetDatabase.LoadAssetAtPath<Data.TerrainData>(path);
+                if (terrainData != null)
+                {
+                    terrainDataList.Add(terrainData);
+                }
+            }
+
+            terrainDataArray = terrainDataList.ToArray();
+            Debug.Log($"MapRenderer: Auto-loaded {terrainDataArray.Length} TerrainData assets from {terrainDataPath}");
+        }
+        #endif
+
+        /// <summary>
+        /// Gets the number of tile variants available for a terrain type.
+        /// Used by GameMap to generate random variants.
+        /// </summary>
+        private int GetVariantCountForTerrain(TerrainType terrain)
+        {
+            if (terrainLookup.TryGetValue(terrain, out var terrainData))
+            {
+                return terrainData.tileVariants?.Length ?? 1;
+            }
+            return 1; // Default: 1 variant if terrain data not found
         }
 
         private void OnEnable()

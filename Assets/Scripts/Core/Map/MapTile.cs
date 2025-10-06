@@ -40,12 +40,12 @@ namespace RealmsOfEldor.Core
 
         public bool IsClear()
         {
-            return IsPassable() && blockingObjectIds.Count == 0;
+            return IsPassable() && (blockingObjectIds == null || blockingObjectIds.Count == 0);
         }
 
         public bool IsBlocked()
         {
-            return !IsPassable() || blockingObjectIds.Count > 0;
+            return !IsPassable() || (blockingObjectIds != null && blockingObjectIds.Count > 0);
         }
 
         public bool IsWater()

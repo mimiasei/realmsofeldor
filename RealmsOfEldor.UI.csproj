@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\UI\ResourceBarUI.cs" />
     <Compile Include="Assets\Scripts\UI\InfoBarUI.cs" />
+    <Compile Include="Assets\Scripts\UI\HeroPanelUI.cs" />
     <Compile Include="Assets\Scripts\UI\TurnControlUI.cs" />
   </ItemGroup>
   <ItemGroup>
