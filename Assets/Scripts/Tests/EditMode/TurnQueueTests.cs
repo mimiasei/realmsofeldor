@@ -3,6 +3,8 @@ using RealmsOfEldor.Core.Battle;
 using RealmsOfEldor.Data;
 using System.Collections.Generic;
 using System.Linq;
+using RealmsOfEldor.Core;
+using UnityEngine;
 
 namespace RealmsOfEldor.Tests.Battle
 {
@@ -325,19 +327,7 @@ namespace RealmsOfEldor.Tests.Battle
 
         private CreatureData CreateTestCreature(string name, int speed)
         {
-            return new CreatureData
-            {
-                creatureName = name,
-                attack = 5,
-                defense = 5,
-                minDamage = 1,
-                maxDamage = 3,
-                hitPoints = 10,
-                speed = speed,
-                shots = 0,
-                isFlying = false,
-                isDoubleWide = false
-            };
+            return ScriptableObject.CreateInstance<CreatureData>();
         }
 
         private BattleUnit CreateBattleUnit(int unitId, CreatureData creature, BattleSide side, int slotIndex)

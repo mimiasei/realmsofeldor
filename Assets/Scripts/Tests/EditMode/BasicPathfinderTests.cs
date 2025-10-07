@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using System.Collections.Generic;
 using RealmsOfEldor.Core;
+using RealmsOfEldor.Data;
 
 namespace RealmsOfEldor.Tests
 {

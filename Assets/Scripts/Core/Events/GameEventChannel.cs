@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 
-namespace RealmsOfEldor.Data
+namespace RealmsOfEldor.Core.Events
 {
     /// <summary>
     /// ScriptableObject-based event channel for game-wide events

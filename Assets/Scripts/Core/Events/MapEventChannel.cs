@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using RealmsOfEldor.Core.Map;
+using RealmsOfEldor.Data;
 
 namespace RealmsOfEldor.Core.Events
 {

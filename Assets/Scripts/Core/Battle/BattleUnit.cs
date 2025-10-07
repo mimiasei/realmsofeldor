@@ -25,7 +25,7 @@ namespace RealmsOfEldor.Core.Battle
         // ===== Health & Stack Count =====
         public int Count { get; private set; }           // Number of creatures alive
         public int FirstUnitHP { get; private set; }     // HP of first (damaged) creature
-        public int MaxHealth => CreatureType?.hitPoints ?? 1;
+        public int MaxHealth => CreatureType != null ? CreatureType.hitPoints : 1;
         public int TotalHealth => (Count - 1) * MaxHealth + FirstUnitHP;
         public bool IsAlive => Count > 0;
 
@@ -316,15 +316,6 @@ namespace RealmsOfEldor.Core.Battle
             var name = CreatureType?.creatureName ?? "Unknown";
             return $"{Count} {name} (HP: {TotalHealth}/{Count * MaxHealth}) [Hex {Position.Value}]";
         }
-    }
-
-    /// <summary>
-    /// Battle side enum.
-    /// </summary>
-    public enum BattleSide
-    {
-        Attacker = 0,
-        Defender = 1
     }
 
     /// <summary>

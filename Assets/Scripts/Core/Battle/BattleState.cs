@@ -53,16 +53,15 @@ namespace RealmsOfEldor.Core.Battle
         /// <summary>
         /// Add a unit to battle from an army slot.
         /// </summary>
-        public BattleUnit AddUnit(CreatureStack stack, BattleSide side, int slotIndex, BattleHex position)
+        public BattleUnit AddUnit(CreatureData creatureType, int count, BattleSide side, int slotIndex, BattleHex position)
         {
-            if (stack == null || stack.Count <= 0)
-                return null;
+            if (count <= 0) return null;
 
             var unitId = nextUnitId++;
             var unit = new BattleUnit(
                 unitId,
-                stack.CreatureType,
-                stack.Count,
+                creatureType,
+                count,
                 side,
                 slotIndex,
                 position
@@ -577,15 +576,5 @@ namespace RealmsOfEldor.Core.Battle
         {
             ObstacleName = name;
         }
-    }
-
-    /// <summary>
-    /// Creature stack for battle initialization.
-    /// Temporary - will use Core.CreatureStack eventually.
-    /// </summary>
-    public class CreatureStack
-    {
-        public CreatureData CreatureType { get; set; }
-        public int Count { get; set; }
     }
 }

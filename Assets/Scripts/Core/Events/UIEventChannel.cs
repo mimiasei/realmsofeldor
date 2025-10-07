@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 
-namespace RealmsOfEldor.Data.EventChannels
+namespace RealmsOfEldor.Core.Events.EventChannels
 {
     /// <summary>
     /// Event channel for adventure map UI interactions and state changes.

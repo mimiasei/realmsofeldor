@@ -135,33 +135,6 @@ namespace RealmsOfEldor.Data
             };
         }
 
-        /// <summary>
-        /// Check if hero can cast this spell
-        /// </summary>
-        public bool CanCast(Hero hero, bool inBattle)
-        {
-            // Check spellbook
-            if (!hero.HasSpellbook)
-                return false;
-
-            // Check if known
-            if (!hero.KnowsSpell(spellId))
-                return false;
-
-            // Check mana
-            if (hero.Mana < manaCost)
-                return false;
-
-            // Check context
-            if (inBattle && !canCastInBattle)
-                return false;
-
-            if (!inBattle && !canCastOnAdventureMap)
-                return false;
-
-            return true;
-        }
-
         public override string ToString()
         {
             return $"{spellName} (Lvl {level} {school})";

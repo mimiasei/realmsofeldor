@@ -1,7 +1,9 @@
 using NUnit.Framework;
+using RealmsOfEldor.Controllers;
 using RealmsOfEldor.Core;
 using RealmsOfEldor.Core.Battle;
 using RealmsOfEldor.Data;
+using UnityEngine;
 
 namespace RealmsOfEldor.Tests.EditMode
 {
@@ -15,8 +17,10 @@ namespace RealmsOfEldor.Tests.EditMode
         [SetUp]
         public void SetUp()
         {
-            attackerHero = new Hero(1, "Attacker", HeroClass.KNIGHT);
-            defenderHero = new Hero(2, "Defender", HeroClass.KNIGHT);
+            attackerHero = GameStateManager.Instance.State.AddHero(typeId: (int)HeroClass.Knight, owner: 0, position: new Position(0, 0));
+            // attackerHero = new Hero(1, "Attacker", HeroClass.Knight);
+            defenderHero = GameStateManager.Instance.State.AddHero(typeId: (int)HeroClass.Knight, owner: 0, position: new Position(0, 0));
+            // defenderHero = new Hero(2, "Defender", HeroClass.Knight);
             battleState = new BattleState(attackerHero, defenderHero);
         }
 
@@ -40,10 +44,9 @@ namespace RealmsOfEldor.Tests.EditMode
         public void ExecuteAttack_DealsDamageToDefender()
         {
             var creature = CreateTestCreature("Swordsman", 6, 6, 6, 9, 35, 5);
-            var stack = new CreatureStack { CreatureType = creature, Count = 10 };
 
-            var attacker = battleState.AddUnit(stack, BattleSide.Attacker, 0, new BattleHex(50));
-            var defender = battleState.AddUnit(stack, BattleSide.Defender, 0, new BattleHex(100));
+            var attacker = battleState.AddUnit(creature, 10, BattleSide.Attacker, 0, new BattleHex(50));
+            var defender = battleState.AddUnit(creature, 10, BattleSide.Defender, 0, new BattleHex(100));
 
             var initialDefenderHP = defender.TotalHealth;
 
@@ -60,10 +63,9 @@ namespace RealmsOfEldor.Tests.EditMode
         public void ExecuteAttack_MarksAttackerAsActed()
         {
             var creature = CreateTestCreature("Swordsman", 6, 6, 6, 9, 35, 5);
-            var stack = new CreatureStack { CreatureType = creature, Count = 1 };
 
-            var attacker = battleState.AddUnit(stack, BattleSide.Attacker, 0, new BattleHex(50));
-            var defender = battleState.AddUnit(stack, BattleSide.Defender, 0, new BattleHex(100));
+            var attacker = battleState.AddUnit(creature, 10, BattleSide.Attacker, 0, new BattleHex(50));
+            var defender = battleState.AddUnit(creature, 10, BattleSide.Defender, 0, new BattleHex(100));
 
             Assert.IsFalse(attacker.HasMoved);
 
@@ -76,10 +78,9 @@ namespace RealmsOfEldor.Tests.EditMode
         public void ExecuteAttack_TriggersRetaliation()
         {
             var creature = CreateTestCreature("Swordsman", 6, 6, 6, 9, 35, 5);
-            var stack = new CreatureStack { CreatureType = creature, Count = 10 };
 
-            var attacker = battleState.AddUnit(stack, BattleSide.Attacker, 0, new BattleHex(50));
-            var defender = battleState.AddUnit(stack, BattleSide.Defender, 0, new BattleHex(100));
+            var attacker = battleState.AddUnit(creature, 10, BattleSide.Attacker, 0, new BattleHex(50));
+            var defender = battleState.AddUnit(creature, 10, BattleSide.Defender, 0, new BattleHex(100));
 
             var initialAttackerHP = attacker.TotalHealth;
 
@@ -99,11 +100,8 @@ namespace RealmsOfEldor.Tests.EditMode
             var weakCreature = CreateTestCreature("Peasant", 1, 1, 1, 1, 5, 3);
             var strongCreature = CreateTestCreature("Dragon", 27, 1, 100, 100, 200, 16);
 
-            var attackerStack = new CreatureStack { CreatureType = strongCreature, Count = 10 };
-            var defenderStack = new CreatureStack { CreatureType = weakCreature, Count = 1 };
-
-            var attacker = battleState.AddUnit(attackerStack, BattleSide.Attacker, 0, new BattleHex(50));
-            var defender = battleState.AddUnit(defenderStack, BattleSide.Defender, 0, new BattleHex(100));
+            var attacker = battleState.AddUnit(weakCreature, 10, BattleSide.Attacker, 0, new BattleHex(50));
+            var defender = battleState.AddUnit(strongCreature, 1, BattleSide.Defender, 0, new BattleHex(100));
 
             var result = battleState.ExecuteAttack(attacker, defender);
 
@@ -122,11 +120,8 @@ namespace RealmsOfEldor.Tests.EditMode
             var noRetalCreature = CreateTestCreature("Vampire", 10, 9, 5, 8, 30, 6);
             noRetalCreature.noMeleeRetal = true;
 
-            var attackerStack = new CreatureStack { CreatureType = noRetalCreature, Count = 10 };
-            var defenderStack = new CreatureStack { CreatureType = normalCreature, Count = 10 };
-
-            var attacker = battleState.AddUnit(attackerStack, BattleSide.Attacker, 0, new BattleHex(50));
-            var defender = battleState.AddUnit(defenderStack, BattleSide.Defender, 0, new BattleHex(100));
+            var attacker = battleState.AddUnit(normalCreature, 10, BattleSide.Attacker, 0, new BattleHex(50));
+            var defender = battleState.AddUnit(noRetalCreature, 10, BattleSide.Defender, 0, new BattleHex(100));
 
             var result = battleState.ExecuteAttack(attacker, defender);
 
@@ -138,10 +133,9 @@ namespace RealmsOfEldor.Tests.EditMode
         public void ExecuteAttack_NullIfAttackerDead()
         {
             var creature = CreateTestCreature("Swordsman", 6, 6, 6, 9, 35, 5);
-            var stack = new CreatureStack { CreatureType = creature, Count = 10 };
 
-            var attacker = battleState.AddUnit(stack, BattleSide.Attacker, 0, new BattleHex(50));
-            var defender = battleState.AddUnit(stack, BattleSide.Defender, 0, new BattleHex(100));
+            var attacker = battleState.AddUnit(creature, 10, BattleSide.Attacker, 0, new BattleHex(50));
+            var defender = battleState.AddUnit(creature, 10, BattleSide.Defender, 0, new BattleHex(100));
 
             // Kill attacker
             attacker.TakeDamage(10000);
@@ -159,11 +153,8 @@ namespace RealmsOfEldor.Tests.EditMode
             var archerCreature = CreateTestCreature("Archer", 6, 3, 2, 3, 10, 4, shots: 12);
             var targetCreature = CreateTestCreature("Swordsman", 6, 6, 6, 9, 35, 5);
 
-            var attackerStack = new CreatureStack { CreatureType = archerCreature, Count = 10 };
-            var defenderStack = new CreatureStack { CreatureType = targetCreature, Count = 10 };
-
-            var attacker = battleState.AddUnit(attackerStack, BattleSide.Attacker, 0, new BattleHex(50));
-            var defender = battleState.AddUnit(defenderStack, BattleSide.Defender, 0, new BattleHex(100));
+            var attacker = battleState.AddUnit(archerCreature, 10, BattleSide.Attacker, 0, new BattleHex(50));
+            var defender = battleState.AddUnit(targetCreature, 10, BattleSide.Defender, 0, new BattleHex(100));
 
             var initialDefenderHP = defender.TotalHealth;
 
@@ -183,11 +174,8 @@ namespace RealmsOfEldor.Tests.EditMode
             var archerCreature = CreateTestCreature("Archer", 6, 3, 2, 3, 10, 4, shots: 12);
             var targetCreature = CreateTestCreature("Swordsman", 6, 6, 6, 9, 35, 5);
 
-            var attackerStack = new CreatureStack { CreatureType = archerCreature, Count = 1 };
-            var defenderStack = new CreatureStack { CreatureType = targetCreature, Count = 1 };
-
-            var attacker = battleState.AddUnit(attackerStack, BattleSide.Attacker, 0, new BattleHex(50));
-            var defender = battleState.AddUnit(defenderStack, BattleSide.Defender, 0, new BattleHex(100));
+            var attacker = battleState.AddUnit(archerCreature, 1, BattleSide.Attacker, 0, new BattleHex(50));
+            var defender = battleState.AddUnit(targetCreature, 1, BattleSide.Defender, 0, new BattleHex(100));
 
             var initialShots = attacker.ShotsRemaining;
 
@@ -202,11 +190,8 @@ namespace RealmsOfEldor.Tests.EditMode
             var archerCreature = CreateTestCreature("Archer", 6, 3, 2, 3, 10, 4, shots: 12);
             var targetCreature = CreateTestCreature("Swordsman", 6, 6, 6, 9, 35, 5);
 
-            var attackerStack = new CreatureStack { CreatureType = archerCreature, Count = 10 };
-            var defenderStack = new CreatureStack { CreatureType = targetCreature, Count = 10 };
-
-            var attacker = battleState.AddUnit(attackerStack, BattleSide.Attacker, 0, new BattleHex(50));
-            var defender = battleState.AddUnit(defenderStack, BattleSide.Defender, 0, new BattleHex(100));
+            var attacker = battleState.AddUnit(archerCreature, 10, BattleSide.Attacker, 0, new BattleHex(50));
+            var defender = battleState.AddUnit(targetCreature, 10, BattleSide.Defender, 0, new BattleHex(100));
 
             var initialAttackerHP = attacker.TotalHealth;
 
@@ -223,11 +208,8 @@ namespace RealmsOfEldor.Tests.EditMode
             var archerCreature = CreateTestCreature("Archer", 6, 3, 2, 3, 10, 4, shots: 12);
             var targetCreature = CreateTestCreature("Swordsman", 6, 6, 6, 9, 35, 5);
 
-            var attackerStack = new CreatureStack { CreatureType = archerCreature, Count = 1 };
-            var defenderStack = new CreatureStack { CreatureType = targetCreature, Count = 1 };
-
-            var attacker = battleState.AddUnit(attackerStack, BattleSide.Attacker, 0, new BattleHex(50));
-            var defender = battleState.AddUnit(defenderStack, BattleSide.Defender, 0, new BattleHex(100));
+            var attacker = battleState.AddUnit(archerCreature, 1, BattleSide.Attacker, 0, new BattleHex(50));
+            var defender = battleState.AddUnit(targetCreature, 1, BattleSide.Defender, 0, new BattleHex(100));
 
             // Use all shots
             while (attacker.ShotsRemaining > 0)
@@ -245,11 +227,8 @@ namespace RealmsOfEldor.Tests.EditMode
         {
             var meleeCreature = CreateTestCreature("Swordsman", 6, 6, 6, 9, 35, 5, shots: 0);
 
-            var attackerStack = new CreatureStack { CreatureType = meleeCreature, Count = 1 };
-            var defenderStack = new CreatureStack { CreatureType = meleeCreature, Count = 1 };
-
-            var attacker = battleState.AddUnit(attackerStack, BattleSide.Attacker, 0, new BattleHex(50));
-            var defender = battleState.AddUnit(defenderStack, BattleSide.Defender, 0, new BattleHex(100));
+            var attacker = battleState.AddUnit(meleeCreature, 1, BattleSide.Attacker, 0, new BattleHex(50));
+            var defender = battleState.AddUnit(meleeCreature, 1, BattleSide.Defender, 0, new BattleHex(100));
 
             var result = battleState.ExecuteShoot(attacker, defender);
 
@@ -262,11 +241,10 @@ namespace RealmsOfEldor.Tests.EditMode
         public void Retaliation_OnlyOncePerTurn()
         {
             var creature = CreateTestCreature("Swordsman", 6, 6, 6, 9, 35, 5);
-            var stack = new CreatureStack { CreatureType = creature, Count = 10 };
 
-            var attacker1 = battleState.AddUnit(stack, BattleSide.Attacker, 0, new BattleHex(50));
-            var attacker2 = battleState.AddUnit(stack, BattleSide.Attacker, 1, new BattleHex(51));
-            var defender = battleState.AddUnit(stack, BattleSide.Defender, 0, new BattleHex(100));
+            var attacker1 = battleState.AddUnit(creature, 10, BattleSide.Attacker, 0, new BattleHex(50));
+            var attacker2 = battleState.AddUnit(creature, 10, BattleSide.Attacker, 1, new BattleHex(51));
+            var defender = battleState.AddUnit(creature, 10, BattleSide.Defender, 0, new BattleHex(100));
 
             // First attack - should trigger retaliation
             var result1 = battleState.ExecuteAttack(attacker1, defender);
@@ -281,10 +259,9 @@ namespace RealmsOfEldor.Tests.EditMode
         public void Retaliation_ResetsEachTurn()
         {
             var creature = CreateTestCreature("Swordsman", 6, 6, 6, 9, 35, 5);
-            var stack = new CreatureStack { CreatureType = creature, Count = 10 };
 
-            var attacker = battleState.AddUnit(stack, BattleSide.Attacker, 0, new BattleHex(50));
-            var defender = battleState.AddUnit(stack, BattleSide.Defender, 0, new BattleHex(100));
+            var attacker = battleState.AddUnit(creature, 10, BattleSide.Attacker, 0, new BattleHex(50));
+            var defender = battleState.AddUnit(creature, 10, BattleSide.Defender, 0, new BattleHex(100));
 
             // First attack - triggers retaliation
             var result1 = battleState.ExecuteAttack(attacker, defender);
@@ -308,11 +285,8 @@ namespace RealmsOfEldor.Tests.EditMode
             var weakCreature = CreateTestCreature("Peasant", 1, 1, 1, 1, 5, 3);
             var strongCreature = CreateTestCreature("Knight", 12, 9, 10, 12, 35, 7);
 
-            var attackerStack = new CreatureStack { CreatureType = strongCreature, Count = 10 };
-            var defenderStack = new CreatureStack { CreatureType = weakCreature, Count = 20 };
-
-            var attacker = battleState.AddUnit(attackerStack, BattleSide.Attacker, 0, new BattleHex(50));
-            var defender = battleState.AddUnit(defenderStack, BattleSide.Defender, 0, new BattleHex(100));
+            var attacker = battleState.AddUnit(strongCreature, 10, BattleSide.Attacker, 0, new BattleHex(50));
+            var defender = battleState.AddUnit(weakCreature, 20, BattleSide.Defender, 0, new BattleHex(100));
 
             var result = battleState.ExecuteAttack(attacker, defender);
 
@@ -326,11 +300,8 @@ namespace RealmsOfEldor.Tests.EditMode
             var weakCreature = CreateTestCreature("Peasant", 1, 1, 1, 1, 5, 3);
             var strongCreature = CreateTestCreature("Dragon", 27, 1, 100, 100, 200, 16);
 
-            var attackerStack = new CreatureStack { CreatureType = strongCreature, Count = 10 };
-            var defenderStack = new CreatureStack { CreatureType = weakCreature, Count = 1 };
-
-            var attacker = battleState.AddUnit(attackerStack, BattleSide.Attacker, 0, new BattleHex(50));
-            var defender = battleState.AddUnit(defenderStack, BattleSide.Defender, 0, new BattleHex(100));
+            var attacker = battleState.AddUnit(strongCreature, 10, BattleSide.Attacker, 0, new BattleHex(50));
+            var defender = battleState.AddUnit(weakCreature, 1, BattleSide.Defender, 0, new BattleHex(100));
 
             var result = battleState.ExecuteAttack(attacker, defender);
 
@@ -342,10 +313,9 @@ namespace RealmsOfEldor.Tests.EditMode
         public void AttackResult_IsKilledFalsWhenStackSurvives()
         {
             var creature = CreateTestCreature("Swordsman", 6, 6, 1, 1, 35, 5);
-            var stack = new CreatureStack { CreatureType = creature, Count = 10 };
 
-            var attacker = battleState.AddUnit(stack, BattleSide.Attacker, 0, new BattleHex(50));
-            var defender = battleState.AddUnit(stack, BattleSide.Defender, 0, new BattleHex(100));
+            var attacker = battleState.AddUnit(creature, 10, BattleSide.Attacker, 0, new BattleHex(50));
+            var defender = battleState.AddUnit(creature, 10, BattleSide.Defender, 0, new BattleHex(100));
 
             var result = battleState.ExecuteAttack(attacker, defender);
 
@@ -359,10 +329,9 @@ namespace RealmsOfEldor.Tests.EditMode
         public void ExecuteAttack_HandlesPartiallyDamagedDefender()
         {
             var creature = CreateTestCreature("Swordsman", 6, 6, 6, 9, 35, 5);
-            var stack = new CreatureStack { CreatureType = creature, Count = 10 };
 
-            var attacker = battleState.AddUnit(stack, BattleSide.Attacker, 0, new BattleHex(50));
-            var defender = battleState.AddUnit(stack, BattleSide.Defender, 0, new BattleHex(100));
+            var attacker = battleState.AddUnit(creature, 10, BattleSide.Attacker, 0, new BattleHex(50));
+            var defender = battleState.AddUnit(creature, 10, BattleSide.Defender, 0, new BattleHex(100));
 
             // Damage defender partially
             defender.TakeDamage(20);
@@ -378,10 +347,9 @@ namespace RealmsOfEldor.Tests.EditMode
         public void ExecuteAttack_ChargeDistance_PassedToCalculator()
         {
             var creature = CreateTestCreature("Champion", 16, 16, 20, 25, 100, 9);
-            var stack = new CreatureStack { CreatureType = creature, Count = 5 };
-
-            var attacker = battleState.AddUnit(stack, BattleSide.Attacker, 0, new BattleHex(50));
-            var defender = battleState.AddUnit(stack, BattleSide.Defender, 0, new BattleHex(100));
+            
+            var attacker = battleState.AddUnit(creature, 5, BattleSide.Attacker, 0, new BattleHex(50));
+            var defender = battleState.AddUnit(creature, 5, BattleSide.Defender, 0, new BattleHex(100));
 
             // Attack with charge distance
             var result = battleState.ExecuteAttack(attacker, defender, chargeDistance: 5);

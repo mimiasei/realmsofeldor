@@ -31,6 +31,8 @@ Assets/AstarPathfindingProject/Behaviors/
 # Resources - just editor handle graphics
 Assets/AstarPathfindingProject/Resources/
 
+# Resources - do not add actual graphics files
+
 # Changelog and readme duplicates
 Assets/AstarPathfindingProject/CHANGELOG.md
 Assets/AstarPathfindingProject/CHANGELOG.md.meta

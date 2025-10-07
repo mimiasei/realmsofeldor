@@ -324,9 +324,14 @@ void LoadTerrainDataFromAssets() {
     1. Moved `Faction`, `CreatureTier`, `ResourceCost` from Core to Data (new file: `GameDataTypes.cs`)
     2. Updated Core assembly: Added Data reference, set `noEngineReferences: false`
     3. Updated Data assembly: Removed Core reference (Data has NO dependencies now)
-    4. Moved `MapEventChannel` from Data to `Core/Events/` (event channels use Core types)
-    5. Removed `using RealmsOfEldor.Core;` from all Data files
-    6. Added `using RealmsOfEldor.Data;` to Core files (GameTypes.cs, Resources.cs, BattleState.cs)
+    4. Moved ALL event channels from `Data/EventChannels/` to `Core/Events/`:
+       - MapEventChannel (uses Position, GameMap, Hero, MapObject, TerrainType)
+       - BattleEventChannel (uses Position)
+       - GameEventChannel (uses Position, Hero)
+       - UIEventChannel (uses Hero)
+    5. Updated event channel namespaces: `RealmsOfEldor.Data` → `RealmsOfEldor.Core.Events`
+    6. Removed `using RealmsOfEldor.Core;` from all Data files
+    7. Added `using RealmsOfEldor.Data;` to Core files (GameTypes.cs, Resources.cs, BattleState.cs)
   - **Key Learning**: Event channels that reference game logic types (Hero, GameMap) belong in Core, not Data
 - BattleHex.cs: Removed `UnityEngine` using and `[SerializeField]` attribute (pure C# struct)
 - TurnQueue.cs: Removed duplicate `BattleSide` enum (already defined in BattleUnit.cs)
@@ -374,11 +379,11 @@ void LoadTerrainDataFromAssets() {
 - `Assets/Scripts/Core/` - GameState, Hero, Army, Player, Resources, Position, GameTypes (minus types moved to Data)
 - `Assets/Scripts/Core/Map/` - GameMap, MapTile, MapObject
 - `Assets/Scripts/Core/Battle/` - BattleHex, BattleUnit, BattleAction, BattleState, TurnQueue, DamageCalculator, AttackResult
-- `Assets/Scripts/Core/Events/` - MapEventChannel (moved from Data)
+- `Assets/Scripts/Core/Events/` - ALL event channels (MapEventChannel, BattleEventChannel, GameEventChannel, UIEventChannel)
 
 ### Data (ScriptableObjects & Foundation Types)
 - `Assets/Scripts/Data/` - CreatureData, HeroTypeData, SpellData, TerrainData, GameDataTypes (Faction, CreatureTier, ResourceCost)
-- `Assets/Scripts/Data/EventChannels/` - GameEventChannel, BattleEventChannel, UIEventChannel
+- `Assets/Scripts/Data/EventChannels/` - REMOVED (all event channels moved to Core/Events)
 
 ### Controllers (MonoBehaviours)
 - `Assets/Scripts/Controllers/` - GameStateManager, MapRenderer, CameraController, GameInitializer

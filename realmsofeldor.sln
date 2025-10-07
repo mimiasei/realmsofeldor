@@ -13,9 +13,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealmsOfEldor.Editor", "Rea
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-firstpass", "Assembly-CSharp-firstpass.csproj", "{17B5DB09-D3ED-EEE7-3354-DDBA7F01C60B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealmsOfEldor.Utilities", "RealmsOfEldor.Utilities.csproj", "{E195E1F1-82D6-2DFF-FBF1-88D3BC9B4E28}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealmsOfEldor.Core", "RealmsOfEldor.Core.csproj", "{993A032D-6560-D578-7D04-85446CAF8AED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealmsOfEldor.Utilities", "RealmsOfEldor.Utilities.csproj", "{E195E1F1-82D6-2DFF-FBF1-88D3BC9B4E28}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealmsOfEldor.Controllers", "RealmsOfEldor.Controllers.csproj", "{3DB041C3-A70E-38C8-2003-55F24838B45A}"
 EndProject
@@ -57,14 +57,14 @@ Global
 		{17B5DB09-D3ED-EEE7-3354-DDBA7F01C60B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{17B5DB09-D3ED-EEE7-3354-DDBA7F01C60B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{17B5DB09-D3ED-EEE7-3354-DDBA7F01C60B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E195E1F1-82D6-2DFF-FBF1-88D3BC9B4E28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E195E1F1-82D6-2DFF-FBF1-88D3BC9B4E28}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E195E1F1-82D6-2DFF-FBF1-88D3BC9B4E28}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E195E1F1-82D6-2DFF-FBF1-88D3BC9B4E28}.Release|Any CPU.Build.0 = Release|Any CPU
 		{993A032D-6560-D578-7D04-85446CAF8AED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{993A032D-6560-D578-7D04-85446CAF8AED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{993A032D-6560-D578-7D04-85446CAF8AED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{993A032D-6560-D578-7D04-85446CAF8AED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E195E1F1-82D6-2DFF-FBF1-88D3BC9B4E28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E195E1F1-82D6-2DFF-FBF1-88D3BC9B4E28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E195E1F1-82D6-2DFF-FBF1-88D3BC9B4E28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E195E1F1-82D6-2DFF-FBF1-88D3BC9B4E28}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3DB041C3-A70E-38C8-2003-55F24838B45A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{3DB041C3-A70E-38C8-2003-55F24838B45A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3DB041C3-A70E-38C8-2003-55F24838B45A}.Release|Any CPU.ActiveCfg = Release|Any CPU

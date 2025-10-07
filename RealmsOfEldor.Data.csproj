@@ -49,11 +49,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Data\TerrainData.cs" />
-    <Compile Include="Assets\Scripts\Data\EventChannels\BattleEventChannel.cs" />
     <Compile Include="Assets\Scripts\Data\CreatureData.cs" />
-    <Compile Include="Assets\Scripts\Data\EventChannels\UIEventChannel.cs" />
     <Compile Include="Assets\Scripts\Data\HeroTypeData.cs" />
-    <Compile Include="Assets\Scripts\Data\EventChannels\GameEventChannel.cs" />
+    <Compile Include="Assets\Scripts\Data\GameConstants.cs" />
     <Compile Include="Assets\Scripts\Data\SpellData.cs" />
     <Compile Include="Assets\Scripts\Data\GameDataTypes.cs" />
   </ItemGroup>

@@ -127,7 +127,7 @@ namespace RealmsOfEldor.Controllers
 
                 // Initialize hero from type data
                 hero1.CustomName = $"{heroType1.heroName} (P1)";
-                heroType1.InitializeHero(hero1);
+                hero1.Initialize(heroType1);
 
                 Debug.Log($"✓ Created hero '{hero1.CustomName}' at {player1HeroPosition} for Player 0");
             }
@@ -140,7 +140,7 @@ namespace RealmsOfEldor.Controllers
 
                 // Initialize hero from type data
                 hero2.CustomName = $"{heroType2.heroName} (P2)";
-                heroType2.InitializeHero(hero2);
+                hero2.Initialize(heroType2);
 
                 Debug.Log($"✓ Created hero '{hero2.CustomName}' at {player2HeroPosition} for Player 1");
             }

@@ -2,6 +2,7 @@ using NUnit.Framework;
 using RealmsOfEldor.Core;
 using System;
 using System.Linq;
+using RealmsOfEldor.Data;
 
 namespace RealmsOfEldor.Tests
 {

@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace RealmsOfEldor.Core.Battle
 {
@@ -15,9 +16,9 @@ namespace RealmsOfEldor.Core.Battle
         public const int FIELD_SIZE = 187;  // 17 * 11
 
         // Special hex constants
-        public const short INVALID = -1;
-        public const short HERO_ATTACKER = 0;
-        public const short HERO_DEFENDER = 16;
+        public const int INVALID = -1;
+        public const int HERO_ATTACKER = 0;
+        public const int HERO_DEFENDER = 16;
 
         /// <summary>
         /// Hex navigation directions (6 neighbors)
@@ -33,16 +34,16 @@ namespace RealmsOfEldor.Core.Battle
             Left = 5
         }
 
-        private short hex;
+        private int hex;
 
         // Constructors
-        public BattleHex(short hexValue) => hex = hexValue;
+        public BattleHex(int hexValue) => hex = hexValue;
         public BattleHex(int x, int y) => SetXY(x, y, out hex);
 
         // Properties
         public int X => hex % FIELD_WIDTH;
         public int Y => hex / FIELD_WIDTH;
-        public short Value => hex;
+        public int Value => hex;
 
         public bool IsValid => hex >= 0 && hex < FIELD_SIZE;
         public bool IsAvailable => IsValid && X > 0 && X < FIELD_WIDTH - 1;  // Exclude edge columns
@@ -53,7 +54,7 @@ namespace RealmsOfEldor.Core.Battle
             SetXY(x, y, out hex);
         }
 
-        private static void SetXY(int x, int y, out short result)
+        private static void SetXY(int x, int y, out int result)
         {
             if (x < 0 || x >= FIELD_WIDTH || y < 0 || y >= FIELD_HEIGHT)
             {
@@ -61,7 +62,7 @@ namespace RealmsOfEldor.Core.Battle
                 x = Mathf.Clamp(x, 0, FIELD_WIDTH - 1);
                 y = Mathf.Clamp(y, 0, FIELD_HEIGHT - 1);
             }
-            result = (short)(x + y * FIELD_WIDTH);
+            result = (x + y * FIELD_WIDTH);
         }
 
         /// <summary>
@@ -176,7 +177,7 @@ namespace RealmsOfEldor.Core.Battle
         public static bool operator ==(BattleHex a, BattleHex b) => a.hex == b.hex;
         public static bool operator !=(BattleHex a, BattleHex b) => a.hex != b.hex;
 
-        public static implicit operator short(BattleHex h) => h.hex;
-        public static implicit operator BattleHex(short value) => new BattleHex(value);
+        public static implicit operator int(BattleHex h) => h.hex;
+        public static implicit operator BattleHex(int value) => new BattleHex(value);
     }
 }

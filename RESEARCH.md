@@ -917,3 +917,301 @@ User clicks another slot
 ---
 
 *Research complete. Ready for hero panel implementation.*
+
+---
+
+## Hero ID Management Research (2025-10-07)
+
+### Problem Statement
+
+The Hero class has a constructor that takes `HeroTypeData` as a parameter:
+```csharp
+public Hero(HeroTypeData template, int playerId, Position startPosition)
+{
+    Id = template.heroId;  // ⚠️ Problem: Using template ID as instance ID
+    TypeId = template.heroTypeId;
+    // ...
+}
+```
+
+**Question**: Should hero instances use the template's `heroId`, or should they get unique runtime instance IDs separate from template IDs?
+
+### VCMI Analysis
+
+#### Hero Type vs Hero Instance in VCMI
+
+**CHero (Static Template)** - `/tmp/vcmi-temp/lib/entities/hero/CHero.h`:
+- Represents hero TYPE definition (like "Catherine the Knight")
+- Has `HeroTypeID` - identifies the hero type in the game data
+- Static data: name, hero class, starting skills, specialty
+- Stored in `CHeroHandler` - the hero type database
+
+**CGHeroInstance (Runtime Instance)** - `/tmp/vcmi-temp/lib/mapObjects/CGHeroInstance.h`:
+```cpp
+class CGHeroInstance : public CArmedInstance
+{
+    ObjectInstanceID id;           // Unique runtime instance ID
+    std::optional<HeroTypeID> heroType;  // Reference to CHero template
+
+    // Runtime state
+    TExpType exp;
+    ui32 level;
+    si32 mana;
+    ui32 movement;
+    // ...
+};
+```
+
+**Key Findings**:
+1. **Template ID ≠ Instance ID**: Hero instances have `ObjectInstanceID` (unique per instance), separate from `HeroTypeID` (identifies template)
+2. **Multiple instances possible**: The same hero type can have multiple instances (e.g., two "Catherine" heroes in different games)
+3. **ID assignment**: Object instance IDs are assigned by the map or game state at creation time
+
+#### Hero Creation in VCMI
+
+From `/tmp/vcmi-temp/lib/mapObjects/CGHeroInstance.cpp`:
+```cpp
+CGHeroInstance::CGHeroInstance(IGameInfoCallback * cb)
+    : CArmedInstance(cb, BonusNodeType::HERO, false),
+    level(1),
+    exp(UNINITIALIZED_EXPERIENCE),
+    // ...
+{
+    // Constructor does NOT assign instance ID
+    // ID is assigned when object is added to map/game state
+}
+```
+
+From VCMI game state management:
+- Instance IDs are managed centrally by `CGameState`
+- When a hero is created, the game state assigns a unique `ObjectInstanceID`
+- The hero's `heroType` field references the template `HeroTypeID`
+
+### Realms of Eldor Current Implementation
+
+#### Current Pattern
+
+**GameState.cs** (lines 100-140):
+```csharp
+public class GameState
+{
+    private Dictionary<int, Hero> heroes = new Dictionary<int, Hero>();
+    private int nextHeroId = 1;  // ID generator
+
+    public Hero AddHero(int typeId, int owner, Position position)
+    {
+        var hero = new Hero
+        {
+            Id = nextHeroId++,        // ✅ Generates unique runtime ID
+            TypeId = typeId,          // ✅ References template type
+            Owner = owner,
+            Position = position,
+            // ...
+        };
+        heroes[hero.Id] = hero;
+        return hero;
+    }
+}
+```
+
+**Hero.cs** constructor (lines 59-73):
+```csharp
+public Hero(HeroTypeData template, int playerId, Position startPosition)
+{
+    Id = template.heroId;         // ❌ WRONG: Uses template ID
+    TypeId = template.heroTypeId; // ✅ Correct: References template type
+    // ...
+}
+```
+
+**HeroTypeData.cs**:
+```csharp
+public class HeroTypeData : ScriptableObject
+{
+    public int heroTypeId;  // Template identifier (e.g., 1 = "Sir Roland")
+    public string heroName;
+    public HeroClass heroClass;
+    // ...
+}
+```
+
+#### Current Usage Patterns
+
+**Tests use object initializer** (no constructor):
+```csharp
+// HeroTests.cs (line 13, 26, etc.)
+var hero = new Hero { Level = 1, Experience = 0 };
+```
+
+**BattleController uses simple constructor**:
+```csharp
+// BattleController.cs (line 82, 88)
+testAttacker = new Hero(1, 0);  // ❌ Constructor doesn't exist!
+testDefender = new Hero(2, 1);
+```
+
+**CombatActionsTests uses non-existent constructor**:
+```csharp
+// CombatActionsTests.cs (line 18-19)
+attackerHero = new Hero(1, "Attacker", HeroClass.KNIGHT);  // ❌ Doesn't exist!
+defenderHero = new Hero(2, "Defender", HeroClass.KNIGHT);
+```
+
+**GameInitializer uses GameState.AddHero correctly**:
+```csharp
+// GameInitializer.cs (line 126, 139)
+var hero1 = gameState.AddHero(heroType1.heroTypeId, owner: 0, player1HeroPosition);
+hero1.CustomName = $"{heroType1.heroName} (P1)";
+heroType1.InitializeHero(hero1);  // Populates stats, skills, army
+```
+
+### Analysis and Recommendations
+
+#### Problems Identified
+
+1. **Constructor confusion**: Hero class has:
+   - A constructor taking `HeroTypeData` that incorrectly uses `template.heroId`
+   - Tests/code expecting constructors that don't exist
+
+2. **ID management inconsistency**:
+   - GameState correctly generates unique IDs via `nextHeroId++`
+   - Hero constructor tries to assign ID from template (wrong pattern)
+
+3. **Two ID fields confusion**:
+   - `Hero.Id` - Should be unique runtime instance ID
+   - `Hero.TypeId` - Should reference the template type ID
+   - Current constructor conflates these
+
+#### Correct Pattern (VCMI-based)
+
+**Template (HeroTypeData)**:
+- `heroTypeId` - Identifies the hero type (1 = "Sir Roland", 2 = "Lord Haart")
+- Used for: Database lookup, initialization data reference
+
+**Instance (Hero)**:
+- `Id` - Unique runtime instance ID (auto-generated by GameState)
+- `TypeId` - References the template `heroTypeId`
+- Created via: `GameState.AddHero(typeId, owner, position)`
+
+#### Recommended Solution
+
+**Option 1: Remove problematic constructor, use object initializer + factory pattern** (CURRENT PATTERN):
+```csharp
+public class Hero
+{
+    // NO public constructor - use GameState.AddHero() factory
+
+    public int Id { get; set; }      // Runtime instance ID (set by GameState)
+    public int TypeId { get; set; }  // Template reference
+    // ...
+}
+
+// GameState.cs
+public Hero AddHero(int typeId, int owner, Position position)
+{
+    var hero = new Hero
+    {
+        Id = nextHeroId++,  // Unique runtime ID
+        TypeId = typeId,    // Template reference
+        Owner = owner,
+        Position = position,
+    };
+    heroes[hero.Id] = hero;
+    return hero;
+}
+
+// Usage (GameInitializer.cs)
+var hero = gameState.AddHero(heroType.heroTypeId, 0, position);
+heroType.InitializeHero(hero);  // Populate from template
+```
+
+**Option 2: Add internal constructor for GameState** (NOT RECOMMENDED - too complex):
+```csharp
+public class Hero
+{
+    // Internal constructor - only GameState can create heroes
+    internal Hero(int runtimeId, int typeId, int owner, Position position)
+    {
+        Id = runtimeId;
+        TypeId = typeId;
+        Owner = owner;
+        Position = position;
+    }
+}
+```
+
+### Conclusion: Correct Architecture
+
+#### Hero IDs Should Work Like This:
+
+1. **HeroTypeData.heroTypeId**: Template identifier (1, 2, 3, etc.)
+   - Static, defined in ScriptableObject asset
+   - Shared by all instances of that hero type
+   - Used for: Database lookup, initialization
+
+2. **Hero.Id**: Runtime instance identifier (1, 2, 3, etc.)
+   - Dynamic, auto-generated by GameState
+   - Unique per hero instance
+   - Used for: Dictionary lookup, serialization, references
+
+3. **Hero.TypeId**: Reference to template
+   - Copy of `HeroTypeData.heroTypeId`
+   - Allows looking up template data later
+
+#### Correct Constructor Signature:
+
+**Remove the HeroTypeData constructor entirely**. Hero creation should ONLY happen via `GameState.AddHero()`:
+
+```csharp
+public class Hero
+{
+    // Use object initializer pattern (current approach is correct)
+    public int Id { get; set; }
+    public int TypeId { get; set; }
+    public string CustomName { get; set; }
+    // ...
+}
+```
+
+**Factory pattern in GameState** (already implemented correctly):
+```csharp
+public Hero AddHero(int typeId, int owner, Position position)
+{
+    var hero = new Hero
+    {
+        Id = nextHeroId++,  // ✅ Unique runtime ID
+        TypeId = typeId,    // ✅ Template reference
+        // ...
+    };
+    heroes[hero.Id] = hero;
+    return hero;
+}
+```
+
+**Initialization from template** (also correct):
+```csharp
+var hero = gameState.AddHero(heroTypeData.heroTypeId, playerId, position);
+heroTypeData.InitializeHero(hero);  // Populates stats, skills, army from template
+```
+
+#### What to Fix:
+
+1. **Remove the problematic constructor** from Hero.cs (line 59-73)
+2. **Fix test files** that expect non-existent constructors:
+   - BattleController.cs (lines 82, 88)
+   - CombatActionsTests.cs (lines 18-19)
+3. **Keep using GameState.AddHero()** as the single source of hero creation
+
+### ID Generation Patterns in Codebase
+
+**Current ID Generators** (from GameState.cs):
+```csharp
+private int nextHeroId = 1;     // Hero instance IDs
+private int nextPlayerId = 0;   // Player IDs
+```
+
+**Consistent with VCMI**: Central ID management in GameState, not in individual classes.
+
+---
+
+*Research complete: Hero instances need unique runtime IDs (managed by GameState), separate from template IDs (in HeroTypeData). Remove problematic Hero constructor.*

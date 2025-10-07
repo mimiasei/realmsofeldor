@@ -1,7 +1,8 @@
+using RealmsOfEldor.Core.Events;
+using RealmsOfEldor.Core.Events.EventChannels;
 using UnityEngine;
 using UnityEditor;
 using RealmsOfEldor.Data;
-using RealmsOfEldor.Data.EventChannels;
 
 namespace RealmsOfEldor.Editor
 {

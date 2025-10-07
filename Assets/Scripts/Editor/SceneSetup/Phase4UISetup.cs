@@ -4,8 +4,9 @@ using UnityEditor;
 using TMPro;
 using RealmsOfEldor.UI;
 using RealmsOfEldor.Controllers;
+using RealmsOfEldor.Core.Events;
+using RealmsOfEldor.Core.Events.EventChannels;
 using RealmsOfEldor.Data;
-using RealmsOfEldor.Data.EventChannels;
 using RealmsOfEldor.Database;
 
 namespace RealmsOfEldor.Editor.SceneSetup

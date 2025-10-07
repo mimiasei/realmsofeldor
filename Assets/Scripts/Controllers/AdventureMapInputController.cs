@@ -2,7 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using RealmsOfEldor.Core;
 using RealmsOfEldor.Data;
-using RealmsOfEldor.Data.EventChannels;
+using RealmsOfEldor.Core.Events;
+using RealmsOfEldor.Core.Events.EventChannels;
 using RealmsOfEldor.Utilities;
 
 namespace RealmsOfEldor.Controllers

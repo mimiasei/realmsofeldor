@@ -14,3 +14,4 @@ This will build and immediately run the ASCII version of the game for testing.
 deprecated. Use Object.FindFirstObjectByType instead or if finding any instance is acceptable the faster Object.FindAnyObjectByType
 - always make sure code is 100% SSOT and 100% DRY
 - after having updated the CHANGES file after completing something, update the CHANGES_SUMMARY file with a brief summary of the changes that is sufficient for you to get up to speed of the project state when starting a new session
+- when I say "be brief!" then only explain so I can do the task myself, do it briefly and use as little tokens as possible.

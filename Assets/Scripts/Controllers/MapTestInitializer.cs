@@ -1,6 +1,7 @@
 using System.Linq;
 using UnityEngine;
 using RealmsOfEldor.Core;
+using RealmsOfEldor.Core.Events;
 using RealmsOfEldor.Data;
 
 namespace RealmsOfEldor.Controllers

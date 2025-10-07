@@ -34,107 +34,6 @@ namespace RealmsOfEldor.Core
     }
 
     /// <summary>
-    /// Terrain types for map tiles
-    /// </summary>
-    public enum TerrainType
-    {
-        Dirt = 0,
-        Sand = 1,
-        Grass = 2,
-        Snow = 3,
-        Swamp = 4,
-        Rough = 5,
-        Subterranean = 6,
-        Lava = 7,
-        Water = 8,
-        Rock = 9
-    }
-
-    /// <summary>
-    /// Hero class types
-    /// </summary>
-    public enum HeroClass
-    {
-        Knight = 0,
-        Cleric = 1,
-        Ranger = 2,
-        Druid = 3,
-        Alchemist = 4,
-        Wizard = 5,
-        Demoniac = 6,
-        Heretic = 7,
-        DeathKnight = 8,
-        Necromancer = 9,
-        Overlord = 10,
-        Warlock = 11,
-        Barbarian = 12,
-        BattleMage = 13,
-        Beastmaster = 14,
-        Witch = 15,
-        Planeswalker = 16,
-        Elementalist = 17
-    }
-
-    // Faction moved to RealmsOfEldor.Data.GameDataTypes
-
-    /// <summary>
-    /// Primary stats for heroes
-    /// </summary>
-    public enum PrimarySkill
-    {
-        Attack = 0,
-        Defense = 1,
-        SpellPower = 2,
-        Knowledge = 3
-    }
-
-    /// <summary>
-    /// Secondary skill types
-    /// </summary>
-    public enum SecondarySkillType
-    {
-        Pathfinding = 0,
-        Archery = 1,
-        Logistics = 2,
-        Scouting = 3,
-        Diplomacy = 4,
-        Navigation = 5,
-        Leadership = 6,
-        Wisdom = 7,
-        Mysticism = 8,
-        Luck = 9,
-        Ballistics = 10,
-        EagleEye = 11,
-        Necromancy = 12,
-        Estates = 13,
-        FireMagic = 14,
-        AirMagic = 15,
-        WaterMagic = 16,
-        EarthMagic = 17,
-        Scholar = 18,
-        Tactics = 19,
-        Artillery = 20,
-        Learning = 21,
-        Offense = 22,
-        Armorer = 23,
-        Intelligence = 24,
-        Sorcery = 25,
-        Resistance = 26,
-        FirstAid = 27
-    }
-
-    /// <summary>
-    /// Secondary skill levels
-    /// </summary>
-    public enum SkillLevel
-    {
-        None = 0,
-        Basic = 1,
-        Advanced = 2,
-        Expert = 3
-    }
-
-    /// <summary>
     /// Artifact equipment slots
     /// </summary>
     public enum ArtifactSlot
@@ -158,18 +57,6 @@ namespace RealmsOfEldor.Core
         Catapult = 16,
         Spellbook = 17,
         Misc5 = 18
-    }
-
-    /// <summary>
-    /// Spell schools
-    /// </summary>
-    public enum SpellSchool
-    {
-        Air = 0,
-        Earth = 1,
-        Fire = 2,
-        Water = 3,
-        All = 4
     }
 
     /// <summary>

@@ -26,6 +26,7 @@ namespace RealmsOfEldor.Data
         public int shots = 0; // 0 = melee, >0 = ranged
 
         [Header("Combat Properties")]
+        public bool isDoubleWide = false;  // Takes 2 hexes (e.g. dragons, behemoths)
         public bool isFlying = false;
         public bool isDoubleAttack = false;
         public bool canShootInMelee = false;
@@ -76,21 +77,16 @@ namespace RealmsOfEldor.Data
             float baseDamage = Random.Range(minDamage, maxDamage + 1);
 
             // Attack/Defense modifier
-            int attackDiff = attack - target.defense;
-            float modifier = 1.0f;
+            var attackDiff = attack - target.defense;
 
-            if (attackDiff > 0)
+            var modifier = attackDiff switch
             {
-                // Each attack point over defense adds 5% damage
-                modifier = 1.0f + (attackDiff * 0.05f);
-            }
-            else if (attackDiff < 0)
-            {
-                // Each defense point over attack reduces damage
-                modifier = 1.0f / (1.0f + Mathf.Abs(attackDiff) * 0.025f);
-            }
+                > 0 => 1.0f + (attackDiff * 0.05f),
+                < 0 => 1.0f / (1.0f + Mathf.Abs(attackDiff) * 0.025f),
+                _ => 1.0f
+            };
 
-            int totalDamage = Mathf.RoundToInt(baseDamage * attackerCount * modifier);
+            var totalDamage = Mathf.RoundToInt(baseDamage * attackerCount * modifier);
             return Mathf.Max(1, totalDamage); // Minimum 1 damage
         }
 

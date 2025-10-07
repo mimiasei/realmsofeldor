@@ -1,6 +1,8 @@
 using NUnit.Framework;
+using RealmsOfEldor.Core;
 using RealmsOfEldor.Core.Battle;
 using RealmsOfEldor.Data;
+using UnityEngine;
 
 namespace RealmsOfEldor.Tests.EditMode
 {

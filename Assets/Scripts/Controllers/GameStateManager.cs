@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 using Cysharp.Threading.Tasks;
 using System.Threading;
 using RealmsOfEldor.Core;
-using RealmsOfEldor.Data;
+using RealmsOfEldor.Core.Events;
 
 namespace RealmsOfEldor.Controllers
 {

@@ -11,7 +11,7 @@ namespace RealmsOfEldor.Data
     public class TerrainData : ScriptableObject
     {
         [Header("Terrain Identity")]
-        public Core.TerrainType terrainType;
+        public TerrainType terrainType;
         public string terrainName;
 
         [Header("Visual Properties")]
@@ -59,25 +59,21 @@ namespace RealmsOfEldor.Data
         private void OnValidate()
         {
             // Auto-set passable based on terrain type
-            if (terrainType == Core.TerrainType.Rock)
+            if (terrainType == TerrainType.Rock)
                 isPassable = false;
 
             // Auto-set water flag
-            isWater = (terrainType == Core.TerrainType.Water);
+            isWater = (terrainType == TerrainType.Water);
 
-            // Auto-set movement cost for common terrain types
-            if (terrainType == Core.TerrainType.Grass)
-                movementCost = 100;
-            else if (terrainType == Core.TerrainType.Dirt)
-                movementCost = 100;
-            else if (terrainType == Core.TerrainType.Sand)
-                movementCost = 150;
-            else if (terrainType == Core.TerrainType.Snow)
-                movementCost = 150;
-            else if (terrainType == Core.TerrainType.Swamp)
-                movementCost = 175;
-            else if (terrainType == Core.TerrainType.Lava)
-                movementCost = 200;
+            movementCost = terrainType switch
+            {
+                // Auto-set movement cost for common terrain types
+                TerrainType.Grass or TerrainType.Dirt => 100,
+                TerrainType.Sand or TerrainType.Snow => 150,
+                TerrainType.Swamp => 175,
+                TerrainType.Lava => 200,
+                _ => movementCost
+            };
         }
     }
 }

@@ -3,8 +3,9 @@ using UnityEngine.UI;
 using TMPro;
 using RealmsOfEldor.Core;
 using RealmsOfEldor.Controllers;
+using RealmsOfEldor.Core.Events;
+using RealmsOfEldor.Core.Events.EventChannels;
 using RealmsOfEldor.Data;
-using RealmsOfEldor.Data.EventChannels;
 
 namespace RealmsOfEldor.UI
 {

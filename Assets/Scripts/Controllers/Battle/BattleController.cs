@@ -1,6 +1,7 @@
 using UnityEngine;
 using RealmsOfEldor.Core;
 using RealmsOfEldor.Core.Battle;
+using RealmsOfEldor.Database;
 
 namespace RealmsOfEldor.Controllers.Battle
 {
@@ -79,13 +80,15 @@ namespace RealmsOfEldor.Controllers.Battle
             // Create test heroes if not assigned
             if (testAttacker == null)
             {
-                testAttacker = new Hero(1, 0);
+                testAttacker = GameStateManager.Instance.State.AddHero(typeId: 0, owner: 0, position: new Position(0, 0));
+                // testAttacker = new Hero(1, 0);
                 testAttacker.CustomName = "Test Attacker";
             }
 
             if (testDefender == null)
             {
-                testDefender = new Hero(2, 1);
+                testDefender = GameStateManager.Instance.State.AddHero(typeId: 1, owner: 1, position: new Position(0, 0));
+                // testDefender = new Hero(2, 1);
                 testDefender.CustomName = "Test Defender";
             }
 
@@ -121,33 +124,26 @@ namespace RealmsOfEldor.Controllers.Battle
             // Attacker: columns 1-2 (left side)
             // Defender: columns 14-15 (right side)
             var startColumn = side == BattleSide.Attacker ? 1 : 14;
-            var row = 5;  // Middle row
+            const int row = 5;  // Middle row
 
             // Place up to 7 stacks (HOMM3 army slots)
             for (var slotIndex = 0; slotIndex < 7; slotIndex++)
             {
                 var stack = army.GetSlot(slotIndex);
-                if (stack != null && stack.Count > 0)
+                if (stack is not { Count: > 0 }) continue;
+                // Calculate position (stagger rows for visibility)
+                var posRow = row + (slotIndex % 3) - 1;  // -1, 0, +1
+                var posCol = startColumn + (slotIndex / 3);
+
+                var position = new BattleHex(posCol, posRow);
+
+                // Use army's existing CreatureStack
+                var creatureType = CreatureDatabase.Instance.GetCreature(stack.CreatureId);
+                var unit = battleState.AddUnit(creatureType, stack.Count, side, slotIndex, position);
+
+                if (unit != null)
                 {
-                    // Calculate position (stagger rows for visibility)
-                    var posRow = row + (slotIndex % 3) - 1;  // -1, 0, +1
-                    var posCol = startColumn + (slotIndex / 3);
-
-                    var position = new BattleHex(posCol, posRow);
-
-                    // Create CreatureStack wrapper (TODO: use existing CreatureStack)
-                    var creatureStack = new CreatureStack
-                    {
-                        CreatureType = null,  // TODO: Get from CreatureDatabase
-                        Count = stack.Count
-                    };
-
-                    var unit = battleState.AddUnit(creatureStack, side, slotIndex, position);
-
-                    if (unit != null)
-                    {
-                        Debug.Log($"Placed {side} unit {slotIndex}: {unit}");
-                    }
+                    Debug.Log($"Placed {side} unit {slotIndex}: {unit}");
                 }
             }
         }

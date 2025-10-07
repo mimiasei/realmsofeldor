@@ -2,8 +2,9 @@ using UnityEngine;
 using DG.Tweening;
 using Cysharp.Threading.Tasks;
 using RealmsOfEldor.Core;
+using RealmsOfEldor.Core.Events;
+using RealmsOfEldor.Core.Events.EventChannels;
 using RealmsOfEldor.Data;
-using RealmsOfEldor.Data.EventChannels;
 using RealmsOfEldor.Utilities;
 
 namespace RealmsOfEldor.Controllers

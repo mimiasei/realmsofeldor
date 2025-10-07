@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
 namespace RealmsOfEldor.Data
 {
     /// <summary>
@@ -101,52 +100,6 @@ namespace RealmsOfEldor.Data
 
         [Header("Audio")]
         public AudioClip selectionSound;
-
-        /// <summary>
-        /// Initialize a hero instance from this type
-        /// </summary>
-        public void InitializeHero(Hero hero)
-        {
-            // Set primary stats
-            hero.Attack = startAttack;
-            hero.Defense = startDefense;
-            hero.SpellPower = startSpellPower;
-            hero.Knowledge = startKnowledge;
-
-            // Set mana based on knowledge
-            hero.MaxMana = 10 * startKnowledge;
-            hero.Mana = hero.MaxMana;
-
-            // Add starting skills
-            foreach (var skill in startingSkills)
-            {
-                hero.AddSecondarySkill(skill.skillType, skill.level);
-            }
-
-            // Add starting spells
-            if (startsWithSpellbook)
-            {
-                hero.HasSpellbook = true;
-                foreach (var spell in startingSpells)
-                {
-                    if (spell != null)
-                    {
-                        hero.LearnSpell(spell.spellId);
-                    }
-                }
-            }
-
-            // Add starting army
-            for (int i = 0; i < startingArmy.Count && i < Army.MaxSlots; i++)
-            {
-                var stack = startingArmy[i];
-                if (stack.creature != null)
-                {
-                    int count = Random.Range(stack.minCount, stack.maxCount + 1);
-                    hero.Army.AddCreatures(stack.creature.creatureId, count, i);
-                }
-            }
-        }
 
         /// <summary>
         /// Roll for primary stat increase on level up

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using RealmsOfEldor.Data;
 
 namespace RealmsOfEldor.Core
 {
@@ -54,6 +55,57 @@ namespace RealmsOfEldor.Core
 
         // State flags
         public bool IsActive { get; set; } = true;
+
+        #region Initialization
+
+        /// <summary>
+        /// Initialize hero from type template.
+        /// Called after GameState.AddHero() creates the hero instance.
+        /// </summary>
+        public void Initialize(HeroTypeData template)
+        {
+            // Set primary stats
+            Attack = template.startAttack;
+            Defense = template.startDefense;
+            SpellPower = template.startSpellPower;
+            Knowledge = template.startKnowledge;
+
+            // Set mana based on knowledge
+            MaxMana = 10 * template.startKnowledge;
+            Mana = MaxMana;
+
+            // Add starting skills
+            foreach (var skill in template.startingSkills)
+            {
+                AddSecondarySkill(skill.skillType, skill.level);
+            }
+
+            // Add starting spells
+            if (template.startsWithSpellbook)
+            {
+                HasSpellbook = true;
+                foreach (var spell in template.startingSpells)
+                {
+                    if (spell != null)
+                    {
+                        LearnSpell(spell.spellId);
+                    }
+                }
+            }
+
+            // Add starting army
+            for (var i = 0; i < template.startingArmy.Count && i < 7; i++)
+            {
+                var stack = template.startingArmy[i];
+                if (stack.creature != null)
+                {
+                    var count = UnityEngine.Random.Range(stack.minCount, stack.maxCount + 1);
+                    Army.AddCreatures(stack.creature.creatureId, count, i);
+                }
+            }
+        }
+
+        #endregion
 
         #region Experience and Leveling
 
@@ -246,6 +298,36 @@ namespace RealmsOfEldor.Core
         public bool KnowsSpell(int spellId)
         {
             return HasSpellbook && KnownSpells.Contains(spellId);
+        }
+        
+        /// <summary>
+        /// Check if hero can cast this spell
+        /// </summary>
+        public bool CanCast(SpellData spell, bool inBattle)
+        {
+            if (spell == null)
+                return false;
+
+            // Check spellbook
+            if (!HasSpellbook)
+                return false;
+
+            // Check if known
+            if (!KnowsSpell(spell.spellId))
+                return false;
+
+            // Check mana
+            if (Mana < spell.manaCost)
+                return false;
+
+            // Check context
+            if (inBattle && !spell.canCastInBattle)
+                return false;
+
+            if (!inBattle && !spell.canCastOnAdventureMap)
+                return false;
+
+            return true;
         }
 
         #endregion
