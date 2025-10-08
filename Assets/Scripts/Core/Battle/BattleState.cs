@@ -349,6 +349,23 @@ namespace RealmsOfEldor.Core.Battle
                 result.Retaliation = ExecuteRetaliation(defender, attacker);
             }
 
+            // Handle double attack (if defender still alive and attacker has ability)
+            if (attacker.HasDoubleAttack && defender.IsAlive)
+            {
+                // Perform second attack
+                var secondAttackInfo = new AttackInfo(attacker, defender, shooting: false, chargeDistance);
+                var secondCalculator = new DamageCalculator(secondAttackInfo);
+                var secondDamage = secondCalculator.CalculateDamageRange();
+                var actualSecondDamage = random.Next(secondDamage.Damage.Min, secondDamage.Damage.Max + 1);
+
+                defender.TakeDamage(actualSecondDamage);
+
+                // Add to result totals
+                result.DamageDealt += actualSecondDamage;
+                result.KillsDealt = GetKillsFromDamage(defender, result.DamageDealt);
+                result.IsKilled = !defender.IsAlive;
+            }
+
             // Mark attacker as acted
             attacker.EndTurn();
 

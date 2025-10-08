@@ -4,14 +4,14 @@
 
 ---
 
-## Current Project Status (2025-10-06)
+## Current Project Status (2025-10-08)
 
-**Current Phase:** Phase 5C (Combat System - Damage Calculation & Actions) - ✅ COMPLETE
+**Current Phase:** Phase 5E (Battle AI & Action Selection) - ✅ COMPLETE
 
-**Next Phase:** Phase 5D - Special Mechanics (morale, luck, special abilities, status effects)
+**Next Phase:** Phase 6 - Town System (or Battle Visualization)
 
-**Total Project Files:** ~85 files
-**Total Project LOC:** ~16,560+ lines
+**Total Project Files:** ~90 files
+**Total Project LOC:** ~18,100+ lines
 
 ---
 
@@ -124,6 +124,46 @@ Controllers/UI Assemblies (Presentation Layer)
 - ExecuteRetaliation(): counter-attack system (once per turn)
 - AttackResult class for combat result tracking
 - 45 unit tests (25 damage + 20 combat actions)
+
+### Phase 5D: Special Mechanics ✅ COMPLETE
+- **Double Attack**: Creatures with `isDoubleAttack` attack twice per turn (if defender survives)
+- **No Retaliation**: Creatures with `noMeleeRetal` prevent defender retaliation
+- **Flying**: `isFlying` flag added (movement integration deferred to pathfinding phase)
+- **Status Effects Framework**: Complete buff/debuff system
+  - StatusEffect class with duration tracking, stat modifiers (attack/defense/speed)
+  - BattleUnit.AddStatusEffect(), RemoveStatusEffect(), ClearStatusEffects()
+  - Auto-expiration via UpdateStatusEffects() called each round
+  - Multiple effects stack additively
+- **Architecture Cleanup**:
+  - Moved TerrainType, SpellSchool from Core to Data (proper layering)
+  - Moved Hero.Initialize() from Data/HeroTypeData to Core/Hero
+  - Removed duplicate BattleSide, CreatureStack, StatusEffect definitions
+  - Fixed Hero constructor (now uses GameState.AddHero() factory pattern)
+  - Added SpellData.isDoubleWide to CreatureData
+- **Testing**: 13 new unit tests for double attack, no-retaliation, flying, status effects
+- **Deferred**: Morale system, Luck system (moved to later phase)
+
+### Phase 5E: Battle AI & Action Selection ✅ COMPLETE
+- **BattleAI Class**: Main AI controller with action selection logic
+  - SelectAction(): Evaluates all possible actions and picks best
+  - Simple decision flow: evaluate attacks → score → execute best or wait
+  - Based on VCMI's BattleEvaluator pattern
+- **AttackPossibility Class**: Attack option evaluation and scoring
+  - Calculates expected damage to defender and retaliation damage
+  - Score formula: `DamageToDefender - RetaliationDamage + Bonuses`
+  - Bonus for killing defender (+100), penalty for getting killed (-1000)
+  - Handles both melee and ranged attacks
+- **BattleController Integration**:
+  - AI automatically selects actions for units
+  - ExecuteAction() fully implemented (attack, shoot, wait, defend)
+  - ProcessUnitTurn() calls AI and executes selected actions
+  - Toggle AI on/off via inspector
+- **Action Evaluation**:
+  - Ranged units prefer shooting (no retaliation)
+  - Melee units attack if adjacent, otherwise wait
+  - AI picks highest scoring target among multiple enemies
+- **Testing**: 10 new unit tests for AI logic, attack evaluation, target selection
+- **Deferred**: Pathfinding integration (move towards enemy), spell casting AI
 
 ---
 
@@ -349,12 +389,23 @@ void LoadTerrainDataFromAssets() {
 
 ## Next Steps
 
-### Phase 5D: Special Mechanics (Weeks 7-8) - NEXT
+### Phase 5E: Battle AI & Action Selection - NEXT (or skip to Phase 6)
+- AI action evaluation (VCMI's BattleEvaluator pattern)
+- Target selection logic
+- Action priority system
+- Simple AI for testing battles
+
+### Phase 6: Town System (Weeks 9-11)
+- Town class and building system
+- Town window UI
+- Creature recruitment interface
+- Daily creature growth
+- Resource costs for recruitment
+
+### Deferred Mechanics (Future Phases)
 - Morale system (extra turn / skip turn)
 - Luck system (+100% damage / -50% damage)
-- Special abilities (flying, double attack, no retaliation)
-- Status effects framework
-- Buff/debuff system
+- Flying movement (pathfinding integration)
 
 ---
 
@@ -454,9 +505,11 @@ Data (no deps) ← Core (refs Data) ← Controllers (refs Core, Data) ← UI (re
 
 ---
 
-**Recent Completions (2025-10-06)**:
+**Recent Completions (2025-10-08)**:
 - ✅ Phase 5B: Turn order system with TurnQueue, initiative sorting, wait mechanics (4 files, ~730 lines)
 - ✅ Phase 5C: Combat system with DamageCalculator, attack/shoot actions, retaliation (6 files, ~2,330 lines, 45 tests)
-- Next: Phase 5D - Special mechanics (morale, luck, special abilities)
+- ✅ Phase 5D: Special mechanics - double attack, status effects framework, architecture cleanup (2 files updated, 1 new test file, 13 tests)
+- ✅ Phase 5E: Battle AI - BattleAI, AttackPossibility, action selection, BattleController integration (3 new files, ~800 lines, 10 tests)
+- Next: Phase 6 - Town System
 
-*Last Updated: 2025-10-06*
+*Last Updated: 2025-10-08*

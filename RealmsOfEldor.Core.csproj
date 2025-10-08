@@ -53,6 +53,7 @@
     <Compile Include="Assets\Scripts\Core\Resources.cs" />
     <Compile Include="Assets\Scripts\Core\Events\UIEventChannel.cs" />
     <Compile Include="Assets\Scripts\Core\Position.cs" />
+    <Compile Include="Assets\Scripts\Core\Battle\AttackPossibility.cs" />
     <Compile Include="Assets\Scripts\Core\Serialization\ResourceSetJsonConverter.cs" />
     <Compile Include="Assets\Scripts\Core\Map\MapObject.cs" />
     <Compile Include="Assets\Scripts\Core\GameState.cs" />
@@ -62,6 +63,7 @@
     <Compile Include="Assets\Scripts\Core\Pathfinding\BasicPathfinder.cs" />
     <Compile Include="Assets\Scripts\Core\Player.cs" />
     <Compile Include="Assets\Scripts\Core\Army.cs" />
+    <Compile Include="Assets\Scripts\Core\Battle\BattleAI.cs" />
     <Compile Include="Assets\Scripts\Core\Hero.cs" />
     <Compile Include="Assets\Scripts\Core\Battle\BattleHex.cs" />
     <Compile Include="Assets\Scripts\Core\Battle\BattleAction.cs" />

@@ -19,9 +19,11 @@ namespace RealmsOfEldor.Controllers.Battle
         [Header("Testing")]
         [SerializeField] private Hero testAttacker;
         [SerializeField] private Hero testDefender;
+        [SerializeField] private bool useAI = true;
 
         // Battle state (pure C#)
         private BattleState battleState;
+        private BattleAI battleAI;
 
         // Properties
         public BattleState State => battleState;
@@ -56,6 +58,13 @@ namespace RealmsOfEldor.Controllers.Battle
 
             // Create battle state
             battleState = new BattleState(attacker, defender);
+
+            // Initialize AI
+            if (useAI)
+            {
+                battleAI = new BattleAI(battleState);
+                Debug.Log("Battle AI initialized");
+            }
 
             // Initialize battlefield
             InitializeBattlefield();
@@ -195,13 +204,32 @@ namespace RealmsOfEldor.Controllers.Battle
 
         /// <summary>
         /// Process one unit's turn.
-        /// Placeholder - will get action from AI/player in Phase 5C.
+        /// Phase 5E: Uses AI to select and execute actions.
         /// </summary>
         private void ProcessUnitTurn(BattleUnit unit)
         {
-            // TODO Phase 5C: Get action from AI or player input
-            // For now, just log and end turn
-            Debug.Log($"  Unit {unit.UnitId} acts (placeholder)");
+            if (useAI && battleAI != null)
+            {
+                // Get action from AI
+                var action = battleAI.SelectAction(unit);
+
+                if (action != null && action.IsValid())
+                {
+                    Debug.Log($"  AI Action: {action}");
+                    ExecuteAction(action);
+                }
+                else
+                {
+                    Debug.Log($"  Unit {unit.UnitId} has no valid actions, ending turn");
+                    unit.EndTurn();
+                }
+            }
+            else
+            {
+                // Manual control or no AI - just end turn for now
+                Debug.Log($"  Unit {unit.UnitId} acts (manual control not yet implemented)");
+                unit.EndTurn();
+            }
         }
 
         /// <summary>
@@ -233,9 +261,9 @@ namespace RealmsOfEldor.Controllers.Battle
 
         /// <summary>
         /// Execute a battle action.
-        /// Placeholder for Phase 5C (Combat System implementation).
+        /// Phase 5E: Integrated with combat system.
         /// </summary>
-        public void ExecuteAction(BattleAction action)
+        private void ExecuteAction(BattleAction action)
         {
             if (!IsBattleActive || action == null || !action.IsValid())
             {
@@ -243,8 +271,63 @@ namespace RealmsOfEldor.Controllers.Battle
                 return;
             }
 
-            // TODO Phase 5C: Implement action execution
-            Debug.Log($"ExecuteAction() - {action} - Not yet implemented (Phase 5C)");
+            var actingUnit = battleState.GetUnit(action.UnitId);
+            if (actingUnit == null)
+            {
+                Debug.LogWarning($"Cannot execute action: unit {action.UnitId} not found");
+                return;
+            }
+
+            AttackResult result = null;
+
+            switch (action.Type)
+            {
+                case ActionType.WALK_AND_ATTACK:
+                    if (action.TargetUnitId > -1)
+                    {
+                        var target = battleState.GetUnit(action.TargetUnitId);
+                        result = battleState.ExecuteAttack(actingUnit, target, chargeDistance: 0);
+                        if (result != null)
+                            Debug.Log($"  {result}");
+                    }
+                    break;
+
+                case ActionType.SHOOT:
+                    if (action.TargetUnitId > -1)
+                    {
+                        var target = battleState.GetUnit(action.TargetUnitId);
+                        result = battleState.ExecuteShoot(actingUnit, target);
+                        if (result != null)
+                            Debug.Log($"  {result}");
+                    }
+                    break;
+
+                case ActionType.WAIT:
+                    battleState.WaitCurrentUnit();
+                    Debug.Log($"  Unit {actingUnit.UnitId} waits");
+                    break;
+
+                case ActionType.DEFEND:
+                    actingUnit.IsDefending = true;
+                    actingUnit.EndTurn();
+                    Debug.Log($"  Unit {actingUnit.UnitId} defends");
+                    break;
+
+                case ActionType.NO_ACTION:
+                case ActionType.END_TACTIC_PHASE:
+                case ActionType.RETREAT:
+                case ActionType.SURRENDER:
+                case ActionType.HERO_SPELL:
+                case ActionType.MONSTER_SPELL:
+                case ActionType.WALK:
+                case ActionType.BAD_MORALE:
+                case ActionType.STACK_HEAL:
+                case ActionType.CATAPULT:
+                default:
+                    Debug.LogWarning($"Action type {action.Type} not yet implemented");
+                    actingUnit.EndTurn();
+                    break;
+            }
         }
 
         /// <summary>
