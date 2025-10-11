@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using RealmsOfEldor.Core;
 using RealmsOfEldor.Data;
@@ -30,18 +31,19 @@ namespace RealmsOfEldor.Controllers
         [Header("References")]
         [SerializeField] private MapRenderer mapRenderer;
         [SerializeField] private CameraController cameraController;
+        [SerializeField] private PathPreviewRenderer pathPreviewRenderer;
 
         private GameMap gameMap;
 
-        [Header("Input Settings")]
-        [SerializeField] private bool enableKeyboardShortcuts = true;
-        [SerializeField] private float doubleTapThreshold = 0.3f;
+        [Header("Settings")]
+        [SerializeField] private GameSettings gameSettings;
 
         private InputState currentState = InputState.Normal;
         private Hero selectedHero;
         private int castingSpellId = -1;
         private float lastTapTime;
         private Position lastTappedPosition;
+        private Position previewedDestination;
 
         void OnEnable()
         {
@@ -95,7 +97,8 @@ namespace RealmsOfEldor.Controllers
 
         void Update()
         {
-            if (!enableKeyboardShortcuts || currentState == InputState.Disabled)
+            var settings = gameSettings ?? GameSettings.Instance;
+            if (!settings.enableKeyboardShortcuts || currentState == InputState.Disabled)
                 return;
 
             HandleKeyboardShortcuts();
@@ -177,8 +180,15 @@ namespace RealmsOfEldor.Controllers
         /// </summary>
         private void HandleTileClicked(Position tilePos)
         {
+            Debug.Log($"InputController: Tile clicked: {tilePos}");
+            Debug.Log($"InputController: Current state: {currentState}");
+            Debug.Log($"InputController: Selected hero: {selectedHero?.CustomName ?? "none"}");
+
             if (currentState == InputState.Disabled)
+            {
+                Debug.Log("InputController: State is Disabled, ignoring click");
                 return;
+            }
 
             if (currentState == InputState.SpellCasting)
             {
@@ -186,15 +196,22 @@ namespace RealmsOfEldor.Controllers
                 return;
             }
 
-            // Check for double-tap (center camera)
+            // Check for double-click (execute hero movement immediately)
             if (IsDoubleTap(tilePos))
             {
-                if (cameraController != null)
-                    cameraController.CenterOn(mapRenderer.MapToWorldPosition(tilePos));
-                return;
+                Debug.Log("InputController: Double-click detected");
+                // If we have a hero selected and previewed path, execute movement
+                if (selectedHero != null && previewedDestination == tilePos &&
+                    pathPreviewRenderer != null && pathPreviewRenderer.IsShowingPath)
+                {
+                    Debug.Log("InputController: Executing previewed movement on double-click");
+                    ExecutePreviewedMove();
+                    return;
+                }
             }
 
             // Normal click handling
+            Debug.Log("InputController: Processing as normal click");
             HandleNormalTileClick(tilePos);
         }
 
@@ -206,16 +223,31 @@ namespace RealmsOfEldor.Controllers
 
         private void HandleNormalTileClick(Position tilePos)
         {
-            if (GameStateManager.Instance == null)
-                return;
+            Debug.Log($"InputController: HandleNormalTileClick({tilePos})");
 
-            if (gameMap == null || !gameMap.IsInBounds(tilePos))
+            if (GameStateManager.Instance == null)
+            {
+                Debug.LogWarning("InputController: GameStateManager.Instance is null");
                 return;
+            }
+
+            if (gameMap == null)
+            {
+                Debug.LogWarning("InputController: gameMap is null");
+                return;
+            }
+
+            if (!gameMap.IsInBounds(tilePos))
+            {
+                Debug.LogWarning($"InputController: Position {tilePos} is out of bounds");
+                return;
+            }
 
             // Check for hero at position
             var heroAtPos = GetHeroAtPosition(tilePos);
             if (heroAtPos != null)
             {
+                Debug.Log($"InputController: Found hero at position: {heroAtPos.CustomName}");
                 SelectHero(heroAtPos);
                 return;
             }
@@ -224,17 +256,187 @@ namespace RealmsOfEldor.Controllers
             var objectsAtPos = gameMap.GetObjectsAt(tilePos);
             if (objectsAtPos.Count > 0)
             {
+                Debug.Log($"InputController: Found {objectsAtPos.Count} objects at position");
                 HandleObjectClick(objectsAtPos[0], tilePos);
                 return;
             }
 
-            // Move selected hero to position
+            // Move selected hero to position (with path preview)
             if (selectedHero != null)
             {
-                MoveHeroToPosition(tilePos);
+                Debug.Log($"InputController: Moving hero {selectedHero.CustomName} to {tilePos}");
+                HandleHeroMovementClick(tilePos);
+            }
+            else
+            {
+                Debug.Log("InputController: No hero selected, ignoring empty tile click");
             }
         }
 
+        /// <summary>
+        /// Handles hero movement click with path preview.
+        /// First click: Show preview. Second click on same tile: Execute move.
+        /// </summary>
+        private void HandleHeroMovementClick(Position targetPos)
+        {
+            if (selectedHero == null || GameStateManager.Instance == null || gameMap == null)
+                return;
+
+            Debug.Log($"HandleHeroMovementClick: targetPos={targetPos}, previewedDestination={previewedDestination}, IsShowingPath={pathPreviewRenderer?.IsShowingPath}");
+
+            // Check if clicking on already previewed destination
+            if (previewedDestination.Equals(targetPos) && pathPreviewRenderer != null && pathPreviewRenderer.IsShowingPath)
+            {
+                Debug.Log("Second click detected - executing movement");
+                // Second click - execute movement
+                ExecutePreviewedMove();
+                return;
+            }
+
+            // First click - show path preview
+            Debug.Log("First click - showing preview");
+            ShowPathPreview(targetPos);
+        }
+
+        /// <summary>
+        /// Shows path preview to target position.
+        /// Calculates per-step costs for accurate green/red split rendering.
+        /// </summary>
+        private void ShowPathPreview(Position targetPos)
+        {
+            if (selectedHero == null || gameMap == null)
+                return;
+
+            // Don't show path to current position
+            if (selectedHero.Position.Equals(targetPos))
+            {
+                Debug.Log("Cannot move to current position");
+                ClearPathPreview();
+                return;
+            }
+
+            // Find path
+            var path = BasicPathfinder.FindPath(gameMap, selectedHero.Position, targetPos);
+            if (path == null)
+            {
+                ClearPathPreview();
+                uiEvents?.RaiseShowStatusMessage("Cannot reach that tile!");
+                return;
+            }
+
+            // Calculate per-step costs for accurate rendering
+            var pathStepCosts = new List<int>();
+            for (int i = 0; i < path.Count - 1; i++)
+            {
+                var stepCost = gameMap.GetMovementCost(path[i], path[i + 1]);
+                pathStepCosts.Add(stepCost);
+            }
+
+            // Calculate total movement cost
+            var totalMovementCost = pathStepCosts.Sum();
+
+            // Show preview with per-step costs
+            if (pathPreviewRenderer != null)
+            {
+                pathPreviewRenderer.ShowPath(path, pathStepCosts, totalMovementCost, selectedHero.Movement);
+                previewedDestination = targetPos;
+
+                // Show status message
+                if (totalMovementCost > selectedHero.Movement)
+                {
+                    // Calculate how far we can actually go
+                    var reachableIndex = pathPreviewRenderer.ReachablePathIndex;
+                    if (reachableIndex > 0)
+                    {
+                        uiEvents?.RaiseShowStatusMessage($"Can move {reachableIndex}/{path.Count - 1} tiles. Click again to move as far as possible.");
+                    }
+                    else
+                    {
+                        uiEvents?.RaiseShowStatusMessage($"Not enough movement! Need {totalMovementCost}, have {selectedHero.Movement}.");
+                    }
+                }
+                else
+                {
+                    uiEvents?.RaiseShowStatusMessage($"Movement cost: {totalMovementCost}/{selectedHero.Movement}. Click again to move.");
+                }
+            }
+            else
+            {
+                // No preview renderer - execute immediately (fallback)
+                MoveHeroToPosition(targetPos);
+            }
+        }
+
+        /// <summary>
+        /// Executes the currently previewed move.
+        /// If insufficient movement, moves as far along path as possible (partial movement).
+        /// </summary>
+        private void ExecutePreviewedMove()
+        {
+            Debug.Log("ExecutePreviewedMove called");
+
+            if (pathPreviewRenderer == null || !pathPreviewRenderer.IsShowingPath)
+            {
+                Debug.LogWarning("No path preview to execute!");
+                return;
+            }
+
+            var fullPath = pathPreviewRenderer.CurrentPath;
+            var reachablePath = pathPreviewRenderer.ReachablePath;
+            var totalMovementCost = pathPreviewRenderer.CurrentMovementCost;
+
+            Debug.Log($"Executing move: fullPathLength={fullPath?.Count}, reachablePathLength={reachablePath?.Count}, cost={totalMovementCost}, heroMovement={selectedHero?.Movement}");
+
+            ClearPathPreview();
+
+            if (selectedHero == null || fullPath == null)
+            {
+                Debug.LogWarning("Selected hero or path is null!");
+                return;
+            }
+
+            // If full path is reachable, use it
+            if (totalMovementCost <= selectedHero.Movement)
+            {
+                Debug.Log($"Full path reachable, moving to {fullPath[fullPath.Count - 1]}");
+                MoveHeroAlongPath(fullPath, totalMovementCost);
+            }
+            // Otherwise, move as far as possible (partial movement)
+            else if (reachablePath != null && reachablePath.Count > 1)
+            {
+                // Calculate cost of reachable portion
+                var reachableCost = 0;
+                for (int i = 0; i < reachablePath.Count - 1; i++)
+                {
+                    reachableCost += gameMap.GetMovementCost(reachablePath[i], reachablePath[i + 1]);
+                }
+
+                Debug.Log($"Partial movement: moving {reachablePath.Count - 1} tiles (cost={reachableCost}) to {reachablePath[reachablePath.Count - 1]}");
+                uiEvents?.RaiseShowStatusMessage($"Moved as far as possible ({reachablePath.Count - 1} tiles)");
+                MoveHeroAlongPath(reachablePath, reachableCost);
+            }
+            else
+            {
+                Debug.LogWarning("No reachable path available!");
+                uiEvents?.RaiseShowStatusMessage($"Not enough movement! Need at least 1 tile.");
+            }
+        }
+
+        /// <summary>
+        /// Clears path preview.
+        /// </summary>
+        private void ClearPathPreview()
+        {
+            if (pathPreviewRenderer != null)
+            {
+                pathPreviewRenderer.ClearPath();
+            }
+            previewedDestination = default;
+        }
+
+        /// <summary>
+        /// Immediately moves hero to position without preview (internal method).
+        /// </summary>
         private void MoveHeroToPosition(Position targetPos)
         {
             if (selectedHero == null || GameStateManager.Instance == null)
@@ -259,13 +461,54 @@ namespace RealmsOfEldor.Controllers
                 return;
             }
 
-            // Execute movement
-            var oldPos = selectedHero.Position;
-            selectedHero.Position = targetPos;
+            // Execute animated movement
+            MoveHeroAlongPath(path, movementCost);
+        }
+
+        /// <summary>
+        /// Moves hero along path with animation.
+        /// </summary>
+        private async void MoveHeroAlongPath(System.Collections.Generic.List<Position> path, int movementCost)
+        {
+            Debug.Log($"MoveHeroAlongPath called - path has {path.Count} positions");
+
+            var heroSpawner = FindFirstObjectByType<HeroSpawner>();
+            if (heroSpawner == null)
+            {
+                Debug.LogError("HeroSpawner not found!");
+                return;
+            }
+
+            var heroController = heroSpawner.GetHeroController(selectedHero.Id);
+            if (heroController == null)
+            {
+                Debug.LogError($"HeroController not found for hero {selectedHero.Id}!");
+                return;
+            }
+
+            Debug.Log($"Starting animation for {path.Count - 1} tiles");
+
+            // Build waypoint array (skip first, it's current position)
+            var waypoints = new Vector3[path.Count - 1];
+            for (int i = 1; i < path.Count; i++)
+            {
+                var worldPos = path[i].ToVector3();
+                worldPos.x += 0.5f; // Center on tile
+                worldPos.y += 0.5f;
+                waypoints[i - 1] = worldPos;
+            }
+
+            // Smooth movement through all waypoints
+            var settings = gameSettings ?? GameSettings.Instance;
+            var totalDuration = (path.Count - 1) * settings.heroMovementTimePerTile;
+            await heroController.MoveAlongPathAsync(waypoints, customSpeed: totalDuration);
+
+            // Update hero data
+            selectedHero.Position = path[path.Count - 1];
             selectedHero.Movement -= movementCost;
 
             // Raise event
-            gameEvents?.RaiseHeroMoved(selectedHero.Id, targetPos);
+            gameEvents?.RaiseHeroMoved(selectedHero.Id, selectedHero.Position);
 
             // Update UI
             uiEvents?.RaiseShowHeroInfo(selectedHero);
@@ -319,6 +562,7 @@ namespace RealmsOfEldor.Controllers
 
         private void SelectHero(Hero hero)
         {
+            ClearPathPreview(); // Clear any existing preview
             selectedHero = hero;
             uiEvents?.RaiseHeroSelected(hero);
 
@@ -331,6 +575,7 @@ namespace RealmsOfEldor.Controllers
 
         private void ClearSelection()
         {
+            ClearPathPreview(); // Clear preview when deselecting
             selectedHero = null;
             uiEvents?.RaiseSelectionCleared();
         }
@@ -400,12 +645,50 @@ namespace RealmsOfEldor.Controllers
 
         private void HandleHeroSelected(Hero hero)
         {
+            Debug.Log($"AdventureMapInputController: Hero selected: {hero.CustomName}");
             selectedHero = hero;
+
+            // Update visual selection on HeroController
+            UpdateHeroSelectionVisuals(hero);
+        }
+
+        private void UpdateHeroSelectionVisuals(Hero hero)
+        {
+            // Find HeroSpawner and get HeroController
+            var heroSpawner = FindFirstObjectByType<HeroSpawner>();
+            if (heroSpawner == null)
+                return;
+
+            // Deselect all heroes first
+            foreach (var heroController in heroSpawner.GetAllHeroControllers())
+            {
+                if (heroController != null)
+                    heroController.SetSelected(false);
+            }
+
+            // Select the new hero
+            var selectedHeroController = heroSpawner.GetHeroController(hero.Id);
+            if (selectedHeroController != null)
+            {
+                selectedHeroController.SetSelected(true);
+                Debug.Log($"Set hero {hero.CustomName} as selected visually");
+            }
         }
 
         private void HandleSelectionCleared()
         {
             selectedHero = null;
+
+            // Clear visual selection on all heroes
+            var heroSpawner = FindFirstObjectByType<HeroSpawner>();
+            if (heroSpawner != null)
+            {
+                foreach (var heroController in heroSpawner.GetAllHeroControllers())
+                {
+                    if (heroController != null)
+                        heroController.SetSelected(false);
+                }
+            }
         }
 
         private void HandleEnterSpellCasting(int spellId)
@@ -524,8 +807,9 @@ namespace RealmsOfEldor.Controllers
 
         private bool IsDoubleTap(Position pos)
         {
+            var settings = gameSettings ?? GameSettings.Instance;
             var currentTime = Time.unscaledTime;
-            var isDoubleTap = lastTappedPosition == pos && (currentTime - lastTapTime) < doubleTapThreshold;
+            var isDoubleTap = lastTappedPosition == pos && (currentTime - lastTapTime) < settings.doubleTapThreshold;
 
             lastTappedPosition = pos;
             lastTapTime = currentTime;

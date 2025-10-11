@@ -26,8 +26,8 @@ namespace RealmsOfEldor.Controllers
         [SerializeField] private Color playerColor = Color.white;
 
         [Header("Animation")]
-        [SerializeField] private float movementSpeed = 2f;
-        [SerializeField] private Ease movementEase = Ease.InOutQuad;
+        [SerializeField] private float movementSpeed = 1f;
+        [SerializeField] private Ease movementEase = Ease.Linear;
         [SerializeField] private float bobHeight = 0.1f;
         [SerializeField] private float bobDuration = 0.5f;
 
@@ -132,30 +132,43 @@ namespace RealmsOfEldor.Controllers
             isMoving = true;
 
             var speed = customSpeed ?? movementSpeed;
-            var distance = Vector3.Distance(transform.position, targetWorldPosition);
-            var duration = distance / speed;
 
             // Kill any existing tween
             currentMovementTween?.Kill();
 
-            // Create movement sequence with bob animation
-            var sequence = DOTween.Sequence();
+            // Simple movement without bob (bob in sequence causes infinite loop error)
+            currentMovementTween = transform.DOMove(targetWorldPosition, speed).SetEase(movementEase);
 
-            // Main movement
-            sequence.Append(transform.DOMove(targetWorldPosition, duration).SetEase(movementEase));
+            // Wait for tween to complete using UniTask
+            await UniTask.WaitWhile(() => currentMovementTween != null && currentMovementTween.IsActive());
 
-            // Bobbing animation during movement
-            var bobTween = transform.DOMoveY(transform.position.y + bobHeight, bobDuration / 2f)
-                .SetEase(Ease.InOutSine)
-                .SetLoops(-1, LoopType.Yoyo);
-            sequence.Join(bobTween);
+            isMoving = false;
+            currentMovementTween = null;
+        }
 
-            currentMovementTween = sequence;
+        /// <summary>
+        /// Moves hero along path with smooth animation through all waypoints.
+        /// </summary>
+        public async UniTask MoveAlongPathAsync(Vector3[] waypoints, float? customSpeed = null)
+        {
+            if (isMoving)
+            {
+                Debug.LogWarning($"Hero {heroData?.CustomName} is already moving!");
+                return;
+            }
 
-            await UniTask.WaitWhile(() => sequence.IsActive());
+            isMoving = true;
 
-            // Reset Y position after bobbing
-            transform.position = new Vector3(transform.position.x, targetWorldPosition.y, transform.position.z);
+            var speed = customSpeed ?? movementSpeed;
+
+            // Kill any existing tween
+            currentMovementTween?.Kill();
+
+            // Smooth path through all waypoints
+            currentMovementTween = transform.DOPath(waypoints, speed, PathType.Linear).SetEase(movementEase);
+
+            // Wait for tween to complete using UniTask
+            await UniTask.WaitWhile(() => currentMovementTween != null && currentMovementTween.IsActive());
 
             isMoving = false;
             currentMovementTween = null;
@@ -193,9 +206,9 @@ namespace RealmsOfEldor.Controllers
         /// </summary>
         public void SetPlayerColor(Color color)
         {
-            playerColor = color;
-            if (spriteRenderer != null && !isSelected)
-                spriteRenderer.color = color;
+            // playerColor = color;
+            // if (spriteRenderer != null && !isSelected)
+            //     spriteRenderer.color = color;
         }
 
         /// <summary>
@@ -203,10 +216,28 @@ namespace RealmsOfEldor.Controllers
         /// </summary>
         void OnMouseDown()
         {
-            if (uiEvents != null && heroData != null)
+            Debug.Log($"Hero clicked: {heroData?.CustomName ?? "no data"}");
+
+            if (uiEvents == null)
             {
-                uiEvents.RaiseHeroSelected(heroData);
+                Debug.LogError("HeroController: uiEvents is NULL!");
+                return;
             }
+
+            if (heroData == null)
+            {
+                Debug.LogError("HeroController: heroData is NULL!");
+                return;
+            }
+
+            // If already selected, don't re-raise the event (just ignore the click)
+            if (isSelected)
+            {
+                Debug.Log($"Hero {heroData.CustomName} already selected, ignoring click");
+                return;
+            }
+
+            uiEvents.RaiseHeroSelected(heroData);
         }
 
         /// <summary>

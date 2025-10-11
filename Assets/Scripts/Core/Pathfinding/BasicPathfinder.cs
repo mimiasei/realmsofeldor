@@ -4,28 +4,32 @@ namespace RealmsOfEldor.Core
 {
     /// <summary>
     /// Pathfinding implementation for hero movement.
-    /// Tries to use A* Pathfinding Project if available, falls back to simple adjacent-only movement.
+    /// Uses built-in A* pathfinding with optional external pathfinding support.
+    /// Based on VCMI's CPathfinder approach.
     /// </summary>
     public static class BasicPathfinder
     {
         /// <summary>
-        /// Delegate for A* pathfinding (set by AstarPathfindingAdapter at runtime).
+        /// Delegate for external A* pathfinding (set by AstarPathfindingAdapter at runtime if using A* Pathfinding Project).
+        /// If null, uses built-in A* implementation.
         /// </summary>
-        public static System.Func<Position, Position, List<Position>> AstarFindPath;
+        public static System.Func<GameMap, Position, Position, List<Position>> AstarFindPath;
 
         /// <summary>
-        /// Delegate for A* reachable positions query.
+        /// Delegate for external A* reachable positions query.
+        /// If null, uses built-in implementation.
         /// </summary>
-        public static System.Func<Position, int, List<Position>> AstarGetReachable;
+        public static System.Func<GameMap, Position, int, List<Position>> AstarGetReachable;
 
         /// <summary>
-        /// Delegate for A* path cost calculation.
+        /// Delegate for external A* path cost calculation.
+        /// If null, uses built-in implementation.
         /// </summary>
-        public static System.Func<List<Position>, int> AstarCalculatePathCost;
+        public static System.Func<GameMap, List<Position>, int> AstarCalculatePathCost;
 
         /// <summary>
         /// Finds a path from start to end position.
-        /// Uses A* if available, otherwise falls back to adjacent-only movement.
+        /// Uses external A* if available, otherwise uses built-in A* implementation.
         /// Returns null if no valid path exists.
         /// </summary>
         public static List<Position> FindPath(GameMap map, Position start, Position end)
@@ -37,112 +41,59 @@ namespace RealmsOfEldor.Core
             if (start == end)
                 return new List<Position> { start };
 
-            // Try A* first if available
+            // Try external A* first if available (A* Pathfinding Project integration)
             if (AstarFindPath != null)
             {
-                var astarPath = AstarFindPath(start, end);
+                var astarPath = AstarFindPath(map, start, end);
                 if (astarPath != null && astarPath.Count > 0)
                     return astarPath;
             }
 
-            // Fallback to basic adjacent-only movement
-            return FindPathBasic(map, start, end);
+            // Use built-in A* pathfinding
+            return AStarPathfinder.FindPath(map, start, end);
         }
 
-        /// <summary>
-        /// Basic pathfinding fallback (adjacent tiles only).
-        /// </summary>
-        private static List<Position> FindPathBasic(GameMap map, Position start, Position end)
-        {
-            // Only support adjacent tile movement
-            if (!IsAdjacent(start, end))
-                return null;
-
-            // Check if target is passable
-            if (!map.GetTile(end).IsPassable())
-                return null;
-
-            // Check if movement is valid
-            if (!map.CanMoveBetween(start, end))
-                return null;
-
-            // Simple two-step path
-            return new List<Position> { start, end };
-        }
 
         /// <summary>
         /// Calculates movement cost for a path.
-        /// Uses A* if available for accurate cost calculation.
+        /// Uses external A* if available, otherwise uses built-in calculation.
         /// </summary>
         public static int CalculatePathCost(GameMap map, List<Position> path)
         {
             if (map == null || path == null || path.Count < 2)
                 return 0;
 
-            // Try A* cost calculation if available
+            // Try external A* cost calculation if available
             if (AstarCalculatePathCost != null)
             {
-                var cost = AstarCalculatePathCost(path);
+                var cost = AstarCalculatePathCost(map, path);
                 if (cost >= 0)
                     return cost;
             }
 
-            // Fallback to manual calculation
-            var totalCost = 0;
-
-            for (int i = 0; i < path.Count - 1; i++)
-            {
-                totalCost += map.GetMovementCost(path[i], path[i + 1]);
-            }
-
-            return totalCost;
+            // Use built-in cost calculation
+            return AStarPathfinder.CalculatePathCost(map, path);
         }
 
         /// <summary>
         /// Gets all reachable positions from start within given movement points.
-        /// Uses A* for accurate reachability if available, otherwise returns adjacent tiles only.
+        /// Uses external A* if available, otherwise uses built-in Dijkstra implementation.
         /// </summary>
         public static List<Position> GetReachablePositions(GameMap map, Position start, int movementPoints)
         {
             if (map == null || !map.IsInBounds(start) || movementPoints <= 0)
                 return new List<Position>();
 
-            // Try A* reachability query if available
+            // Try external A* reachability query if available
             if (AstarGetReachable != null)
             {
-                var reachable = AstarGetReachable(start, movementPoints);
+                var reachable = AstarGetReachable(map, start, movementPoints);
                 if (reachable != null)
                     return reachable;
             }
 
-            // Fallback to basic adjacent tiles
-            return GetReachablePositionsBasic(map, start, movementPoints);
-        }
-
-        /// <summary>
-        /// Basic reachability fallback (adjacent tiles only).
-        /// </summary>
-        private static List<Position> GetReachablePositionsBasic(GameMap map, Position start, int movementPoints)
-        {
-            var reachable = new List<Position>();
-            var adjacent = GetAdjacentPositions(start);
-
-            foreach (var pos in adjacent)
-            {
-                if (!map.IsInBounds(pos))
-                    continue;
-
-                if (!map.GetTile(pos).IsPassable())
-                    continue;
-
-                var cost = map.GetMovementCost(start, pos);
-                if (cost <= movementPoints)
-                {
-                    reachable.Add(pos);
-                }
-            }
-
-            return reachable;
+            // Use built-in reachability calculation
+            return AStarPathfinder.GetReachablePositions(map, start, movementPoints);
         }
 
         /// <summary>

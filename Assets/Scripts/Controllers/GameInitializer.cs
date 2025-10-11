@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Linq;
 using RealmsOfEldor.Core;
+using RealmsOfEldor.Core.Events;
 using RealmsOfEldor.Database;
 
 namespace RealmsOfEldor.Controllers
@@ -22,6 +23,9 @@ namespace RealmsOfEldor.Controllers
         [SerializeField] private bool createStartingHeroes = true;
         [SerializeField] private Position player1HeroPosition = new Position(5, 5);
         [SerializeField] private Position player2HeroPosition = new Position(25, 25);
+
+        [Header("Event Channels")]
+        [SerializeField] private GameEventChannel gameEvents;
 
         [Header("Optional References")]
         [SerializeField] private HeroDatabase heroDatabase;
@@ -58,8 +62,20 @@ namespace RealmsOfEldor.Controllers
             if (GameStateManager.Instance == null)
             {
                 var gameStateObj = new GameObject("GameStateManager");
-                gameStateObj.AddComponent<GameStateManager>();
-                Debug.Log("✓ Created GameStateManager singleton");
+                var gsm = gameStateObj.AddComponent<GameStateManager>();
+
+                // Wire up event channel using reflection
+                if (gameEvents != null)
+                {
+                    var field = typeof(GameStateManager).GetField("gameEvents",
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    field?.SetValue(gsm, gameEvents);
+                    Debug.Log("✓ Created GameStateManager singleton with gameEvents wired");
+                }
+                else
+                {
+                    Debug.LogWarning("⚠️ Created GameStateManager but gameEvents not assigned to GameInitializer!");
+                }
             }
 
             var gameState = GameStateManager.Instance.State;
@@ -101,6 +117,32 @@ namespace RealmsOfEldor.Controllers
             }
 
             Debug.Log($"✅ Game initialized: {numberOfPlayers} players, day {gameState.CurrentDay}");
+
+            // Force movement refresh after initialization
+            if (createStartingHeroes)
+            {
+                foreach (var heroId in gameState.GetPlayer(0)?.HeroIds ?? System.Linq.Enumerable.Empty<int>())
+                {
+                    var hero = gameState.GetHero(heroId);
+                    if (hero != null)
+                    {
+                        hero.MaxMovement = 2000;
+                        hero.Movement = 2000;
+                    }
+                }
+                if (numberOfPlayers >= 2)
+                {
+                    foreach (var heroId in gameState.GetPlayer(1)?.HeroIds ?? System.Linq.Enumerable.Empty<int>())
+                    {
+                        var hero = gameState.GetHero(heroId);
+                        if (hero != null)
+                        {
+                            hero.MaxMovement = 2000;
+                            hero.Movement = 2000;
+                        }
+                    }
+                }
+            }
         }
 
         private void CreateStartingHeroes(GameState gameState)
@@ -123,11 +165,15 @@ namespace RealmsOfEldor.Controllers
             if (numberOfPlayers >= 1)
             {
                 var heroType1 = heroTypes[0];
-                var hero1 = gameState.AddHero(heroType1.heroTypeId, owner: 0, player1HeroPosition);
+                var hero1 = GameStateManager.Instance.CreateHero(heroType1.heroTypeId, 0, player1HeroPosition);
 
                 // Initialize hero from type data
                 hero1.CustomName = $"{heroType1.heroName} (P1)";
                 hero1.Initialize(heroType1);
+                hero1.MaxMovement = 2000;
+                hero1.Movement = 2000; // Set AFTER MaxMovement
+
+                Debug.Log($"Hero {hero1.CustomName} initialized: Movement={hero1.Movement}, MaxMovement={hero1.MaxMovement}");
 
                 Debug.Log($"✓ Created hero '{hero1.CustomName}' at {player1HeroPosition} for Player 0");
             }
@@ -136,11 +182,15 @@ namespace RealmsOfEldor.Controllers
             if (numberOfPlayers >= 2 && heroTypes.Count >= 1)
             {
                 var heroType2 = heroTypes.Count > 1 ? heroTypes[1] : heroTypes[0];
-                var hero2 = gameState.AddHero(heroType2.heroTypeId, owner: 1, player2HeroPosition);
+                var hero2 = GameStateManager.Instance.CreateHero(heroType2.heroTypeId, 1, player2HeroPosition);
 
                 // Initialize hero from type data
                 hero2.CustomName = $"{heroType2.heroName} (P2)";
                 hero2.Initialize(heroType2);
+                hero2.MaxMovement = 2000;
+                hero2.Movement = 2000;
+
+                Debug.Log($"Hero {hero2.CustomName} initialized: Movement={hero2.Movement}, MaxMovement={hero2.MaxMovement}");
 
                 Debug.Log($"✓ Created hero '{hero2.CustomName}' at {player2HeroPosition} for Player 1");
             }

@@ -47,3 +47,9 @@ Assets/AstarPathfindingProject/defines.csv.meta
 Assets/AstarPathfindingProject/link.xml
 Assets/AstarPathfindingProject/link.xml.meta
 
+# All .md files
+*.md
+
+# Except Readme
+!README.md
+

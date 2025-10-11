@@ -19,8 +19,9 @@ namespace RealmsOfEldor.Core
         private int nextObjectId;
         private Random variantRng; // Shared Random instance for variant selection
 
-        // Delegate to get variant count for a terrain type (injected by Unity layer)
+        // Delegates injected by Unity layer
         public static Func<TerrainType, int> GetTerrainVariantCount { get; set; }
+        public static Func<TerrainType, bool> GetTerrainPassability { get; set; }
 
         public GameMap(int width, int height, int? randomSeed = null)
         {
@@ -221,7 +222,34 @@ namespace RealmsOfEldor.Core
                 return false;
 
             var tile = GetTile(to);
-            return tile.IsClear();
+            if (!tile.IsClear())
+                return false;
+
+            // For diagonal movement, prevent corner-cutting
+            // At least one of the two cardinal neighbors must be clear (passable + no blocking objects)
+            var dx = to.X - from.X;
+            var dy = to.Y - from.Y;
+
+            if (dx != 0 && dy != 0) // Diagonal movement
+            {
+                var horizontal = new Position(from.X + dx, from.Y);
+                var vertical = new Position(from.X, from.Y + dy);
+
+                var horizontalClear = IsInBounds(horizontal) && GetTile(horizontal).IsClear();
+                var verticalClear = IsInBounds(vertical) && GetTile(vertical).IsClear();
+
+                // Debug logging
+                UnityEngine.Debug.Log($"Diagonal check: from {from} to {to}, dx={dx}, dy={dy}, H({horizontal})={horizontalClear}, V({vertical})={verticalClear}");
+
+                // At least one cardinal neighbor must be clear
+                if (!horizontalClear && !verticalClear)
+                {
+                    UnityEngine.Debug.Log($"BLOCKED diagonal movement from {from} to {to} - both cardinal neighbors blocked");
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public int GetMovementCost(Position from, Position to)

@@ -74,6 +74,18 @@ namespace RealmsOfEldor.Controllers
             if (cameraController != null)
             {
                 cameraController.SetMapBounds(mapWidth, mapHeight);
+
+                // Set perspective camera angle
+                var cam = cameraController.GetComponent<Camera>();
+                if (cam != null)
+                {
+                    cam.orthographic = false;
+                    cam.fieldOfView = 20f;
+                    cam.transform.rotation = Quaternion.Euler(-30f, 0f, 0f);
+                    var pos = cam.transform.position;
+                    // Y offset compensates for 30° tilt: -50 * tan(30°) ≈ -29
+                    cam.transform.position = new Vector3(pos.x, pos.y - 29f, -50f);
+                }
             }
 
             // Raise map loaded event - this triggers MapRenderer to render via event subscription
@@ -84,16 +96,44 @@ namespace RealmsOfEldor.Controllers
 
         private void GenerateRandomTerrain()
         {
-            // Create some water patches
-            for (int i = 0; i < 5; i++)
+            // PATHFINDING TEST MAP GENERATOR
+            // Creates diverse terrain to test A* pathfinding:
+            // - Passable: Grass (100), Dirt (110), Sand (125), Rough (150), Swamp (175)
+            // - Impassable: Water, Snow, Lava, Rock
+            // - Varied costs encourage pathfinder to find optimal routes
+
+            // Step 1: Fill map with varied passable terrain (strategic distribution)
+            for (var y = 0; y < mapHeight; y++)
+            {
+                for (var x = 0; x < mapWidth; x++)
+                {
+                    var pos = new Position(x, y);
+                    var roll = Random.value;
+
+                    // 40% Grass (fast), 25% Dirt (medium), 20% Sand (medium-slow), 10% Rough (slow), 5% Swamp (very slow)
+                    if (roll < 0.40f)
+                        gameMap.SetTerrain(pos, TerrainType.Grass);
+                    else if (roll < 0.65f)
+                        gameMap.SetTerrain(pos, TerrainType.Dirt);
+                    else if (roll < 0.85f)
+                        gameMap.SetTerrain(pos, TerrainType.Sand);
+                    else if (roll < 0.95f)
+                        gameMap.SetTerrain(pos, TerrainType.Rough);
+                    else
+                        gameMap.SetTerrain(pos, TerrainType.Swamp);
+                }
+            }
+
+            // Step 2: Create water lakes (impassable obstacles)
+            for (var i = 0; i < 8; i++)
             {
                 var centerX = Random.Range(5, mapWidth - 5);
                 var centerY = Random.Range(5, mapHeight - 5);
-                var radius = Random.Range(2, 5);
+                var radius = Random.Range(2, 4);
 
-                for (int y = -radius; y <= radius; y++)
+                for (var y = -radius; y <= radius; y++)
                 {
-                    for (int x = -radius; x <= radius; x++)
+                    for (var x = -radius; x <= radius; x++)
                     {
                         if (x * x + y * y <= radius * radius)
                         {
@@ -107,67 +147,124 @@ namespace RealmsOfEldor.Controllers
                 }
             }
 
-            // Add some rough terrain
-            for (int i = 0; i < 10; i++)
+            // Step 3: Add snow patches (impassable) in corners
+            // Top-right corner
+            for (var y = mapHeight - 6; y < mapHeight; y++)
             {
-                var x = Random.Range(0, mapWidth);
-                var y = Random.Range(0, mapHeight);
-                var pos = new Position(x, y);
-
-                if (!gameMap.GetTile(pos).IsWater())
-                {
-                    gameMap.SetTerrain(pos, TerrainType.Rough);
-                }
-            }
-
-            // Add some dirt paths
-            for (int i = 0; i < 3; i++)
-            {
-                var startX = Random.Range(0, mapWidth);
-                var startY = Random.Range(0, mapHeight);
-                var length = Random.Range(5, 15);
-                var direction = Random.Range(0, 4); // 0=N, 1=E, 2=S, 3=W
-
-                for (int j = 0; j < length; j++)
-                {
-                    var x = startX + (direction == 1 ? j : direction == 3 ? -j : 0);
-                    var y = startY + (direction == 0 ? j : direction == 2 ? -j : 0);
-                    var pos = new Position(x, y);
-
-                    if (gameMap.IsInBounds(pos) && !gameMap.GetTile(pos).IsWater())
-                    {
-                        gameMap.SetTerrain(pos, TerrainType.Dirt);
-                    }
-                }
-            }
-
-            // Add some snow in top-right corner
-            for (int y = mapHeight - 5; y < mapHeight; y++)
-            {
-                for (int x = mapWidth - 5; x < mapWidth; x++)
+                for (var x = mapWidth - 6; x < mapWidth; x++)
                 {
                     var pos = new Position(x, y);
-                    if (gameMap.IsInBounds(pos) && !gameMap.GetTile(pos).IsWater())
+                    if (gameMap.IsInBounds(pos))
                     {
                         gameMap.SetTerrain(pos, TerrainType.Snow);
                     }
                 }
             }
 
-            // Add some swamp near water
-            for (int y = 0; y < mapHeight; y++)
+            // Bottom-left corner (smaller)
+            for (var y = 0; y < 4; y++)
             {
-                for (int x = 0; x < mapWidth; x++)
+                for (var x = 0; x < 4; x++)
+                {
+                    var pos = new Position(x, y);
+                    if (gameMap.IsInBounds(pos))
+                    {
+                        gameMap.SetTerrain(pos, TerrainType.Snow);
+                    }
+                }
+            }
+
+            // Step 4: Add lava rivers (impassable barriers)
+            for (var i = 0; i < 3; i++)
+            {
+                var startX = Random.Range(0, mapWidth);
+                var startY = Random.Range(0, mapHeight);
+                var length = Random.Range(10, 20);
+                var direction = Random.Range(0, 4); // 0=N, 1=E, 2=S, 3=W
+
+                for (var j = 0; j < length; j++)
+                {
+                    var x = startX + (direction == 1 ? j : direction == 3 ? -j : 0);
+                    var y = startY + (direction == 0 ? j : direction == 2 ? -j : 0);
+                    var pos = new Position(x, y);
+
+                    if (gameMap.IsInBounds(pos))
+                    {
+                        gameMap.SetTerrain(pos, TerrainType.Lava);
+                    }
+                }
+            }
+
+            // Step 5: Create dirt roads (fast paths) - pathfinder should prefer these
+            for (var i = 0; i < 5; i++)
+            {
+                var startX = Random.Range(0, mapWidth);
+                var startY = Random.Range(0, mapHeight);
+                var length = Random.Range(8, 20);
+                var direction = Random.Range(0, 4);
+
+                for (var j = 0; j < length; j++)
+                {
+                    var x = startX + (direction == 1 ? j : direction == 3 ? -j : 0);
+                    var y = startY + (direction == 0 ? j : direction == 2 ? -j : 0);
+                    var pos = new Position(x, y);
+
+                    if (gameMap.IsInBounds(pos))
+                    {
+                        var tile = gameMap.GetTile(pos);
+                        // Don't overwrite impassable terrain
+                        if (!tile.IsWater() && tile.Terrain != TerrainType.Snow && tile.Terrain != TerrainType.Lava)
+                        {
+                            gameMap.SetTerrain(pos, TerrainType.Dirt);
+                        }
+                    }
+                }
+            }
+
+            // Step 6: Add rough terrain patches (slow terrain - pathfinder should avoid)
+            for (var i = 0; i < 15; i++)
+            {
+                var centerX = Random.Range(2, mapWidth - 2);
+                var centerY = Random.Range(2, mapHeight - 2);
+
+                for (var dy = -1; dy <= 1; dy++)
+                {
+                    for (var dx = -1; dx <= 1; dx++)
+                    {
+                        var pos = new Position(centerX + dx, centerY + dy);
+                        if (gameMap.IsInBounds(pos) && Random.value < 0.6f)
+                        {
+                            var tile = gameMap.GetTile(pos);
+                            // Don't overwrite impassable or already good terrain
+                            if (!tile.IsWater() && tile.Terrain != TerrainType.Snow &&
+                                tile.Terrain != TerrainType.Lava && tile.Terrain != TerrainType.Dirt)
+                            {
+                                gameMap.SetTerrain(pos, TerrainType.Rough);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Step 7: Add swamp near water edges (very slow - strong avoidance)
+            for (var y = 0; y < mapHeight; y++)
+            {
+                for (var x = 0; x < mapWidth; x++)
                 {
                     var pos = new Position(x, y);
                     var tile = gameMap.GetTile(pos);
 
-                    if (!tile.IsWater() && tile.IsCoastal && Random.value < 0.3f)
+                    if (!tile.IsWater() && tile.IsCoastal && Random.value < 0.4f)
                     {
                         gameMap.SetTerrain(pos, TerrainType.Swamp);
                     }
                 }
             }
+
+            Debug.Log("✓ Generated pathfinding test map with diverse terrain costs:");
+            Debug.Log("  - Passable: Grass(100), Dirt(110), Sand(125), Rough(150), Swamp(175)");
+            Debug.Log("  - Impassable: Water, Snow, Lava");
+            Debug.Log("  - Pathfinder should prefer: Grass > Dirt > Sand, avoid Rough/Swamp");
         }
 
         private void GenerateCheckerboardPattern()

@@ -56,6 +56,7 @@
     <Compile Include="Assets\Scripts\Editor\DataGeneration\TileAssetGenerator.cs" />
     <Compile Include="Assets\Scripts\Editor\SceneSetup\Phase4SetupWindow.cs" />
     <Compile Include="Assets\Scripts\Editor\DataGeneration\TerrainDataGenerator.cs" />
+    <Compile Include="Assets\Scripts\Editor\SceneSetup\HeroSpawnerSetup.cs" />
     <Compile Include="Assets\Scripts\Editor\SampleDataGenerator.cs" />
     <Compile Include="Assets\Scripts\Editor\SceneSetup\Phase4UISetup.cs" />
   </ItemGroup>
@@ -1171,8 +1172,8 @@
   <ItemGroup>
     <ProjectReference Include="RealmsOfEldor.Core.csproj" />
     <ProjectReference Include="RealmsOfEldor.Data.csproj" />
-    <ProjectReference Include="RealmsOfEldor.Database.csproj" />
     <ProjectReference Include="RealmsOfEldor.Controllers.csproj" />
+    <ProjectReference Include="RealmsOfEldor.Database.csproj" />
     <ProjectReference Include="RealmsOfEldor.Utilities.csproj" />
     <ProjectReference Include="RealmsOfEldor.UI.csproj" />
   </ItemGroup>

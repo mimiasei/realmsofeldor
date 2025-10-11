@@ -36,12 +36,27 @@ namespace RealmsOfEldor.Core
         // Passability checks
         public bool IsPassable()
         {
-            return Terrain != TerrainType.Rock;
+            // Use delegate to query TerrainData (injected by MapRenderer)
+            if (GameMap.GetTerrainPassability != null)
+                return GameMap.GetTerrainPassability(Terrain);
+
+            // Fallback if delegate not set
+            return Terrain != TerrainType.Water && Terrain != TerrainType.Lava;
         }
 
         public bool IsClear()
         {
-            return IsPassable() && (blockingObjectIds == null || blockingObjectIds.Count == 0);
+            var passable = IsPassable();
+            var noBlocking = (blockingObjectIds == null || blockingObjectIds.Count == 0);
+            var result = passable && noBlocking;
+
+            // Debug logging for impassable tiles
+            if (!result)
+            {
+                UnityEngine.Debug.Log($"Tile at terrain={Terrain} is NOT clear: passable={passable}, noBlocking={noBlocking}, blockingCount={blockingObjectIds?.Count ?? 0}");
+            }
+
+            return result;
         }
 
         public bool IsBlocked()

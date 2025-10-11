@@ -4,8 +4,8 @@
     "references": [
         "RealmsOfEldor.Core",
         "RealmsOfEldor.Data",
-        "RealmsOfEldor.Database",
         "RealmsOfEldor.Controllers",
+        "RealmsOfEldor.Database",
         "RealmsOfEldor.Utilities",
         "RealmsOfEldor.UI",
         "Unity.TextMeshPro",

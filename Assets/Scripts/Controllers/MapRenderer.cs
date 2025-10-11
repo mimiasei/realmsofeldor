@@ -38,6 +38,7 @@ namespace RealmsOfEldor.Controllers
         private GameMap currentMap;
         private Dictionary<TerrainType, Data.TerrainData> terrainLookup;
         private Dictionary<int, GameObject> objectInstances;
+        private Camera mainCamera;
 
         private void Awake()
         {
@@ -62,8 +63,12 @@ namespace RealmsOfEldor.Controllers
                 }
             }
 
-            // Inject variant count function into GameMap (SSOT: TerrainData knows variant count)
+            // Inject delegates into GameMap (SSOT: TerrainData knows properties)
             GameMap.GetTerrainVariantCount = GetVariantCountForTerrain;
+            GameMap.GetTerrainPassability = GetPassabilityForTerrain;
+
+            // Cache main camera
+            mainCamera = Camera.main;
         }
 
         #if UNITY_EDITOR
@@ -104,6 +109,18 @@ namespace RealmsOfEldor.Controllers
             return 1; // Default: 1 variant if terrain data not found
         }
 
+        /// <summary>
+        /// Gets passability for a terrain type from TerrainData.
+        /// </summary>
+        private bool GetPassabilityForTerrain(TerrainType terrain)
+        {
+            if (terrainLookup.TryGetValue(terrain, out var terrainData))
+            {
+                return terrainData.isPassable;
+            }
+            return false; // Default: impassable if terrain data not found
+        }
+
         private void OnEnable()
         {
             if (mapEvents == null) return;
@@ -132,6 +149,78 @@ namespace RealmsOfEldor.Controllers
             mapEvents.OnTileSelected -= HandleTileSelected;
             mapEvents.OnTilesHighlighted -= HandleTilesHighlighted;
             mapEvents.OnSelectionCleared -= HandleSelectionCleared;
+        }
+
+        private void Update()
+        {
+            HandleMouseInput();
+        }
+
+        /// <summary>
+        /// Handles mouse input for tile selection.
+        /// </summary>
+        private void HandleMouseInput()
+        {
+            if (currentMap == null)
+            {
+                Debug.LogWarning("MapRenderer: currentMap is null, cannot handle input");
+                return;
+            }
+
+            if (mapEvents == null)
+            {
+                Debug.LogWarning("MapRenderer: mapEvents is null, cannot handle input");
+                return;
+            }
+
+            // Check for left mouse button click
+            if (Input.GetMouseButtonDown(0))
+            {
+                if (mainCamera == null)
+                    mainCamera = Camera.main;
+
+                if (mainCamera == null)
+                {
+                    Debug.LogWarning("MapRenderer: Main camera not found!");
+                    return;
+                }
+
+                // Convert mouse position to world position
+                var mousePos = Input.mousePosition;
+
+                // Raycast to hit z=0 plane for perspective projection
+                Ray ray = mainCamera.ScreenPointToRay(mousePos);
+                Plane groundPlane = new Plane(Vector3.forward, Vector3.zero);
+                Vector3 worldPos;
+
+                if (groundPlane.Raycast(ray, out float enter))
+                {
+                    worldPos = ray.GetPoint(enter);
+                }
+                else
+                {
+                    // Fallback for orthographic
+                    worldPos = mainCamera.ScreenToWorldPoint(mousePos);
+                }
+
+                Debug.Log($"MapRenderer: Mouse clicked at screen {mousePos}, world {worldPos}");
+
+                // Convert world position to map position
+                var mapPos = WorldToMapPosition(worldPos);
+
+                Debug.Log($"MapRenderer: Converted to map position {mapPos}");
+
+                // Check if position is valid
+                if (currentMap.IsInBounds(mapPos))
+                {
+                    Debug.Log($"MapRenderer: Position is in bounds, raising OnTileSelected for {mapPos}");
+                    mapEvents.RaiseTileSelected(mapPos);
+                }
+                else
+                {
+                    Debug.Log($"MapRenderer: Position {mapPos} is OUT OF BOUNDS (map size: {currentMap.Width}x{currentMap.Height})");
+                }
+            }
         }
 
         // Event handlers

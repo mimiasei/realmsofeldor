@@ -59,20 +59,38 @@ namespace RealmsOfEldor.Data
         private void OnValidate()
         {
             // Auto-set passable based on terrain type
-            if (terrainType == TerrainType.Rock)
-                isPassable = false;
+            // Only Grass, Dirt, Sand, Rough, and Swamp are passable for pathfinding testing
+            isPassable = terrainType switch
+            {
+                TerrainType.Grass => true,
+                TerrainType.Subterranean => true,
+                TerrainType.Dirt => true,
+                TerrainType.Rock => true,
+                TerrainType.Sand => true,
+                TerrainType.Rough => true,
+                TerrainType.Snow => true,
+                TerrainType.Swamp => true,
+                _ => false // Water, Lava are impassable
+            };
 
             // Auto-set water flag
             isWater = (terrainType == TerrainType.Water);
 
+            // Auto-set movement costs for pathfinding testing
+            // Different costs encourage pathfinder to find optimal routes
             movementCost = terrainType switch
             {
-                // Auto-set movement cost for common terrain types
-                TerrainType.Grass or TerrainType.Dirt => 100,
-                TerrainType.Sand or TerrainType.Snow => 150,
-                TerrainType.Swamp => 175,
-                TerrainType.Lava => 200,
-                _ => movementCost
+                TerrainType.Grass => 100,       // Fast (baseline)
+                TerrainType.Subterranean => 100,// Fast (baseline)
+                TerrainType.Dirt => 100,        // Fast (baseline)
+                TerrainType.Rock => 110,        // Slightly slower
+                TerrainType.Rough => 125,       // Slow (encourages avoidance)
+                TerrainType.Sand => 150,        // Medium slow
+                TerrainType.Snow => 150,        // Medium slow
+                TerrainType.Swamp => 175,       // Very slow (strong avoidance)
+                TerrainType.Water => 999999,    // Impassable (high cost)
+                TerrainType.Lava => 999999,     // Impassable
+                _ => 100
             };
         }
     }

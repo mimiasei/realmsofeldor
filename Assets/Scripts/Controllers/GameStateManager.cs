@@ -128,7 +128,12 @@ namespace RealmsOfEldor.Controllers
 
             if (gameEvents != null)
             {
+                Debug.Log($"🔔 Raising OnHeroCreated event for heroId={hero.Id}");
                 gameEvents.RaiseHeroCreated(hero.Id);
+            }
+            else
+            {
+                Debug.LogError("⚠️ GameStateManager: gameEvents is NULL! Cannot raise OnHeroCreated.");
             }
 
             return hero;
