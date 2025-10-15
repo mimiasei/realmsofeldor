@@ -2,13 +2,15 @@
 
 A turn-based fantasy strategy game inspired by Heroes of Might and Magic III, built with Unity and C#.
 
-## 🎮 Current Status: Phase 3 Complete
+## 🎮 Current Status: Phase 6F Complete
 
-**Phase 3: Map System** ✅ **COMPLETE**
-- Fully functional adventure map with varied terrain
-- Smooth camera controls with zoom and pan
-- Random map generation with water, mountains, swamps, and more
-- Object placement system (resources, mines, dwellings)
+**Phase 6F: Modificator Architecture** ✅ **COMPLETE**
+- VCMI-style modificator pipeline for extensible map generation
+- Budget-based RMG with treasure limits and balanced placement
+- Guard placement system for high-value objects
+- Obstacle placement with path preservation
+- Reachability validation ensuring all objects accessible
+- Complete UI/UX flow (Main Menu → Map Selection → Adventure Map)
 
 ## 🕹️ Controls
 
@@ -112,33 +114,59 @@ Assets/
 - Map object system (resources, mines, dwellings)
 - Random terrain generation
 - A* pathfinding integration
-- 65 total unit tests
 
-### 🔄 Phase 4: Adventure Map UI (In Progress - Code Complete)
+### ✅ Phase 4: Adventure Map UI (Complete)
 - Resource bar UI
 - Hero panel with stats
 - Hero selection and movement
 - Turn button and day counter
 - Keyboard shortcuts
+- Path preview system
+- Smooth hero movement
 
-### ⏳ Phase 5: Battle System (Not Started)
+### ✅ Phase 5: Battle System (Complete)
 - Turn-based combat engine
-- Damage calculation (HOMM3 formulas)
-- Battle UI and animations
-- Auto-battle AI
+- Damage calculation (VCMI formulas)
+- Turn queue with initiative ordering
+- Special mechanics (double attack, status effects)
+- Battle AI with action evaluation
 
-### ⏳ Phase 6: Town System (Not Started)
+### ✅ Phase 6A-6F: RMG Foundation (Complete)
+- UI/UX flow (MainMenu → MapSelection → AdventureMap)
+- Map persistence system with metadata
+- Budget-based object placement (Phase 6B)
+- Reachability validation (Phase 6C)
+- Guard placement for high-value treasures (Phase 6D)
+- Obstacle placement with density control (Phase 6E)
+- **Modificator architecture refactor (Phase 6F)** ✨ NEW
+  - 7 modificators with dependency chain
+  - Extensible pipeline for adding new features
+  - VCMI-accurate implementation
+
+### ⏳ Phase 7: Zone-Based RMG (Future)
+- Voronoi zone placement
+- Per-zone budgets
+- Zone connections and paths
+
+### ⏳ Phase 8: Town System (Future)
 - Town buildings
 - Creature recruitment
 - Resource costs and growth
 
 ## 🧪 Unit Tests
 
-**Total: 65 tests** with 100% coverage on core logic
+**Total: 180+ tests** with comprehensive coverage
 
 Run tests in Unity:
 - Window → General → Test Runner
 - EditMode tab → Run All
+
+Test Coverage:
+- Core logic (GameState, Hero, Army, Resources)
+- Map system (GameMap, MapTile, Pathfinding)
+- Battle system (Combat, Turn Queue, Damage)
+- RMG system (Budget, Reachability, Guards, Obstacles)
+- Modificator pipeline (15 tests)
 
 ## 📚 Documentation
 
@@ -149,27 +177,18 @@ Run tests in Unity:
 
 ## 🎯 Next Steps
 
-1. **Phase 4**: Integrate adventure map UI (code exists, needs scene setup)
-2. **Phase 5**: Implement battle system
+1. **Phase 7**: Zone-based RMG (Voronoi zones, balanced starting positions)
+2. **Town System**: Buildings, creature recruitment, resource management
 3. **Replace placeholder art** with proper sprites
-4. **Create hero prefabs** for movement testing
+4. **Battle visualization**: Hex grid rendering, unit animations
 
 ## 📝 Notes
 
 - This is a work-in-progress educational project
 - Architecture inspired by VCMI (open-source HOMM3 engine)
 - Focus on clean code, testability, and proven patterns
-- VCMI reference code available at `/tmp/vcmi-temp/`
-
-## 🚀 Quick Start for New Session
-
-1. Read **PROJECT_SUMMARY.md** for current state
-2. Check **CHANGES.md** for recent updates
-3. Reference **VCMI code** at `/tmp/vcmi-temp/` for implementation patterns
-4. Run tests to verify everything works
-5. Load AdventureMap scene and press Play!
 
 ---
 
-**Current Build**: Phase 3 Complete - Map System Fully Functional
-**Last Updated**: 2025-10-04
+**Current Build**: Phase 6F Complete - Modificator Architecture Refactor
+**Last Updated**: 2025-10-15
