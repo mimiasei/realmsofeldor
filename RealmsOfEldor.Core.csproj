@@ -51,13 +51,19 @@
     <Compile Include="Assets\Scripts\Core\Events\BattleEventChannel.cs" />
     <Compile Include="Assets\Scripts\Core\Pathfinding\AStarPathfinder.cs" />
     <Compile Include="Assets\Scripts\Core\Battle\DamageCalculator.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\MapMetadata.cs" />
     <Compile Include="Assets\Scripts\Core\Resources.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\ModificatorPipeline.cs" />
     <Compile Include="Assets\Scripts\Core\Events\UIEventChannel.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\MapModificator.cs" />
     <Compile Include="Assets\Scripts\Core\Position.cs" />
     <Compile Include="Assets\Scripts\Core\Battle\AttackPossibility.cs" />
     <Compile Include="Assets\Scripts\Core\Serialization\ResourceSetJsonConverter.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\MapObjectFactory.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\MapReachabilityValidator.cs" />
     <Compile Include="Assets\Scripts\Core\Map\MapObject.cs" />
     <Compile Include="Assets\Scripts\Core\GameState.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\Modificators\ReachabilityValidatorModificator.cs" />
     <Compile Include="Assets\Scripts\Core\Battle\BattleState.cs" />
     <Compile Include="Assets\Scripts\Core\Events\MapEventChannel.cs" />
     <Compile Include="Assets\Scripts\Core\Battle\BattleUnit.cs" />
@@ -68,12 +74,20 @@
     <Compile Include="Assets\Scripts\Core\Hero.cs" />
     <Compile Include="Assets\Scripts\Core\Battle\BattleHex.cs" />
     <Compile Include="Assets\Scripts\Core\Battle\BattleAction.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\Modificators\GuardPlacerModificator.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\Modificators\DwellingPlacerModificator.cs" />
     <Compile Include="Assets\Scripts\Core\Battle\TurnQueue.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\Modificators\ObstaclePlacerModificator.cs" />
     <Compile Include="Assets\Scripts\Core\Events\GameEventChannel.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\Modificators\MinePlacerModificator.cs" />
     <Compile Include="Assets\Scripts\Core\Serialization\PositionJsonConverter.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\MapGenBudget.cs" />
     <Compile Include="Assets\Scripts\Core\Map\GameMap.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\Modificators\TerrainPainterModificator.cs" />
     <Compile Include="Assets\Scripts\Core\Map\MapTile.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\Modificators\ResourcePlacerModificator.cs" />
     <Compile Include="Assets\Scripts\Core\GameTypes.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\ObstaclePlacer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Core\RealmsOfEldor.Core.asmdef" />

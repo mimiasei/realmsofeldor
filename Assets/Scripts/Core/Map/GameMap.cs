@@ -319,5 +319,21 @@ namespace RealmsOfEldor.Core
                 dwelling.ApplyWeeklyGrowth();
             }
         }
+        
+        /// <summary>
+        /// Checks if a position is passable (not blocked by terrain or objects).
+        /// </summary>
+        public bool IsPassable(Position pos)
+        {
+            return IsInBounds(pos) && GetTile(pos).IsPassable();
+        }
+
+        /// <summary>
+        /// Checks if a position is clear (passable and has no blocking objects).
+        /// </summary>
+        public bool IsClear(Position pos)
+        {
+            return IsInBounds(pos) && GetTile(pos).IsClear();
+        }
     }
 }

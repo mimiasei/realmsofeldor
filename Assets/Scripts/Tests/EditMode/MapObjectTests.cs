@@ -184,5 +184,97 @@ namespace RealmsOfEldor.Tests
 
             Assert.AreEqual(PlayerColor.Neutral, mine.Owner);
         }
+
+        [Test]
+        public void MapObject_CanBeInstantiatedDirectly_ForDecorativeObjects()
+        {
+            var pos = new Position(7, 9);
+            var decorative = new MapObject(MapObjectType.Decorative, pos)
+            {
+                Name = "Rock",
+                IsBlocking = true,
+                IsVisitable = false
+            };
+
+            Assert.AreEqual(MapObjectType.Decorative, decorative.ObjectType);
+            Assert.AreEqual(pos, decorative.Position);
+            Assert.AreEqual("Rock", decorative.Name);
+            Assert.IsTrue(decorative.IsBlocking);
+            Assert.IsFalse(decorative.IsVisitable);
+        }
+
+        [Test]
+        public void MapObject_GetBlockedPositions_ReturnsOwnPositionWhenBlocking()
+        {
+            var pos = new Position(7, 9);
+            var blockingDecorative = new MapObject(MapObjectType.Decorative, pos)
+            {
+                IsBlocking = true
+            };
+
+            var blocked = blockingDecorative.GetBlockedPositions();
+            Assert.AreEqual(1, blocked.Count);
+            Assert.IsTrue(blocked.Contains(pos));
+        }
+
+        [Test]
+        public void MapObject_GetBlockedPositions_ReturnsEmptyWhenNonBlocking()
+        {
+            var pos = new Position(7, 9);
+            var nonBlockingDecorative = new MapObject(MapObjectType.Decorative, pos)
+            {
+                IsBlocking = false
+            };
+
+            var blocked = nonBlockingDecorative.GetBlockedPositions();
+            Assert.AreEqual(0, blocked.Count);
+        }
+
+        [Test]
+        public void MapObjectFactory_CreateDecorative_CreatesCorrectObject()
+        {
+            var pos = new Position(10, 12);
+            var decorative = MapObjectFactory.CreateDecorative(pos, "Mountain", isBlocking: true);
+
+            Assert.AreEqual(MapObjectType.Decorative, decorative.ObjectType);
+            Assert.AreEqual(pos, decorative.Position);
+            Assert.AreEqual("Mountain", decorative.Name);
+            Assert.IsTrue(decorative.IsBlocking);
+            Assert.IsFalse(decorative.IsVisitable);
+            Assert.IsFalse(decorative.IsRemovable);
+        }
+
+        [Test]
+        public void MapObjectFactory_CreateResource_CreatesResourceObject()
+        {
+            var pos = new Position(3, 5);
+            var resource = MapObjectFactory.CreateResource(pos, ResourceType.Wood, 250);
+
+            Assert.AreEqual(MapObjectType.Resource, resource.ObjectType);
+            Assert.AreEqual(ResourceType.Wood, resource.ResourceType);
+            Assert.AreEqual(250, resource.Amount);
+        }
+
+        [Test]
+        public void MapObjectFactory_CreateMine_CreatesMineObject()
+        {
+            var pos = new Position(8, 12);
+            var mine = MapObjectFactory.CreateMine(pos, ResourceType.Crystal, 3);
+
+            Assert.AreEqual(MapObjectType.Mine, mine.ObjectType);
+            Assert.AreEqual(ResourceType.Crystal, mine.ResourceType);
+            Assert.AreEqual(3, mine.DailyProduction);
+        }
+
+        [Test]
+        public void MapObjectFactory_CreateDwelling_CreatesDwellingObject()
+        {
+            var pos = new Position(15, 20);
+            var dwelling = MapObjectFactory.CreateDwelling(pos, creatureId: 5, weeklyGrowth: 8);
+
+            Assert.AreEqual(MapObjectType.Dwelling, dwelling.ObjectType);
+            Assert.AreEqual(5, dwelling.CreatureId);
+            Assert.AreEqual(8, dwelling.WeeklyGrowth);
+        }
     }
 }

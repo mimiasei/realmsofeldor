@@ -1,13 +1,15 @@
 using System.Collections.Generic;
 using System.Linq;
+using RealmsOfEldor.Data;
 
 namespace RealmsOfEldor.Core
 {
     /// <summary>
     /// Base class for objects on the game map.
     /// Based on VCMI's CGObjectInstance.
+    /// Can be instantiated directly for decorative objects (following VCMI pattern).
     /// </summary>
-    public abstract class MapObject
+    public class MapObject
     {
         // Basic properties
         public int InstanceId { get; set; }
@@ -17,11 +19,26 @@ namespace RealmsOfEldor.Core
         public string Name { get; set; }
 
         // Blocking and visitable configuration
-        public bool IsBlocking { get; protected set; }
-        public bool IsVisitable { get; protected set; }
-        public bool IsRemovable { get; protected set; }
+        public bool IsBlocking { get; set; }
+        public bool IsVisitable { get; set; }
+        public bool IsRemovable { get; set; }
 
-        protected MapObject(MapObjectType objectType, Position position)
+        // Value tracking for budget system
+        private int? _cachedValue;
+        public int Value
+        {
+            get
+            {
+                if (!_cachedValue.HasValue)
+                    _cachedValue = CalculateValue();
+                return _cachedValue.Value;
+            }
+        }
+
+        // Guard information
+        public GuardInfo Guard { get; set; }
+
+        public MapObject(MapObjectType objectType, Position position)
         {
             ObjectType = objectType;
             Position = position;
@@ -30,11 +47,29 @@ namespace RealmsOfEldor.Core
             IsBlocking = false;
             IsVisitable = false;
             IsRemovable = false;
+            Guard = null; // No guard by default
         }
 
-        // Abstract methods for subclasses
-        public abstract HashSet<Position> GetBlockedPositions();
-        public abstract void OnVisit(Hero hero);
+        // Virtual methods with default implementations (can be overridden by subclasses)
+        public virtual HashSet<Position> GetBlockedPositions()
+        {
+            // Default: single tile blocking at object position if IsBlocking is true
+            return IsBlocking ? new HashSet<Position> { Position } : new HashSet<Position>();
+        }
+
+        public virtual void OnVisit(Hero hero)
+        {
+            // Default: no action (decorative objects don't have visit logic)
+        }
+
+        /// <summary>
+        /// Calculates the value of this object for budget tracking.
+        /// Override in subclasses for specific value calculations.
+        /// </summary>
+        protected virtual int CalculateValue()
+        {
+            return 0; // Decorative objects have no value
+        }
 
         // Get positions that can be visited from (adjacent to blocked positions)
         public virtual HashSet<Position> GetVisitablePositions()
@@ -69,6 +104,43 @@ namespace RealmsOfEldor.Core
         {
             return GetBlockedPositions().Contains(pos);
         }
+
+        /// <summary>
+        /// Checks if this object has guards.
+        /// </summary>
+        public bool IsGuarded()
+        {
+            return Guard != null && Guard.CreatureId != 0 && Guard.Count > 0;
+        }
+
+        /// <summary>
+        /// Gets the position where the guard is placed (blocking access to the object).
+        /// Usually the tile directly in front of the object's main tile.
+        /// </summary>
+        public Position GetGuardPosition()
+        {
+            // Default: place guard directly south of object (below)
+            // This matches VCMI's preference for placing guards below objects
+            return new Position(Position.X, Position.Y + 1);
+        }
+    }
+
+    /// <summary>
+    /// Represents guard information for a map object.
+    /// Based on VCMI's CGCreature pattern for object guards.
+    /// </summary>
+    public class GuardInfo
+    {
+        public int CreatureId { get; set; }
+        public int Count { get; set; }
+        public int CalculatedStrength { get; set; } // AI value used for calculation
+
+        public GuardInfo(int creatureId, int count, int calculatedStrength = 0)
+        {
+            CreatureId = creatureId;
+            Count = count;
+            CalculatedStrength = calculatedStrength;
+        }
     }
 
     /// <summary>
@@ -101,6 +173,30 @@ namespace RealmsOfEldor.Core
             // Resource pickup logic handled by GameState
             // This object will be removed after visit
         }
+
+        protected override int CalculateValue()
+        {
+            // Calculate value based on resource type
+            // Uses standard VCMI values: Gold 1:1, Basic 125:1, Rare 500:1
+            switch (ResourceType)
+            {
+                case ResourceType.Gold:
+                    return Amount;
+
+                case ResourceType.Wood:
+                case ResourceType.Ore:
+                    return Amount * 125;
+
+                case ResourceType.Mercury:
+                case ResourceType.Sulfur:
+                case ResourceType.Crystal:
+                case ResourceType.Gems:
+                    return Amount * 500;
+
+                default:
+                    return 0;
+            }
+        }
     }
 
     /// <summary>
@@ -132,6 +228,37 @@ namespace RealmsOfEldor.Core
         {
             // Flag mine for hero's owner
             // Logic handled by GameState
+        }
+
+        protected override int CalculateValue()
+        {
+            // Mines have strategic value: daily production * 30 days
+            // Uses standard VCMI values: Gold 1:1, Basic 125:1, Rare 500:1
+            int dailyValue;
+            switch (ResourceType)
+            {
+                case ResourceType.Gold:
+                    dailyValue = DailyProduction;
+                    break;
+
+                case ResourceType.Wood:
+                case ResourceType.Ore:
+                    dailyValue = DailyProduction * 125;
+                    break;
+
+                case ResourceType.Mercury:
+                case ResourceType.Sulfur:
+                case ResourceType.Crystal:
+                case ResourceType.Gems:
+                    dailyValue = DailyProduction * 500;
+                    break;
+
+                default:
+                    dailyValue = 0;
+                    break;
+            }
+
+            return dailyValue * 30; // Strategic value over time (30 days)
         }
     }
 

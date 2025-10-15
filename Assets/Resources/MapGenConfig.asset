@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49fa3443ef934a9e9af7325fbaf6a839, type: 3}
+  m_Name: MapGenConfig
+  m_EditorClassIdentifier:
+  treasureBudget: 10000
+  treasureValueLimit: 5000
+  mineCount: 7
+  dwellingCount: 4
+  resourcePileCount: 15
+  goldValueMultiplier: 1
+  basicResourceValue: 125
+  rareResourceValue: 500
+  mineExtraResourcesLimit: 10
+  minGuardedValue: 2000
+  enableGuards: 1
+  guardStrengthValue1: 2500
+  guardStrengthValue2: 7500
+  guardStrengthMultiplier1: 1
+  guardStrengthMultiplier2: 1
+  objectDensity: 5

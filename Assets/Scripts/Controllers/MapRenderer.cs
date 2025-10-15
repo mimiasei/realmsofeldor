@@ -27,6 +27,8 @@ namespace RealmsOfEldor.Controllers
         [SerializeField] private GameObject resourcePrefab;
         [SerializeField] private GameObject minePrefab;
         [SerializeField] private GameObject dwellingPrefab;
+        [SerializeField] private GameObject obstaclePrefab;
+        [SerializeField] private MapObjectPrefabGenerator prefabGenerator;
 
         [Header("Highlight Tiles")]
         [SerializeField] private TileBase selectionTile;
@@ -66,6 +68,28 @@ namespace RealmsOfEldor.Controllers
             // Inject delegates into GameMap (SSOT: TerrainData knows properties)
             GameMap.GetTerrainVariantCount = GetVariantCountForTerrain;
             GameMap.GetTerrainPassability = GetPassabilityForTerrain;
+
+            // Auto-find prefab generator if not assigned
+            if (prefabGenerator == null)
+            {
+                prefabGenerator = FindFirstObjectByType<MapObjectPrefabGenerator>();
+                if (prefabGenerator == null)
+                {
+                    Debug.LogWarning("⚠️ MapObjectPrefabGenerator not found. Creating one...");
+                    var generatorObj = new GameObject("MapObjectPrefabGenerator");
+                    prefabGenerator = generatorObj.AddComponent<MapObjectPrefabGenerator>();
+                }
+            }
+
+            // Use generated prefabs if manual prefabs not assigned
+            if (resourcePrefab == null && prefabGenerator != null)
+                resourcePrefab = prefabGenerator.ResourcePrefab;
+            if (minePrefab == null && prefabGenerator != null)
+                minePrefab = prefabGenerator.MinePrefab;
+            if (dwellingPrefab == null && prefabGenerator != null)
+                dwellingPrefab = prefabGenerator.DwellingPrefab;
+            if (obstaclePrefab == null && prefabGenerator != null)
+                obstaclePrefab = prefabGenerator.ObstaclePrefab;
 
             // Cache main camera
             mainCamera = Camera.main;
@@ -352,12 +376,19 @@ namespace RealmsOfEldor.Controllers
                 prefab = minePrefab;
             else if (obj is DwellingObject)
                 prefab = dwellingPrefab;
+            else if (obj.ObjectType == MapObjectType.Decorative)
+                prefab = obstaclePrefab;
+
+            Debug.Log($"MapRenderer.AddObjectRendering: {obj.Name} (Type={obj.ObjectType}), prefab={(prefab != null ? "FOUND" : "NULL")}");
 
             if (prefab != null)
             {
                 var instance = Instantiate(prefab, transform);
                 instance.transform.position = MapToWorldPosition(obj.Position);
                 instance.name = obj.Name;
+                instance.SetActive(true); // Ensure it's active
+
+                Debug.Log($"MapRenderer: Instantiated {obj.Name} at world position {instance.transform.position}");
 
                 // Add MapObjectView component to link instance to data
                 var view = instance.GetComponent<MapObjectView>();
@@ -366,6 +397,10 @@ namespace RealmsOfEldor.Controllers
                 view.ObjectId = obj.InstanceId;
 
                 objectInstances[obj.InstanceId] = instance;
+            }
+            else
+            {
+                Debug.LogWarning($"MapRenderer: No prefab found for object {obj.Name} (Type={obj.ObjectType})");
             }
         }
 

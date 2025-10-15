@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Controllers\Battle\BattleController.cs" />
     <Compile Include="Assets\Scripts\Controllers\HeroSpawner.cs" />
+    <Compile Include="Assets\Scripts\Controllers\MapPersistenceManager.cs" />
     <Compile Include="Assets\Scripts\Controllers\AdventureMapInputController.cs" />
     <Compile Include="Assets\Scripts\Controllers\HeroController.cs" />
     <Compile Include="Assets\Scripts\Controllers\GameInitializer.cs" />
@@ -59,6 +60,7 @@
     <Compile Include="Assets\Scripts\Controllers\PathPreviewRenderer.cs" />
     <Compile Include="Assets\Scripts\Controllers\CameraController.cs" />
     <Compile Include="Assets\Scripts\Controllers\MapRenderer.cs" />
+    <Compile Include="Assets\Scripts\Controllers\MapObjectPrefabGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Controllers\RealmsOfEldor.Controllers.asmdef" />

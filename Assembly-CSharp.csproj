@@ -52,9 +52,12 @@
     <Compile Include="Assets\Scripts\Tests\EditMode\MapObjectTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\BasicPathfinderTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\DamageCalculatorTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\ObstaclePlacerTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\GameMapTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\ModificatorPipelineTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\MapTileTests.cs" />
     <Compile Include="Assets\Scripts\Tests\EditMode\TurnQueueTests.cs" />
+    <Compile Include="Assets\Scripts\Tests\EditMode\GuardPlacementTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

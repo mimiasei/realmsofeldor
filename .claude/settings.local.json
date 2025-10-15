@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//tmp/vcmi-temp/lib/**)",
+      "Read(//mnt/c/Users/**)",
+      "Bash(mkdir:*)",
+      "Bash(tree:*)",
+      "Read(//tmp/vcmi-temp/**)",
+      "Bash(xargs ls:*)",
+      "Bash(dotnet build:*)",
+      "WebSearch",
+      "Bash(uuidgen)",
+      "Read(//home/mikkel/Projects/vcmi-develop/lib/rmg/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

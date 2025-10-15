@@ -49,8 +49,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\UI\ResourceBarUI.cs" />
+    <Compile Include="Assets\Scripts\UI\MapSelectionUI.cs" />
     <Compile Include="Assets\Scripts\UI\InfoBarUI.cs" />
     <Compile Include="Assets\Scripts\UI\HeroPanelUI.cs" />
+    <Compile Include="Assets\Scripts\UI\MainMenuUI.cs" />
     <Compile Include="Assets\Scripts\UI\TurnControlUI.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -1139,6 +1141,7 @@
     <ProjectReference Include="RealmsOfEldor.Controllers.csproj" />
     <ProjectReference Include="RealmsOfEldor.Data.csproj" />
     <ProjectReference Include="RealmsOfEldor.Utilities.csproj" />
+    <ProjectReference Include="RealmsOfEldor.Database.csproj" />
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   <ItemGroup>

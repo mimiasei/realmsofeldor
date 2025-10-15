@@ -1,14 +1,18 @@
+using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using RealmsOfEldor.Core;
 using RealmsOfEldor.Core.Events;
+using RealmsOfEldor.Core.Map;
 using RealmsOfEldor.Database;
+using RealmsOfEldor.Data;
 
 namespace RealmsOfEldor.Controllers
 {
     /// <summary>
-    /// Initializes the game state with default players, heroes, and resources
-    /// Attach to a GameObject in the Adventure Map scene
+    /// Unified game initializer that creates both GameState and GameMap.
+    /// Based on VCMI's CMap initialization pattern.
+    /// Attach to a GameObject in the Adventure Map scene.
     /// </summary>
     public class GameInitializer : MonoBehaviour
     {
@@ -19,6 +23,18 @@ namespace RealmsOfEldor.Controllers
         [SerializeField] private int startingWood = 20;
         [SerializeField] private int startingOre = 20;
 
+        [Header("Map Settings")]
+        [SerializeField] private int mapWidth = 30;
+        [SerializeField] private int mapHeight = 30;
+        [SerializeField] private bool useModificatorPipeline = true;
+        [SerializeField] private bool generateRandomTerrain = true;
+        [SerializeField] private bool addMapObjects = true;
+        [SerializeField] private int resourcePileCount = 5;
+        [SerializeField] private int mineCount = 3;
+        [SerializeField] private int dwellingCount = 2;
+        [SerializeField] private bool validateReachability = true;
+        [SerializeField] private int reachabilitySearchRadius = 5;
+
         [Header("Hero Settings")]
         [SerializeField] private bool createStartingHeroes = true;
         [SerializeField] private Position player1HeroPosition = new Position(5, 5);
@@ -26,6 +42,11 @@ namespace RealmsOfEldor.Controllers
 
         [Header("Event Channels")]
         [SerializeField] private GameEventChannel gameEvents;
+        [SerializeField] private MapEventChannel mapEvents;
+
+        [Header("Required References")]
+        [SerializeField] private MapRenderer mapRenderer;
+        [SerializeField] private CameraController cameraController;
 
         [Header("Optional References")]
         [SerializeField] private HeroDatabase heroDatabase;
@@ -143,6 +164,539 @@ namespace RealmsOfEldor.Controllers
                     }
                 }
             }
+
+            // Initialize map (following VCMI's CMap pattern)
+            InitializeMap();
+        }
+
+        /// <summary>
+        /// Initializes the game map with terrain and objects.
+        /// Based on VCMI's CMap::addNewObject pattern.
+        /// </summary>
+        private void InitializeMap()
+        {
+            if (mapEvents == null)
+            {
+                Debug.LogWarning("⚠️ MapEventChannel not assigned. Map will not be initialized.");
+                return;
+            }
+
+            Debug.Log("🗺️ Initializing game map...");
+
+            // Create GameMap (VCMI's CMap equivalent)
+            var gameMap = new GameMap(mapWidth, mapHeight);
+
+            // Use new modificator pipeline or legacy approach
+            if (useModificatorPipeline)
+            {
+                InitializeMapWithModificators(gameMap);
+            }
+            else
+            {
+                InitializeMapLegacy(gameMap);
+            }
+
+            // Configure camera
+            if (cameraController != null)
+            {
+                cameraController.SetMapBounds(mapWidth, mapHeight);
+            }
+
+            // Raise map loaded event (triggers MapRenderer to render)
+            mapEvents.RaiseMapLoaded(gameMap);
+
+            Debug.Log($"✅ Map initialized: {mapWidth}x{mapHeight} with {gameMap.GetAllObjects().Count()} objects");
+        }
+
+        /// <summary>
+        /// Initializes map using the VCMI-style modificator pipeline.
+        /// This is the new recommended approach.
+        /// </summary>
+        private void InitializeMapWithModificators(GameMap gameMap)
+        {
+            var config = MapGenConfig.Instance;
+            var pipeline = new ModificatorPipeline(gameMap, config);
+
+            // Collect hero start positions for reachability validator
+            var startPositions = new List<Position>();
+            if (createStartingHeroes)
+            {
+                startPositions.Add(player1HeroPosition);
+                if (numberOfPlayers >= 2)
+                    startPositions.Add(player2HeroPosition);
+            }
+            if (startPositions.Count == 0)
+            {
+                startPositions.Add(new Position(mapWidth / 2, mapHeight / 2));
+            }
+
+            // Add modificators in priority order (they'll self-sort)
+            pipeline.AddModificator(new TerrainPainterModificator());
+
+            if (addMapObjects)
+            {
+                pipeline.AddModificator(new ResourcePlacerModificator());
+                pipeline.AddModificator(new MinePlacerModificator());
+                pipeline.AddModificator(new DwellingPlacerModificator());
+                pipeline.AddModificator(new GuardPlacerModificator());
+                pipeline.AddModificator(new ObstaclePlacerModificator());
+            }
+
+            if (validateReachability)
+            {
+                pipeline.AddModificator(new ReachabilityValidatorModificator(startPositions, reachabilitySearchRadius));
+            }
+
+            // Log pipeline configuration
+            Debug.Log(pipeline.GetSummary());
+
+            // Execute pipeline
+            pipeline.ExecuteWithCleanup();
+        }
+
+        /// <summary>
+        /// Legacy map initialization (pre-modificator system).
+        /// Kept for backwards compatibility and testing.
+        /// </summary>
+        private void InitializeMapLegacy(GameMap gameMap)
+        {
+            // Generate terrain
+            if (generateRandomTerrain)
+            {
+                GenerateRandomTerrain(gameMap);
+            }
+            else
+            {
+                GenerateBasicTerrain(gameMap);
+            }
+
+            // Add map objects (VCMI's addNewObject pattern)
+            if (addMapObjects)
+            {
+                AddMapObjects(gameMap);
+
+                // Add guards to high-value objects (VCMI's TreasurePlacer guard logic)
+                AddGuardsToObjects(gameMap);
+
+                // Add decorative obstacles (VCMI's ObstaclePlacer modificator)
+                AddObstacles(gameMap);
+            }
+
+            // Validate reachability (VCMI's RockFiller equivalent)
+            if (validateReachability)
+            {
+                ValidateMapReachability(gameMap);
+            }
+
+            // Calculate coastal tiles (VCMI's calculateGuardingCreaturePositions equivalent)
+            gameMap.CalculateCoastalTiles();
+        }
+
+        /// <summary>
+        /// Generates diverse terrain for pathfinding testing.
+        /// Based on MapTestInitializer pattern.
+        /// </summary>
+        private void GenerateRandomTerrain(GameMap map)
+        {
+            // Fill with base terrain
+            for (var y = 0; y < mapHeight; y++)
+            {
+                for (var x = 0; x < mapWidth; x++)
+                {
+                    var pos = new Position(x, y);
+                    var roll = Random.value;
+
+                    if (roll < 0.40f)
+                        map.SetTerrain(pos, TerrainType.Grass);
+                    else if (roll < 0.65f)
+                        map.SetTerrain(pos, TerrainType.Dirt);
+                    else if (roll < 0.85f)
+                        map.SetTerrain(pos, TerrainType.Sand);
+                    else if (roll < 0.95f)
+                        map.SetTerrain(pos, TerrainType.Rough);
+                    else
+                        map.SetTerrain(pos, TerrainType.Swamp);
+                }
+            }
+
+            // Add water lakes (impassable)
+            for (var i = 0; i < 5; i++)
+            {
+                var centerX = Random.Range(5, mapWidth - 5);
+                var centerY = Random.Range(5, mapHeight - 5);
+                var radius = Random.Range(2, 4);
+
+                for (var y = -radius; y <= radius; y++)
+                {
+                    for (var x = -radius; x <= radius; x++)
+                    {
+                        if (x * x + y * y <= radius * radius)
+                        {
+                            var pos = new Position(centerX + x, centerY + y);
+                            if (map.IsInBounds(pos))
+                            {
+                                map.SetTerrain(pos, TerrainType.Water);
+                            }
+                        }
+                    }
+                }
+            }
+
+            Debug.Log("✓ Generated random terrain with diverse costs");
+        }
+
+        /// <summary>
+        /// Generates simple grass terrain for basic testing.
+        /// </summary>
+        private void GenerateBasicTerrain(GameMap map)
+        {
+            for (var y = 0; y < mapHeight; y++)
+            {
+                for (var x = 0; x < mapWidth; x++)
+                {
+                    map.SetTerrain(new Position(x, y), TerrainType.Grass);
+                }
+            }
+
+            Debug.Log("✓ Generated basic grass terrain");
+        }
+
+        /// <summary>
+        /// Adds map objects (resources, mines, dwellings) using budget-based placement.
+        /// Following VCMI's treasure budget and addNewObject pattern.
+        /// </summary>
+        private void AddMapObjects(GameMap map)
+        {
+            var config = MapGenConfig.Instance;
+            var budget = new MapGenBudget(config);
+
+            // Add resource piles using treasure budget (VCMI's CGResource equivalent)
+            var resourceAttempts = 0;
+            while (budget.CanPlaceResourcePile(1) && resourceAttempts < 100)
+            {
+                resourceAttempts++;
+                var pos = FindClearPosition(map);
+                if (pos == null)
+                    continue;
+
+                // Generate resource with value consideration
+                var resourceType = (ResourceType)Random.Range(0, 7);
+                var amount = CalculateResourceAmount(resourceType, budget.RemainingTreasureBudget, config);
+
+                var resource = new ResourceObject(pos.Value, resourceType, amount);
+
+                // Check if this resource fits within budget
+                if (budget.CanPlaceResourcePile(resource.Value))
+                {
+                    map.AddObject(resource);
+                    budget.RecordResourcePile(resource);
+                }
+            }
+
+            // Add mines (VCMI's CGMine equivalent)
+            var mineAttempts = 0;
+            while (budget.CanPlaceMine() && mineAttempts < 50)
+            {
+                mineAttempts++;
+                var pos = FindClearPosition(map);
+                if (pos == null)
+                    continue;
+
+                var resourceType = (ResourceType)Random.Range(1, 7); // Not gold mines
+                var production = Random.Range(1, 3);
+                var mine = new MineObject(pos.Value, resourceType, production);
+
+                map.AddObject(mine);
+                budget.RecordMine(mine);
+            }
+
+            // Add dwellings (VCMI's CGDwelling equivalent)
+            var dwellingAttempts = 0;
+            while (budget.CanPlaceDwelling() && dwellingAttempts < 50)
+            {
+                dwellingAttempts++;
+                var pos = FindClearPosition(map);
+                if (pos == null)
+                    continue;
+
+                var creatureId = Random.Range(1, 10);
+                var weeklyGrowth = Random.Range(5, 15);
+                var dwelling = new DwellingObject(pos.Value, creatureId, weeklyGrowth);
+                dwelling.ApplyWeeklyGrowth(); // Start with some creatures
+
+                map.AddObject(dwelling);
+                budget.RecordDwelling(dwelling);
+            }
+
+            Debug.Log($"✅ Budget-based placement complete:\n{budget.GetSummary()}");
+        }
+
+        /// <summary>
+        /// Calculates appropriate resource amount based on remaining budget and resource type.
+        /// Prevents placing resources that exceed budget limits.
+        /// </summary>
+        private int CalculateResourceAmount(ResourceType resourceType, int remainingBudget, MapGenConfig config)
+        {
+            // Calculate max amount based on remaining budget
+            int minAmount, maxAmount;
+
+            switch (resourceType)
+            {
+                case ResourceType.Gold:
+                    minAmount = 500;
+                    maxAmount = System.Math.Min(2000, remainingBudget / config.goldValueMultiplier);
+                    break;
+
+                case ResourceType.Wood:
+                case ResourceType.Ore:
+                    minAmount = 3;
+                    maxAmount = System.Math.Min(10, remainingBudget / config.basicResourceValue);
+                    break;
+
+                case ResourceType.Mercury:
+                case ResourceType.Sulfur:
+                case ResourceType.Crystal:
+                case ResourceType.Gems:
+                    minAmount = 2;
+                    maxAmount = System.Math.Min(6, remainingBudget / config.rareResourceValue);
+                    break;
+
+                default:
+                    return 1;
+            }
+
+            // Ensure we have valid range
+            maxAmount = System.Math.Max(minAmount, maxAmount);
+            return Random.Range(minAmount, maxAmount + 1);
+        }
+
+        /// <summary>
+        /// Validates that all map objects are reachable from hero start positions.
+        /// Based on VCMI's RockFiller reachability validation.
+        /// </summary>
+        private void ValidateMapReachability(GameMap map)
+        {
+            Debug.Log("🔍 Validating map reachability...");
+
+            // Collect hero start positions
+            var startPositions = new List<Position>();
+            if (createStartingHeroes)
+            {
+                startPositions.Add(player1HeroPosition);
+                if (numberOfPlayers >= 2)
+                    startPositions.Add(player2HeroPosition);
+            }
+
+            // If no heroes, use center of map as start position
+            if (startPositions.Count == 0)
+            {
+                startPositions.Add(new Position(mapWidth / 2, mapHeight / 2));
+            }
+
+            // Run reachability validation
+            var validator = new MapReachabilityValidator(map);
+            var result = validator.FixUnreachableObjects(startPositions, reachabilitySearchRadius);
+
+            // Log results
+            if (result.TotalUnreachableObjects > 0)
+            {
+                Debug.Log($"⚠️ Reachability validation:\n{result}");
+            }
+            else
+            {
+                var stats = validator.CalculateStats(startPositions);
+                Debug.Log($"✅ All objects reachable!\n{stats}");
+            }
+        }
+
+        /// <summary>
+        /// Finds a random clear position on the map for object placement.
+        /// </summary>
+        private Position? FindClearPosition(GameMap map)
+        {
+            for (var attempts = 0; attempts < 50; attempts++)
+            {
+                var x = Random.Range(1, mapWidth - 1);
+                var y = Random.Range(1, mapHeight - 1);
+                var pos = new Position(x, y);
+
+                if (map.GetTile(pos).IsClear())
+                {
+                    return pos;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Chooses appropriate guards for a treasure object based on its value.
+        /// Based on VCMI's ObjectManager::chooseGuard() algorithm.
+        /// </summary>
+        /// <param name="treasureValue">Value of the object to guard</param>
+        /// <param name="config">Map generation configuration</param>
+        /// <returns>GuardInfo with creature and count, or null if no guard needed</returns>
+        private GuardInfo ChooseGuard(int treasureValue, MapGenConfig config)
+        {
+            if (!config.RequiresGuards(treasureValue))
+                return null;
+
+            var guardStrength = config.CalculateGuardStrength(treasureValue);
+            if (guardStrength <= 0)
+                return null;
+
+            // VCMI uses creature database to find appropriate guards
+            // For simplicity, we'll use a hardcoded creature list with AI values
+            // In a full implementation, this would query CreatureDatabase
+
+            // Simplified creature list (creatureId, AIValue per creature)
+            var availableCreatures = new[]
+            {
+                (id: 1, aiValue: 30),     // Weak creature (e.g., Pikeman)
+                (id: 2, aiValue: 80),     // Low-tier creature
+                (id: 3, aiValue: 150),    // Medium-tier creature
+                (id: 4, aiValue: 300),    // Strong creature
+                (id: 5, aiValue: 600),    // Very strong creature
+                (id: 6, aiValue: 1200),   // Elite creature
+                (id: 7, aiValue: 2500)    // Champion creature
+            };
+
+            // Find creatures that can provide guards with strength between average and 100x
+            var suitableCreatures = availableCreatures
+                .Where(c => c.aiValue * 50 >= guardStrength && c.aiValue <= guardStrength * 100)
+                .ToList();
+
+            if (suitableCreatures.Count == 0)
+            {
+                // Fallback: use strongest available creature if strength is very high
+                var strongest = availableCreatures[availableCreatures.Length - 1];
+                var count = Mathf.Max(1, guardStrength / strongest.aiValue);
+                return new GuardInfo(strongest.id, count, guardStrength);
+            }
+
+            // Pick a random suitable creature
+            var chosen = suitableCreatures[Random.Range(0, suitableCreatures.Count)];
+            var guardCount = Mathf.Max(1, guardStrength / chosen.aiValue);
+
+            // Add randomization for stacks of 4+
+            if (guardCount >= 4)
+            {
+                guardCount = Mathf.RoundToInt(guardCount * Random.Range(0.75f, 1.25f));
+            }
+
+            return new GuardInfo(chosen.id, guardCount, guardStrength);
+        }
+
+        /// <summary>
+        /// Adds guards to high-value objects after placement.
+        /// Based on VCMI's TreasurePlacer::createTreasures() guard logic.
+        /// </summary>
+        private void AddGuardsToObjects(GameMap map)
+        {
+            var config = MapGenConfig.Instance;
+            if (!config.enableGuards)
+            {
+                Debug.Log("⚔️ Guard placement disabled in config");
+                return;
+            }
+
+            var guardsPlaced = 0;
+            foreach (var obj in map.GetAllObjects())
+            {
+                if (config.RequiresGuards(obj.Value))
+                {
+                    var guard = ChooseGuard(obj.Value, config);
+                    if (guard != null)
+                    {
+                        obj.Guard = guard;
+                        guardsPlaced++;
+
+                        // Guard position is automatically calculated by MapObject.GetGuardPosition()
+                        Debug.Log($"🛡️ Added guard to {obj.Name} (value: {obj.Value}): {guard.Count}x creature {guard.CreatureId} (strength: {guard.CalculatedStrength})");
+                    }
+                }
+            }
+
+            Debug.Log($"✅ Placed {guardsPlaced} guards for high-value objects");
+        }
+
+        /// <summary>
+        /// Adds decorative and blocking obstacles to the map.
+        /// Based on VCMI's ObstaclePlacer modificator.
+        /// </summary>
+        private void AddObstacles(GameMap map)
+        {
+            var config = MapGenConfig.Instance;
+            if (!config.enableObstacles)
+            {
+                Debug.Log("🌳 Obstacle placement disabled in config");
+                return;
+            }
+
+            // Build obstacle type list based on configuration
+            var obstacleTypes = BuildObstacleTypeList(config);
+
+            // Use shared Random instance for consistent results
+            var sharedRandom = new System.Random();
+
+            // Create obstacle placer
+            var placer = new ObstaclePlacer(map, sharedRandom);
+
+            // Place obstacles
+            var obstacles = placer.PlaceObstacles(
+                obstacleTypes,
+                config.obstacleCount,
+                allowBlocking: config.blockingObstacleRatio > 0f);
+
+            // Debug: Log each obstacle
+            foreach (var obstacle in obstacles)
+            {
+                Debug.Log($"🌳 Obstacle: {obstacle.Name} at {obstacle.Position}, Blocking={obstacle.IsBlocking}, Type={obstacle.ObjectType}");
+            }
+
+            // Log statistics
+            var stats = placer.GetStats();
+            Debug.Log($"✅ Placed {obstacles.Count} obstacles\n{stats}");
+        }
+
+        /// <summary>
+        /// Builds list of obstacle types based on configuration percentages.
+        /// </summary>
+        private List<ObstacleType> BuildObstacleTypeList(MapGenConfig config)
+        {
+            var obstacleTypes = new List<ObstacleType>();
+
+            // Add mountain/rock types (30% by default)
+            if (config.mountainRockChance > 0f)
+            {
+                obstacleTypes.Add(ObstacleType.Mountain);
+                obstacleTypes.Add(ObstacleType.Rock);
+                obstacleTypes.Add(ObstacleType.Boulder);
+            }
+
+            // Add tree types (40% by default)
+            if (config.treeChance > 0f)
+            {
+                obstacleTypes.Add(ObstacleType.Tree);
+                obstacleTypes.Add(ObstacleType.Tree); // Add twice for higher frequency
+            }
+
+            // Add bush/flower types (30% by default)
+            if (config.bushFlowerChance > 0f)
+            {
+                obstacleTypes.Add(ObstacleType.Bush);
+                obstacleTypes.Add(ObstacleType.Flowers);
+                obstacleTypes.Add(ObstacleType.Grass);
+            }
+
+            // If no types configured, provide defaults
+            if (obstacleTypes.Count == 0)
+            {
+                obstacleTypes.Add(ObstacleType.Tree);
+                obstacleTypes.Add(ObstacleType.Rock);
+                obstacleTypes.Add(ObstacleType.Bush);
+            }
+
+            return obstacleTypes;
         }
 
         private void CreateStartingHeroes(GameState gameState)

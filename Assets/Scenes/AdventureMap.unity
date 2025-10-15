@@ -526,6 +526,15 @@ MonoBehaviour:
   startingGold: 10000
   startingWood: 20
   startingOre: 20
+  mapWidth: 30
+  mapHeight: 30
+  generateRandomTerrain: 1
+  addMapObjects: 1
+  resourcePileCount: 5
+  mineCount: 3
+  dwellingCount: 2
+  validateReachability: 1
+  reachabilitySearchRadius: 5
   createStartingHeroes: 1
   player1HeroPosition:
     X: 5
@@ -534,6 +543,9 @@ MonoBehaviour:
     X: 25
     Y: 25
   gameEvents: {fileID: 11400000, guid: c9a2de40d9b7afb47b1ec001223475d0, type: 2}
+  mapEvents: {fileID: 11400000, guid: 874935b6abd27714fa8e0fc023e4a01a, type: 2}
+  mapRenderer: {fileID: 1487374062}
+  cameraController: {fileID: 2052833280}
   heroDatabase: {fileID: 35988669}
 --- !u!4 &406986465
 Transform:
@@ -2274,10 +2286,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: RealmsOfEldor.Controllers::RealmsOfEldor.Controllers.PathPreviewRenderer
   lineRenderer: {fileID: 0}
+  unreachableLineRenderer: {fileID: 0}
   lineWidth: 0.1
   lineZPosition: 0
-  normalPathColor: {r: 0.3, g: 1, b: 0.3, a: 0.8}
-  insufficientMovementColor: {r: 1, g: 0.3, b: 0.3, a: 0.8}
+  reachablePathColor: {r: 0.3, g: 1, b: 0.3, a: 0.8}
+  unreachablePathColor: {r: 1, g: 0.3, b: 0.3, a: 0.8}
 --- !u!4 &1344467145
 Transform:
   m_ObjectHideFlags: 0
@@ -2769,6 +2782,8 @@ MonoBehaviour:
   resourcePrefab: {fileID: 0}
   minePrefab: {fileID: 0}
   dwellingPrefab: {fileID: 0}
+  obstaclePrefab: {fileID: 0}
+  prefabGenerator: {fileID: 0}
   selectionTile: {fileID: 0}
   reachableTile: {fileID: 0}
   mapEvents: {fileID: 11400000, guid: 874935b6abd27714fa8e0fc023e4a01a, type: 2}
@@ -3242,8 +3257,7 @@ MonoBehaviour:
   mapRenderer: {fileID: 1487374062}
   cameraController: {fileID: 2052833280}
   pathPreviewRenderer: {fileID: 1344467144}
-  enableKeyboardShortcuts: 1
-  doubleTapThreshold: 0.3
+  gameSettings: {fileID: 0}
 --- !u!4 &1862710868
 Transform:
   m_ObjectHideFlags: 0
@@ -3427,13 +3441,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: RealmsOfEldor.Controllers::RealmsOfEldor.Controllers.CameraController
-  mainCamera: {fileID: 0}
+  mainCamera: {fileID: 2052833281}
   panSpeed: 10
   edgePanSpeed: 8
   edgePanThreshold: 10
   zoomSpeed: 5
   minZoom: 2
   maxZoom: 10
+  minPerspZoom: -50
+  maxPerspZoom: -10
+  zoomUnitsBeforeToStartCamRot: 5
+  regularCamRot: -30
+  maxZoomCamRot: -60
   mapMinBounds: {x: 0, y: 0}
   mapMaxBounds: {x: 0, y: 0}
   constrainToBounds: 1
@@ -3474,8 +3493,8 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
-  orthographic: 1
+  field of view: 20
+  orthographic: 0
   orthographic size: 20
   m_Depth: 0
   m_CullingMask:
@@ -3500,13 +3519,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2052833279}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 45, y: 0, z: 0}
+  m_LocalRotation: {x: -0.258819, y: 0, z: 0, w: 0.9659259}
+  m_LocalPosition: {x: 15, y: 15, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -30, y: 0, z: 0}
 --- !u!114 &2052833283
 MonoBehaviour:
   m_ObjectHideFlags: 0

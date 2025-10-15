@@ -84,7 +84,9 @@ namespace RealmsOfEldor.Core
         University = 17,
         Shipyard = 18,
         Obelisk = 19,
-        Event = 20
+        Event = 20,
+        Decorative = 21,
+        Visitable = 22
     }
 
     /// <summary>

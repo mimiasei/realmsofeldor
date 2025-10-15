@@ -51,6 +51,7 @@
     <Compile Include="Assets\Scripts\Data\TerrainData.cs" />
     <Compile Include="Assets\Scripts\Data\CreatureData.cs" />
     <Compile Include="Assets\Scripts\Data\HeroTypeData.cs" />
+    <Compile Include="Assets\Scripts\Data\MapGenConfig.cs" />
     <Compile Include="Assets\Scripts\Data\GameSettings.cs" />
     <Compile Include="Assets\Scripts\Data\GameConstants.cs" />
     <Compile Include="Assets\Scripts\Data\SpellData.cs" />
