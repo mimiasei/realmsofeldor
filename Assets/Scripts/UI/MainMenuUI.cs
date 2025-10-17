@@ -37,6 +37,15 @@ namespace RealmsOfEldor.UI
             {
                 titleText.text = "Realms of Eldor";
             }
+
+            // Debug: Log all scenes in build settings
+            Debug.Log($"=== Scenes in Build Settings ===");
+            for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
+            {
+                string scenePath = SceneUtility.GetScenePathByBuildIndex(i);
+                Debug.Log($"[{i}] {scenePath}");
+            }
+            Debug.Log($"================================");
         }
 
         void OnDestroy()
@@ -59,7 +68,17 @@ namespace RealmsOfEldor.UI
         private void OnPlayClicked()
         {
             Debug.Log($"Loading map selection scene: {mapSelectionSceneName}");
-            SceneManager.LoadScene(mapSelectionSceneName);
+
+            // Try loading by name first, if that fails try by build index
+            try
+            {
+                SceneManager.LoadScene(mapSelectionSceneName);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"Failed to load scene by name '{mapSelectionSceneName}', trying by build index 1. Error: {e.Message}");
+                SceneManager.LoadScene(1); // MapSelection should be at index 1
+            }
         }
 
         /// <summary>

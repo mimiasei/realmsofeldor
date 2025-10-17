@@ -4,7 +4,9 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 using RealmsOfEldor.Core;
+using RealmsOfEldor.Core.Map;
 using RealmsOfEldor.Controllers;
+using RealmsOfEldor.Data;
 
 namespace RealmsOfEldor.UI
 {
@@ -43,6 +45,12 @@ namespace RealmsOfEldor.UI
                 persistenceObj.AddComponent<MapPersistenceManager>();
             }
 
+            // CRITICAL FIX: Ensure Content has VerticalLayoutGroup and ContentSizeFitter
+            if (mapListContainer != null)
+            {
+                FixContentLayoutComponents();
+            }
+
             // Wire up buttons
             if (generateNewMapButton != null)
             {
@@ -64,6 +72,54 @@ namespace RealmsOfEldor.UI
             RefreshMapList();
         }
 
+        /// <summary>
+        /// Runtime fix: Ensures Content GameObject has VerticalLayoutGroup and ContentSizeFitter.
+        /// This is a failsafe in case the scene wasn't saved properly.
+        /// </summary>
+        private void FixContentLayoutComponents()
+        {
+            Debug.Log($"[MapSelectionUI] mapListContainer is: {GetFullPath(mapListContainer)}");
+
+            var rectTransform = mapListContainer.GetComponent<RectTransform>();
+
+            // Fix anchors if incorrect
+            if (rectTransform.anchorMin != new Vector2(0f, 1f) || rectTransform.anchorMax != new Vector2(1f, 1f))
+            {
+                Debug.LogWarning($"[MapSelectionUI] Wrong anchors: {rectTransform.anchorMin} to {rectTransform.anchorMax}. Fixing...");
+                rectTransform.anchorMin = new Vector2(0f, 1f);
+                rectTransform.anchorMax = new Vector2(1f, 1f);
+                rectTransform.pivot = new Vector2(0.5f, 1f);
+                rectTransform.anchoredPosition = Vector2.zero;
+                rectTransform.sizeDelta = new Vector2(0, 0);
+            }
+
+            // Ensure VerticalLayoutGroup exists
+            var verticalLayout = mapListContainer.GetComponent<VerticalLayoutGroup>();
+            if (verticalLayout == null)
+            {
+                Debug.LogWarning("[MapSelectionUI] VerticalLayoutGroup missing! Adding...");
+                verticalLayout = mapListContainer.gameObject.AddComponent<VerticalLayoutGroup>();
+            }
+
+            verticalLayout.childAlignment = TextAnchor.UpperCenter;
+            verticalLayout.childControlWidth = true;
+            verticalLayout.childControlHeight = false;
+            verticalLayout.childForceExpandWidth = true;
+            verticalLayout.childForceExpandHeight = false;
+            verticalLayout.spacing = 10;
+
+            // Ensure ContentSizeFitter exists
+            var contentSizeFitter = mapListContainer.GetComponent<ContentSizeFitter>();
+            if (contentSizeFitter == null)
+            {
+                Debug.LogWarning("[MapSelectionUI] ContentSizeFitter missing! Adding...");
+                contentSizeFitter = mapListContainer.gameObject.AddComponent<ContentSizeFitter>();
+            }
+
+            contentSizeFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            contentSizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        }
+
         void OnDestroy()
         {
             if (generateNewMapButton != null)
@@ -82,19 +138,27 @@ namespace RealmsOfEldor.UI
         /// </summary>
         private void RefreshMapList()
         {
-            // Clear existing items
-            if (mapListContainer != null)
+            if (MapPersistenceManager.Instance == null)
             {
-                foreach (Transform child in mapListContainer)
-                {
-                    Destroy(child.gameObject);
-                }
+                Debug.LogError("MapPersistenceManager.Instance is NULL!");
+                return;
+            }
+
+            if (mapListContainer == null)
+            {
+                Debug.LogError("mapListContainer is NULL! Assign it in Inspector!");
+                return;
+            }
+
+            // Clear existing items
+            foreach (Transform child in mapListContainer)
+            {
+                Destroy(child.gameObject);
             }
 
             // Get available maps
-            availableMaps = MapPersistenceManager.Instance?.GetAllMapMetadata() ?? new List<MapMetadata>();
-
-            Debug.Log($"Found {availableMaps.Count} available maps");
+            availableMaps = MapPersistenceManager.Instance.GetAllMapMetadata();
+            Debug.Log($"[MapSelectionUI] Found {availableMaps.Count} available maps");
 
             // Create UI items for each map
             foreach (var metadata in availableMaps)
@@ -102,11 +166,9 @@ namespace RealmsOfEldor.UI
                 CreateMapListItem(metadata);
             }
 
-            // If no maps, show helpful message
-            if (availableMaps.Count == 0)
-            {
-                Debug.Log("No maps found. Generate a new map to get started!");
-            }
+            // Force layout rebuild
+            Canvas.ForceUpdateCanvases();
+            UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(mapListContainer.GetComponent<RectTransform>());
         }
 
         /// <summary>
@@ -115,28 +177,24 @@ namespace RealmsOfEldor.UI
         private void CreateMapListItem(MapMetadata metadata)
         {
             if (mapItemPrefab == null || mapListContainer == null)
-            {
-                Debug.LogWarning("Map item prefab or container not assigned");
                 return;
-            }
 
             var item = Instantiate(mapItemPrefab, mapListContainer);
+            item.name = $"MapItem_{metadata.Name}";
 
-            // Find text component (assumes prefab has TextMeshProUGUI child)
+            // Set text
             var textComponent = item.GetComponentInChildren<TextMeshProUGUI>();
             if (textComponent != null)
             {
                 textComponent.text = metadata.GetDisplayName();
             }
 
-            // Find button component and wire up click
+            // Wire up button click
             var button = item.GetComponent<Button>();
             if (button != null)
             {
                 button.onClick.AddListener(() => OnMapSelected(metadata.Id));
             }
-
-            Debug.Log($"Created map list item: {metadata.GetDisplayName()}");
         }
 
         /// <summary>
@@ -145,9 +203,6 @@ namespace RealmsOfEldor.UI
         private void OnMapSelected(string mapId)
         {
             selectedMapId = mapId;
-            Debug.Log($"Map selected: {mapId}");
-
-            // Load the selected map and start game
             LoadMapAndStartGame(mapId);
         }
 
@@ -156,12 +211,8 @@ namespace RealmsOfEldor.UI
         /// </summary>
         private void OnGenerateNewMapClicked()
         {
-            Debug.Log("Generating new map...");
-
-            // Generate random map name
             var mapName = $"Random Map {System.DateTime.Now:yyyy-MM-dd HH:mm:ss}";
 
-            // Create metadata
             var metadata = new MapMetadata(
                 name: mapName,
                 width: defaultMapWidth,
@@ -171,19 +222,12 @@ namespace RealmsOfEldor.UI
             );
             metadata.Description = "Randomly generated map";
 
-            // Generate the map (using same pattern as GameInitializer)
             var gameMap = GenerateRandomMap(metadata.Width, metadata.Height);
 
-            // Save the map
             if (MapPersistenceManager.Instance.SaveMap(gameMap, metadata))
             {
-                Debug.Log($"✅ Map generated and saved: {mapName}");
-
-                // Refresh list to show new map
+                Debug.Log($"[MapSelectionUI] Generated new map: {mapName}");
                 RefreshMapList();
-
-                // Optionally, auto-select and load the new map
-                // LoadMapAndStartGame(metadata.Id);
             }
             else
             {
@@ -192,131 +236,51 @@ namespace RealmsOfEldor.UI
         }
 
         /// <summary>
-        /// Generates a random map with diverse terrain and objects.
-        /// Based on GameInitializer's GenerateRandomTerrain pattern.
+        /// Generates a random map using the Phase 6F modificator pipeline.
+        /// This replaces the legacy inline generation code.
+        /// Note: Hero spawning is now handled by HeroSpawnModificator (end of pipeline).
         /// </summary>
         private GameMap GenerateRandomMap(int width, int height)
         {
             var map = new GameMap(width, height);
+            var config = MapGenConfig.Instance;
 
-            // Generate diverse terrain
-            for (var y = 0; y < height; y++)
-            {
-                for (var x = 0; x < width; x++)
-                {
-                    var pos = new Position(x, y);
-                    var roll = Random.value;
+            // Set up modificator pipeline
+            var pipeline = new ModificatorPipeline(map, config);
 
-                    if (roll < 0.40f)
-                        map.SetTerrain(pos, Data.TerrainType.Grass);
-                    else if (roll < 0.65f)
-                        map.SetTerrain(pos, Data.TerrainType.Dirt);
-                    else if (roll < 0.85f)
-                        map.SetTerrain(pos, Data.TerrainType.Sand);
-                    else if (roll < 0.95f)
-                        map.SetTerrain(pos, Data.TerrainType.Rough);
-                    else
-                        map.SetTerrain(pos, Data.TerrainType.Swamp);
-                }
-            }
+            // Define starting position for hero spawn (center of map)
+            var heroSpawnPos = new Position(width / 2, height / 2);
+            var startPositions = new List<Position> { heroSpawnPos };
 
-            // Add water lakes (impassable)
-            for (var i = 0; i < 5; i++)
-            {
-                var centerX = Random.Range(5, width - 5);
-                var centerY = Random.Range(5, height - 5);
-                var radius = Random.Range(2, 4);
+            // Add all modificators
+            pipeline.AddModificator(new TerrainPainterModificator());
+            pipeline.AddModificator(new ResourcePlacerModificator());
+            pipeline.AddModificator(new MinePlacerModificator());
+            pipeline.AddModificator(new DwellingPlacerModificator());
+            pipeline.AddModificator(new GuardPlacerModificator());
+            pipeline.AddModificator(new ObstaclePlacerModificator());
+            pipeline.AddModificator(new ReachabilityValidatorModificator(startPositions, 5));
 
-                for (var y = -radius; y <= radius; y++)
-                {
-                    for (var x = -radius; x <= radius; x++)
-                    {
-                        if (x * x + y * y <= radius * radius)
-                        {
-                            var pos = new Position(centerX + x, centerY + y);
-                            if (map.IsInBounds(pos))
-                            {
-                                map.SetTerrain(pos, Data.TerrainType.Water);
-                            }
-                        }
-                    }
-                }
-            }
+            // Add hero spawn modificator (runs AFTER terrain generation - Priority 90)
+            // This ensures hero spawns on passable terrain
+            var heroSpawnMod = new HeroSpawnModificator();
+            pipeline.AddModificator(heroSpawnMod);
 
-            // Add map objects
-            AddMapObjects(map, 5, 3, 2); // 5 resources, 3 mines, 2 dwellings
-
-            // Calculate coastal tiles
+            // Execute pipeline
+            pipeline.ExecuteWithCleanup();
             map.CalculateCoastalTiles();
 
-            Debug.Log($"✓ Generated random map: {width}x{height}");
+            // Create hero at the spawn position found by modificator
+            if (heroSpawnMod.SpawnPosition.HasValue && GameStateManager.Instance != null)
+            {
+                var hero = GameStateManager.Instance.CreateHero(1, 0, heroSpawnMod.SpawnPosition.Value);
+                hero.CustomName = "Starting Hero";
+                hero.MaxMovement = 2000;
+                hero.Movement = 2000;
+                Debug.Log($"✓ Created hero at {heroSpawnMod.SpawnPosition.Value}");
+            }
+
             return map;
-        }
-
-        /// <summary>
-        /// Adds map objects (resources, mines, dwellings) to the map.
-        /// Based on GameInitializer's AddMapObjects pattern.
-        /// </summary>
-        private void AddMapObjects(GameMap map, int resourceCount, int mineCount, int dwellingCount)
-        {
-            // Add resource piles
-            for (var i = 0; i < resourceCount; i++)
-            {
-                var pos = FindClearPosition(map);
-                if (pos != null)
-                {
-                    var resourceType = (ResourceType)Random.Range(0, 7);
-                    var amount = Random.Range(5, 20);
-                    var resource = new ResourceObject(pos.Value, resourceType, amount);
-                    map.AddObject(resource);
-                }
-            }
-
-            // Add mines
-            for (var i = 0; i < mineCount; i++)
-            {
-                var pos = FindClearPosition(map);
-                if (pos != null)
-                {
-                    var resourceType = (ResourceType)Random.Range(1, 7); // Not gold
-                    var production = Random.Range(1, 3);
-                    var mine = new MineObject(pos.Value, resourceType, production);
-                    map.AddObject(mine);
-                }
-            }
-
-            // Add dwellings
-            for (var i = 0; i < dwellingCount; i++)
-            {
-                var pos = FindClearPosition(map);
-                if (pos != null)
-                {
-                    var creatureId = Random.Range(1, 10);
-                    var weeklyGrowth = Random.Range(5, 15);
-                    var dwelling = new DwellingObject(pos.Value, creatureId, weeklyGrowth);
-                    dwelling.ApplyWeeklyGrowth(); // Start with some creatures
-                    map.AddObject(dwelling);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Finds a random clear position on the map for object placement.
-        /// </summary>
-        private Position? FindClearPosition(GameMap map)
-        {
-            for (var attempts = 0; attempts < 50; attempts++)
-            {
-                var x = Random.Range(1, map.Width - 1);
-                var y = Random.Range(1, map.Height - 1);
-                var pos = new Position(x, y);
-
-                if (map.GetTile(pos).IsClear())
-                {
-                    return pos;
-                }
-            }
-            return null;
         }
 
         /// <summary>
@@ -324,9 +288,6 @@ namespace RealmsOfEldor.UI
         /// </summary>
         private void LoadMapAndStartGame(string mapId)
         {
-            Debug.Log($"Loading map {mapId} and starting game...");
-
-            // Load the map
             var gameMap = MapPersistenceManager.Instance.LoadMap(mapId);
             if (gameMap == null)
             {
@@ -338,7 +299,6 @@ namespace RealmsOfEldor.UI
             PlayerPrefs.SetString("SelectedMapId", mapId);
             PlayerPrefs.Save();
 
-            // Load adventure map scene
             SceneManager.LoadScene(adventureMapSceneName);
         }
 
@@ -347,8 +307,21 @@ namespace RealmsOfEldor.UI
         /// </summary>
         private void OnBackClicked()
         {
-            Debug.Log("Returning to main menu");
             SceneManager.LoadScene(mainMenuSceneName);
+        }
+
+        /// <summary>
+        /// Helper to get full hierarchy path of a Transform.
+        /// </summary>
+        private string GetFullPath(Transform transform)
+        {
+            string path = transform.name;
+            while (transform.parent != null)
+            {
+                transform = transform.parent;
+                path = transform.name + "/" + path;
+            }
+            return path;
         }
 
 #if UNITY_EDITOR

@@ -26,6 +26,7 @@ namespace RealmsOfEldor.Core.Events
         public event Action<MapObject, Position, Position> OnObjectMoved;
         public event Action<MapObject, PlayerColor> OnObjectOwnerChanged;
         public event Action<Hero, MapObject> OnObjectVisited;
+        public event Action<MapObject> OnObjectClicked; // Raised when object is clicked
 
         // Hero movement on map
         public event Action<Hero, Position, Position> OnHeroMovedOnMap;
@@ -84,6 +85,11 @@ namespace RealmsOfEldor.Core.Events
             OnObjectVisited?.Invoke(hero, obj);
         }
 
+        public void RaiseObjectClicked(MapObject obj)
+        {
+            OnObjectClicked?.Invoke(obj);
+        }
+
         // Raise hero movement events
         public void RaiseHeroMovedOnMap(Hero hero, Position from, Position to)
         {
@@ -123,6 +129,7 @@ namespace RealmsOfEldor.Core.Events
             OnObjectMoved = null;
             OnObjectOwnerChanged = null;
             OnObjectVisited = null;
+            OnObjectClicked = null;
             OnHeroMovedOnMap = null;
             OnHeroTeleported = null;
             OnTileSelected = null;

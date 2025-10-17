@@ -528,6 +528,7 @@ MonoBehaviour:
   startingOre: 20
   mapWidth: 30
   mapHeight: 30
+  useModificatorPipeline: 1
   generateRandomTerrain: 1
   addMapObjects: 1
   resourcePileCount: 5

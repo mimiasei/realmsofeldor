@@ -42,6 +42,9 @@ namespace RealmsOfEldor.Controllers
         private Dictionary<int, GameObject> objectInstances;
         private Camera mainCamera;
 
+        // Public accessor for MapEvents
+        public MapEventChannel MapEvents => mapEvents;
+
         private void Awake()
         {
             terrainLookup = new Dictionary<TerrainType, Data.TerrainData>();
@@ -395,6 +398,13 @@ namespace RealmsOfEldor.Controllers
                 if (view == null)
                     view = instance.AddComponent<MapObjectView>();
                 view.ObjectId = obj.InstanceId;
+                view.SetObjectReference(obj); // Cache object reference for click detection
+
+                // Add guard visualization if object has guards
+                if (obj.IsGuarded())
+                {
+                    AddGuardVisualization(instance, obj);
+                }
 
                 objectInstances[obj.InstanceId] = instance;
             }
@@ -411,6 +421,73 @@ namespace RealmsOfEldor.Controllers
                 Destroy(instance);
                 objectInstances.Remove(objectId);
             }
+        }
+
+        /// <summary>
+        /// Adds a visual indicator for guarded objects.
+        /// Creates a small sprite renderer showing guard icon or count.
+        /// </summary>
+        private void AddGuardVisualization(GameObject objectInstance, MapObject obj)
+        {
+            if (!obj.IsGuarded())
+                return;
+
+            // Create child GameObject for guard indicator
+            var guardIndicator = new GameObject("GuardIndicator");
+            guardIndicator.transform.SetParent(objectInstance.transform);
+
+            // Position indicator slightly below and to the right of object
+            guardIndicator.transform.localPosition = new Vector3(0.3f, -0.3f, -0.1f);
+            guardIndicator.transform.localScale = Vector3.one * 0.4f; // Smaller than object
+
+            // Add SpriteRenderer for guard icon
+            var spriteRenderer = guardIndicator.AddComponent<SpriteRenderer>();
+            spriteRenderer.sortingOrder = 15; // Above objects but below UI
+
+            // Create a simple colored square as guard indicator (red for danger)
+            spriteRenderer.sprite = CreateGuardSprite();
+            spriteRenderer.color = new Color(1f, 0.2f, 0.2f, 0.8f); // Red with transparency
+
+            // Add TextMesh for guard count
+            var textObj = new GameObject("GuardCount");
+            textObj.transform.SetParent(guardIndicator.transform);
+            textObj.transform.localPosition = Vector3.zero;
+            textObj.transform.localScale = Vector3.one * 2f; // Scale up text
+
+            var textMesh = textObj.AddComponent<TextMesh>();
+            textMesh.text = obj.Guard.Count.ToString();
+            textMesh.fontSize = 20;
+            textMesh.alignment = TextAlignment.Center;
+            textMesh.anchor = TextAnchor.MiddleCenter;
+            textMesh.color = Color.white;
+
+            // Add MeshRenderer for text visibility
+            var meshRenderer = textObj.GetComponent<MeshRenderer>();
+            if (meshRenderer != null)
+            {
+                meshRenderer.sortingOrder = 16; // Above guard sprite
+            }
+
+            Debug.Log($"✓ Added guard visualization to {obj.Name}: {obj.Guard.Count}x creature {obj.Guard.CreatureId}");
+        }
+
+        /// <summary>
+        /// Creates a simple sprite for guard indicator (small square).
+        /// </summary>
+        private Sprite CreateGuardSprite()
+        {
+            // Create a 16x16 texture with a filled square
+            var texture = new Texture2D(16, 16);
+            var pixels = new Color[16 * 16];
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                pixels[i] = Color.white; // Fill with white (will be tinted red by SpriteRenderer)
+            }
+            texture.SetPixels(pixels);
+            texture.Apply();
+
+            // Create sprite from texture
+            return Sprite.Create(texture, new Rect(0, 0, 16, 16), new Vector2(0.5f, 0.5f), 16f);
         }
 
         private void ClearMap()
@@ -483,9 +560,51 @@ namespace RealmsOfEldor.Controllers
 
     /// <summary>
     /// Component attached to map object instances to link them to their data.
+    /// Handles click detection for map objects.
     /// </summary>
     public class MapObjectView : MonoBehaviour
     {
         public int ObjectId { get; set; }
+
+        [SerializeField] private MapEventChannel mapEvents;
+        private MapObject cachedObject;
+
+        void Awake()
+        {
+            // Auto-find mapEvents if not assigned
+            if (mapEvents == null)
+            {
+                var mapRenderer = FindFirstObjectByType<MapRenderer>();
+                if (mapRenderer != null)
+                {
+                    mapEvents = mapRenderer.GetComponent<MapRenderer>().MapEvents;
+                }
+            }
+
+            // Ensure we have a collider for click detection
+            var collider = GetComponent<Collider2D>();
+            if (collider == null)
+            {
+                var boxCollider = gameObject.AddComponent<BoxCollider2D>();
+                boxCollider.size = new Vector2(1f, 1f); // Match tile size
+            }
+        }
+
+        void OnMouseDown()
+        {
+            // Raise event when object is clicked
+            if (mapEvents != null && cachedObject != null)
+            {
+                Debug.Log($"MapObjectView: Object clicked: {cachedObject.Name} at {cachedObject.Position}");
+                mapEvents.RaiseObjectClicked(cachedObject);
+            }
+        }
+
+        public void SetObjectReference(MapObject obj)
+        {
+            cachedObject = obj;
+        }
+
+        public MapObject GetObject() => cachedObject;
     }
 }

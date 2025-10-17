@@ -2,11 +2,12 @@
     "name": "RealmsOfEldor.Controllers",
     "rootNamespace": "RealmsOfEldor.Controllers",
     "references": [
-        "RealmsOfEldor.Core",
-        "RealmsOfEldor.Data",
-        "RealmsOfEldor.Database",
-        "RealmsOfEldor.Utilities",
-        "UniTask"
+        "GUID:1d7afc45038d5fb46bd29e5ab063bb84",
+        "GUID:12ffa57f83499bf4a8e27096d34b8f11",
+        "GUID:f7fe06737d19d26468a485422063ee05",
+        "GUID:3dd9bdebdbf1d474894572da22175cd5",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

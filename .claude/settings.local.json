@@ -10,7 +10,11 @@
       "Bash(dotnet build:*)",
       "WebSearch",
       "Bash(uuidgen)",
-      "Read(//home/mikkel/Projects/vcmi-develop/lib/rmg/**)"
+      "Read(//home/mikkel/Projects/vcmi-develop/lib/rmg/**)",
+      "Bash(find:*)",
+      "Bash(awk:*)",
+      "Bash(xargs cat:*)",
+      "Read(//home/mikkel/Projects/vcmi-develop/client/battle/**)"
     ],
     "deny": [],
     "ask": []

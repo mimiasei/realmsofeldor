@@ -50,15 +50,22 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Controllers\Battle\BattleController.cs" />
     <Compile Include="Assets\Scripts\Controllers\HeroSpawner.cs" />
+    <Compile Include="Assets\Scripts\Controllers\Battle\BattleAnimator.cs" />
     <Compile Include="Assets\Scripts\Controllers\MapPersistenceManager.cs" />
     <Compile Include="Assets\Scripts\Controllers\AdventureMapInputController.cs" />
     <Compile Include="Assets\Scripts\Controllers\HeroController.cs" />
     <Compile Include="Assets\Scripts\Controllers\GameInitializer.cs" />
+    <Compile Include="Assets\Scripts\Controllers\BattleStackRenderer.cs" />
     <Compile Include="Assets\Scripts\Controllers\GameStateManager.cs" />
     <Compile Include="Assets\Scripts\Controllers\AstarPathfindingAdapter.cs" />
+    <Compile Include="Assets\Scripts\Controllers\BattleFieldRenderer.cs" />
     <Compile Include="Assets\Scripts\Controllers\MapTestInitializer.cs" />
+    <Compile Include="Assets\Scripts\Controllers\BattleHexGrid.cs" />
     <Compile Include="Assets\Scripts\Controllers\PathPreviewRenderer.cs" />
+    <Compile Include="Assets\Scripts\Controllers\BattleStackView.cs" />
     <Compile Include="Assets\Scripts\Controllers\CameraController.cs" />
+    <Compile Include="Assets\Scripts\Controllers\Battle\BattleUIPanel.cs" />
+    <Compile Include="Assets\Scripts\Controllers\Battle\BattleSceneController.cs" />
     <Compile Include="Assets\Scripts\Controllers\MapRenderer.cs" />
     <Compile Include="Assets\Scripts\Controllers\MapObjectPrefabGenerator.cs" />
   </ItemGroup>
@@ -1128,6 +1135,10 @@
     </Reference>
     <Reference Include="UniTask">
       <HintPath>Library\ScriptAssemblies\UniTask.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>Library\ScriptAssemblies\Unity.TextMeshPro.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEditor.UI">

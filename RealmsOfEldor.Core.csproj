@@ -52,6 +52,7 @@
     <Compile Include="Assets\Scripts\Core\Pathfinding\AStarPathfinder.cs" />
     <Compile Include="Assets\Scripts\Core\Battle\DamageCalculator.cs" />
     <Compile Include="Assets\Scripts\Core\Map\MapMetadata.cs" />
+    <Compile Include="Assets\Scripts\Core\Map\Modificators\HeroSpawnModificator.cs" />
     <Compile Include="Assets\Scripts\Core\Resources.cs" />
     <Compile Include="Assets\Scripts\Core\Map\ModificatorPipeline.cs" />
     <Compile Include="Assets\Scripts\Core\Events\UIEventChannel.cs" />
@@ -76,6 +77,7 @@
     <Compile Include="Assets\Scripts\Core\Battle\BattleAction.cs" />
     <Compile Include="Assets\Scripts\Core\Map\Modificators\GuardPlacerModificator.cs" />
     <Compile Include="Assets\Scripts\Core\Map\Modificators\DwellingPlacerModificator.cs" />
+    <Compile Include="Assets\Scripts\Core\Battle\BattleStack.cs" />
     <Compile Include="Assets\Scripts\Core\Battle\TurnQueue.cs" />
     <Compile Include="Assets\Scripts\Core\Map\Modificators\ObstaclePlacerModificator.cs" />
     <Compile Include="Assets\Scripts\Core\Events\GameEventChannel.cs" />

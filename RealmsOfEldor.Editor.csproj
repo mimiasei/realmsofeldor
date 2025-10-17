@@ -53,7 +53,9 @@
     <Compile Include="Assets\Scripts\Editor\Phase3SetupWindow.cs" />
     <Compile Include="Assets\Scripts\Editor\JsonCreatureImporter.cs" />
     <Compile Include="Assets\Scripts\Editor\SceneSetup\AdventureMapSceneSetup.cs" />
+    <Compile Include="Assets\Scripts\Editor\ScrollViewLayoutFixer.cs" />
     <Compile Include="Assets\Scripts\Editor\SceneSetup\URPActivationTool.cs" />
+    <Compile Include="Assets\Scripts\Editor\MapItemPrefabInspector.cs" />
     <Compile Include="Assets\Scripts\Editor\DataGeneration\TileAssetGenerator.cs" />
     <Compile Include="Assets\Scripts\Editor\SceneSetup\Phase4SetupWindow.cs" />
     <Compile Include="Assets\Scripts\Editor\DataGeneration\TerrainDataGenerator.cs" />
@@ -61,6 +63,8 @@
     <Compile Include="Assets\Scripts\Editor\SampleDataGenerator.cs" />
     <Compile Include="Assets\Scripts\Editor\SceneSetup\Phase4UISetup.cs" />
     <Compile Include="Assets\Scripts\Editor\AssetCreationTools.cs" />
+    <Compile Include="Assets\Scripts\Editor\SceneBuildSettingsFixer.cs" />
+    <Compile Include="Assets\Scripts\Editor\MapItemPrefabFixer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Editor\RealmsOfEldor.Editor.asmdef" />

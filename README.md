@@ -168,13 +168,6 @@ Test Coverage:
 - RMG system (Budget, Reachability, Guards, Obstacles)
 - Modificator pipeline (15 tests)
 
-## 📚 Documentation
-
-- **PROJECT_SUMMARY.md** - Complete project overview and architecture
-- **CHANGES.md** - Detailed development log (1800+ lines)
-- **RESEARCH.md** - VCMI architecture research and Unity translation
-- **CLAUDE.md** - Development commands and instructions
-
 ## 🎯 Next Steps
 
 1. **Phase 7**: Zone-based RMG (Voronoi zones, balanced starting positions)

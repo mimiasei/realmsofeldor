@@ -35,8 +35,8 @@ namespace RealmsOfEldor.Controllers
         [SerializeField] private bool validateReachability = true;
         [SerializeField] private int reachabilitySearchRadius = 5;
 
-        [Header("Hero Settings")]
-        [SerializeField] private bool createStartingHeroes = true;
+        [Header("Hero Settings (Legacy - use HeroSpawnModificator instead)")]
+        [SerializeField] private bool createStartingHeroes = false; // Disabled: use HeroSpawnModificator
         [SerializeField] private Position player1HeroPosition = new Position(5, 5);
         [SerializeField] private Position player2HeroPosition = new Position(25, 25);
 
@@ -172,6 +172,7 @@ namespace RealmsOfEldor.Controllers
         /// <summary>
         /// Initializes the game map with terrain and objects.
         /// Based on VCMI's CMap::addNewObject pattern.
+        /// Checks PlayerPrefs for a selected map from MapSelection scene.
         /// </summary>
         private void InitializeMap()
         {
@@ -183,9 +184,64 @@ namespace RealmsOfEldor.Controllers
 
             Debug.Log("🗺️ Initializing game map...");
 
-            // Create GameMap (VCMI's CMap equivalent)
-            var gameMap = new GameMap(mapWidth, mapHeight);
+            GameMap gameMap;
 
+            // Check if a map was selected in MapSelection scene
+            var selectedMapId = PlayerPrefs.GetString("SelectedMapId", null);
+            if (!string.IsNullOrEmpty(selectedMapId))
+            {
+                Debug.Log($"📂 Loading selected map: {selectedMapId}");
+
+                // Ensure MapPersistenceManager exists
+                if (MapPersistenceManager.Instance == null)
+                {
+                    var persistenceObj = new GameObject("MapPersistenceManager");
+                    persistenceObj.AddComponent<MapPersistenceManager>();
+                }
+
+                // Load the map
+                gameMap = MapPersistenceManager.Instance.LoadMap(selectedMapId);
+
+                if (gameMap != null)
+                {
+                    Debug.Log($"✅ Loaded map: {selectedMapId} ({gameMap.Width}x{gameMap.Height})");
+
+                    // Clear the PlayerPrefs key so it doesn't load again next time
+                    PlayerPrefs.DeleteKey("SelectedMapId");
+                    PlayerPrefs.Save();
+                }
+                else
+                {
+                    Debug.LogWarning($"⚠️ Failed to load map {selectedMapId}, generating new map instead");
+                    gameMap = new GameMap(mapWidth, mapHeight);
+                    GenerateNewMap(gameMap);
+                }
+            }
+            else
+            {
+                // No selected map, generate new one
+                Debug.Log("📝 No selected map, generating new map");
+                gameMap = new GameMap(mapWidth, mapHeight);
+                GenerateNewMap(gameMap);
+            }
+
+            // Configure camera
+            if (cameraController != null)
+            {
+                cameraController.SetMapBounds(gameMap.Width, gameMap.Height);
+            }
+
+            // Raise map loaded event (triggers MapRenderer to render)
+            mapEvents.RaiseMapLoaded(gameMap);
+
+            Debug.Log($"✅ Map initialized: {gameMap.Width}x{gameMap.Height} with {gameMap.GetAllObjects().Count()} objects");
+        }
+
+        /// <summary>
+        /// Generates a new map (either loaded or new generation).
+        /// </summary>
+        private void GenerateNewMap(GameMap gameMap)
+        {
             // Use new modificator pipeline or legacy approach
             if (useModificatorPipeline)
             {
@@ -195,17 +251,6 @@ namespace RealmsOfEldor.Controllers
             {
                 InitializeMapLegacy(gameMap);
             }
-
-            // Configure camera
-            if (cameraController != null)
-            {
-                cameraController.SetMapBounds(mapWidth, mapHeight);
-            }
-
-            // Raise map loaded event (triggers MapRenderer to render)
-            mapEvents.RaiseMapLoaded(gameMap);
-
-            Debug.Log($"✅ Map initialized: {mapWidth}x{mapHeight} with {gameMap.GetAllObjects().Count()} objects");
         }
 
         /// <summary>

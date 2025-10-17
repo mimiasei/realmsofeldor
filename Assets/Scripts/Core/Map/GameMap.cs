@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using RealmsOfEldor.Data;
+using Newtonsoft.Json;
 
 namespace RealmsOfEldor.Core
 {
@@ -11,18 +12,29 @@ namespace RealmsOfEldor.Core
     /// </summary>
     public class GameMap
     {
+        [JsonProperty]
         public int Width { get; private set; }
+
+        [JsonProperty]
         public int Height { get; private set; }
 
+        [JsonProperty]
         private MapTile[,] tiles;
+
+        [JsonProperty]
         private Dictionary<int, MapObject> objects;
+
+        [JsonProperty]
         private int nextObjectId;
+
+        [JsonIgnore]
         private Random variantRng; // Shared Random instance for variant selection
 
         // Delegates injected by Unity layer
         public static Func<TerrainType, int> GetTerrainVariantCount { get; set; }
         public static Func<TerrainType, bool> GetTerrainPassability { get; set; }
 
+        // Default constructor for regular creation
         public GameMap(int width, int height, int? randomSeed = null)
         {
             if (width <= 0 || height <= 0)
@@ -44,6 +56,18 @@ namespace RealmsOfEldor.Core
                     SetTerrain(new Position(x, y), TerrainType.Grass);
                 }
             }
+        }
+
+        // JSON deserialization constructor
+        [JsonConstructor]
+        private GameMap(int width, int height, MapTile[,] tiles, Dictionary<int, MapObject> objects, int nextObjectId)
+        {
+            Width = width;
+            Height = height;
+            this.tiles = tiles ?? new MapTile[width, height];
+            this.objects = objects ?? new Dictionary<int, MapObject>();
+            this.nextObjectId = nextObjectId;
+            this.variantRng = new Random(); // Re-initialize Random after deserialization
         }
 
         // Bounds checking

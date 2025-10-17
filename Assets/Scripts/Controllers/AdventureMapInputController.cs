@@ -51,6 +51,7 @@ namespace RealmsOfEldor.Controllers
             {
                 mapEvents.OnTileSelected += HandleTileClicked;
                 mapEvents.OnMapLoaded += HandleMapLoaded;
+                mapEvents.OnObjectClicked += HandleObjectClicked;
             }
 
             if (uiEvents != null)
@@ -76,6 +77,7 @@ namespace RealmsOfEldor.Controllers
             {
                 mapEvents.OnTileSelected -= HandleTileClicked;
                 mapEvents.OnMapLoaded -= HandleMapLoaded;
+                mapEvents.OnObjectClicked -= HandleObjectClicked;
             }
 
             if (uiEvents != null)
@@ -467,6 +469,7 @@ namespace RealmsOfEldor.Controllers
 
         /// <summary>
         /// Moves hero along path with animation.
+        /// Checks for object interactions when hero lands on destination.
         /// </summary>
         private async void MoveHeroAlongPath(System.Collections.Generic.List<Position> path, int movementCost)
         {
@@ -504,7 +507,8 @@ namespace RealmsOfEldor.Controllers
             await heroController.MoveAlongPathAsync(waypoints, customSpeed: totalDuration);
 
             // Update hero data
-            selectedHero.Position = path[path.Count - 1];
+            var finalPos = path[path.Count - 1];
+            selectedHero.Position = finalPos;
             selectedHero.Movement -= movementCost;
 
             // Raise event
@@ -512,6 +516,32 @@ namespace RealmsOfEldor.Controllers
 
             // Update UI
             uiEvents?.RaiseShowHeroInfo(selectedHero);
+
+            // Check if hero landed on an object's visitable position
+            CheckForObjectInteraction(finalPos);
+        }
+
+        /// <summary>
+        /// Checks if hero is at a visitable position for any object and triggers OnVisit if so.
+        /// </summary>
+        private void CheckForObjectInteraction(Position heroPos)
+        {
+            if (gameMap == null || selectedHero == null)
+                return;
+
+            // Get all objects on the map
+            var allObjects = gameMap.GetAllObjects();
+
+            foreach (var obj in allObjects)
+            {
+                // Check if hero is at a visitable position for this object
+                if (obj.IsVisitableAt(heroPos))
+                {
+                    Debug.Log($"Hero arrived at visitable position for {obj.Name} - triggering OnVisit");
+                    VisitObject(obj);
+                    return; // Only visit one object per move
+                }
+            }
         }
 
         private void MoveHeroInDirection(Vector2Int direction)
@@ -527,21 +557,72 @@ namespace RealmsOfEldor.Controllers
             MoveHeroToPosition(targetPos);
         }
 
-        private void HandleObjectClick(MapObject mapObject, Position clickPos)
+        /// <summary>
+        /// Handles object clicks from MapObjectView colliders.
+        /// Shows path preview to nearest visitable position around the object.
+        /// </summary>
+        private void HandleObjectClicked(MapObject mapObject)
         {
-            if (selectedHero == null)
-                return;
-
-            // Check if hero is adjacent to object
-            if (!IsAdjacent(selectedHero.Position, clickPos))
+            if (selectedHero == null || gameMap == null)
             {
-                // Move hero toward object
-                MoveHeroToPosition(clickPos);
+                Debug.Log("Cannot interact with object: no hero selected or no map");
                 return;
             }
 
-            // Visit object
-            VisitObject(mapObject);
+            Debug.Log($"Object clicked: {mapObject.Name} at {mapObject.Position}");
+
+            // Check if hero is already at a visitable position
+            if (mapObject.IsVisitableAt(selectedHero.Position))
+            {
+                Debug.Log("Hero is already at visitable position - visiting object now");
+                VisitObject(mapObject);
+                return;
+            }
+
+            // Find nearest visitable position
+            var visitablePositions = mapObject.GetVisitablePositions();
+            if (visitablePositions.Count == 0)
+            {
+                Debug.LogWarning($"Object {mapObject.Name} has no visitable positions!");
+                uiEvents?.RaiseShowStatusMessage("Cannot interact with this object!");
+                return;
+            }
+
+            // Find closest visitable position that's reachable
+            Position nearestVisitablePos = default;
+            var shortestPathLength = int.MaxValue;
+
+            foreach (var visitablePos in visitablePositions)
+            {
+                if (!gameMap.IsInBounds(visitablePos))
+                    continue;
+
+                var path = BasicPathfinder.FindPath(gameMap, selectedHero.Position, visitablePos);
+                if (path != null && path.Count < shortestPathLength)
+                {
+                    shortestPathLength = path.Count;
+                    nearestVisitablePos = visitablePos;
+                }
+            }
+
+            if (shortestPathLength == int.MaxValue)
+            {
+                Debug.LogWarning("No reachable visitable position found!");
+                uiEvents?.RaiseShowStatusMessage("Cannot reach this object!");
+                return;
+            }
+
+            Debug.Log($"Showing path preview to visitable position {nearestVisitablePos}");
+
+            // Show path preview to nearest visitable position
+            // This will trigger the standard path preview system
+            ShowPathPreview(nearestVisitablePos);
+        }
+
+        private void HandleObjectClick(MapObject mapObject, Position clickPos)
+        {
+            // Delegate to HandleObjectClicked (unified handler)
+            HandleObjectClicked(mapObject);
         }
 
         private void VisitObject(MapObject mapObject)
@@ -556,6 +637,9 @@ namespace RealmsOfEldor.Controllers
 
             // Raise event
             mapEvents?.RaiseObjectVisited(selectedHero, mapObject);
+
+            // Show interaction message
+            uiEvents?.RaiseShowStatusMessage($"Visited {mapObject.Name}");
         }
 
         // ===== Hero Selection =====
