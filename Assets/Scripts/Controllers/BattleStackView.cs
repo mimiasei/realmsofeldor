@@ -49,6 +49,14 @@ namespace RealmsOfEldor.Controllers
 
             // Hide selection indicator by default
             selectionIndicator.enabled = false;
+
+            // Add collider for mouse click detection if not present
+            if (GetComponent<Collider2D>() == null)
+            {
+                var boxCollider = gameObject.AddComponent<BoxCollider2D>();
+                // Size based on hex dimensions
+                boxCollider.size = new Vector2(BattleHexGrid.HEX_WIDTH * 0.8f, BattleHexGrid.HEX_HEIGHT * 0.8f);
+            }
         }
 
         /// <summary>
@@ -287,6 +295,11 @@ namespace RealmsOfEldor.Controllers
         /// Gets the stack this view represents.
         /// </summary>
         public BattleStack Stack => cachedStack;
+
+        /// <summary>
+        /// Gets the stack ID.
+        /// </summary>
+        public int StackId => cachedStack?.Id ?? -1;
 
         /// <summary>
         /// Handles mouse click on stack.

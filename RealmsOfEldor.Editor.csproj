@@ -58,6 +58,7 @@
     <Compile Include="Assets\Scripts\Editor\MapItemPrefabInspector.cs" />
     <Compile Include="Assets\Scripts\Editor\DataGeneration\TileAssetGenerator.cs" />
     <Compile Include="Assets\Scripts\Editor\SceneSetup\Phase4SetupWindow.cs" />
+    <Compile Include="Assets\Scripts\Editor\BattleTester.cs" />
     <Compile Include="Assets\Scripts\Editor\DataGeneration\TerrainDataGenerator.cs" />
     <Compile Include="Assets\Scripts\Editor\SceneSetup\HeroSpawnerSetup.cs" />
     <Compile Include="Assets\Scripts\Editor\SampleDataGenerator.cs" />

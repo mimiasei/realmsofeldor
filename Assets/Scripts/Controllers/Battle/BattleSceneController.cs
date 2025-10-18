@@ -20,6 +20,7 @@ namespace RealmsOfEldor.Controllers.Battle
         [SerializeField] private BattleStackRenderer stackRenderer;
         [SerializeField] private BattleUIPanel uiPanel;
         [SerializeField] private BattleAnimator battleAnimator;
+        [SerializeField] private BattleInputController inputController;
 
         [Header("Settings")]
         [SerializeField] private bool autoProcessRounds = false;
@@ -52,6 +53,9 @@ namespace RealmsOfEldor.Controllers.Battle
 
             if (battleAnimator == null)
                 battleAnimator = FindFirstObjectByType<BattleAnimator>();
+
+            if (inputController == null)
+                inputController = FindFirstObjectByType<BattleInputController>();
 
             // Validate required components
             if (battleController == null)
@@ -295,21 +299,22 @@ namespace RealmsOfEldor.Controllers.Battle
         private void HandleAttackClicked()
         {
             Debug.Log("BattleSceneController: Attack clicked");
-            // TODO: Enter attack targeting mode
+            inputController?.EnterAttackMode();
             uiPanel?.LogMessage("Select target to attack");
         }
 
         private void HandleDefendClicked()
         {
             Debug.Log("BattleSceneController: Defend clicked");
-            // TODO: Set active unit to defend mode
+            inputController?.DefendSelectedUnit();
             uiPanel?.LogMessage("Unit defending");
+            UpdateVisuals();
         }
 
         private void HandleWaitClicked()
         {
             Debug.Log("BattleSceneController: Wait clicked");
-            battleController?.WaitCurrentUnit();
+            inputController?.WaitSelectedUnit();
             uiPanel?.LogMessage("Unit waiting");
             UpdateVisuals();
         }
@@ -318,6 +323,10 @@ namespace RealmsOfEldor.Controllers.Battle
         {
             Debug.Log("BattleSceneController: Auto combat toggled");
             autoProcessRounds = !autoProcessRounds;
+
+            // Disable player input during auto-combat
+            inputController?.SetInputEnabled(!autoProcessRounds);
+
             uiPanel?.LogMessage(autoProcessRounds ? "Auto combat enabled" : "Auto combat disabled");
         }
 
