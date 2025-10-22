@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 686098c5d070698489e95ae01cdb0ba6, type: 3}
+  m_Name: royalGriffin
+  m_EditorClassIdentifier: RealmsOfEldor.Data::RealmsOfEldor.Data.CreatureData
+  creatureId: 5
+  creatureName: Royal Griffin
+  faction: 0
+  tier: 3
+  attack: 9
+  defense: 9
+  minDamage: 3
+  maxDamage: 6
+  hitPoints: 25
+  speed: 9
+  shots: 0
+  isDoubleWide: 1
+  isFlying: 1
+  isDoubleAttack: 0
+  canShootInMelee: 0
+  noMeleeRetal: 0
+  abilities:
+  - Flying
+  - Unlimited Retaliations
+  weeklyGrowth: 7
+  cost:
+    Wood: 0
+    Mercury: 0
+    Ore: 0
+    Sulfur: 0
+    Crystal: 0
+    Gems: 0
+    Gold: 240
+  aiValue: 448
+  icon: {fileID: 0}
+  battleSprite: {fileID: 0}
+  battleAnimator: {fileID: 0}
+  attackSound: {fileID: 0}
+  hitSound: {fileID: 0}
+  deathSound: {fileID: 0}

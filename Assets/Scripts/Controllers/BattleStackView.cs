@@ -34,7 +34,10 @@ namespace RealmsOfEldor.Controllers
                 spriteObj.transform.SetParent(transform);
                 spriteObj.transform.localPosition = Vector3.zero;
                 creatureSprite = spriteObj.AddComponent<SpriteRenderer>();
+                creatureSprite.sortingLayerName = "Default";
                 creatureSprite.sortingOrder = 10; // Render stacks above field
+
+                Debug.Log($"BattleStackView.Awake: Created sprite renderer with sorting layer 'Default' and order 10");
             }
 
             if (amountBadge == null)
@@ -54,8 +57,8 @@ namespace RealmsOfEldor.Controllers
             if (GetComponent<Collider2D>() == null)
             {
                 var boxCollider = gameObject.AddComponent<BoxCollider2D>();
-                // Size based on hex dimensions
-                boxCollider.size = new Vector2(BattleHexGrid.HEX_WIDTH * 0.8f, BattleHexGrid.HEX_HEIGHT * 0.8f);
+                // Size based on hex dimensions (1.0 world units now)
+                boxCollider.size = new Vector2(0.8f, 0.8f);
             }
         }
 
@@ -70,24 +73,28 @@ namespace RealmsOfEldor.Controllers
             if (creatureIcon != null)
             {
                 creatureSprite.sprite = creatureIcon;
+                Debug.Log($"BattleStackView: Using provided sprite for stack {stack.Id}");
             }
             else
             {
                 creatureSprite.sprite = CreatePlaceholderSprite();
+                Debug.Log($"BattleStackView: Created placeholder sprite for stack {stack.Id} - enabled: {creatureSprite.enabled}, sprite: {creatureSprite.sprite != null}");
             }
 
             // Update amount text
             UpdateAmount();
 
-            // Position at hex location
+            // Position at hex location (Z=0 to be in front of background at Z=5)
             var worldPos = BattleHexGrid.HexToWorld(stack.Position.X, stack.Position.Y);
-            transform.position = worldPos;
+            transform.position = new Vector3(worldPos.x, worldPos.y, 0f); // Z=0 puts stacks in front of background
 
             // Set team color
             var isAlly = stack.Side == BattleSide.Attacker; // TODO: Make this configurable
             selectionIndicator.color = isAlly ? allyColor : enemyColor;
 
-            Debug.Log($"BattleStackView: Initialized stack {stack.Id} ({stack.Count}x creature {stack.CreatureId}) at hex ({stack.Position.X}, {stack.Position.Y})");
+            Debug.Log($"BattleStackView: Initialized stack {stack.Id} ({stack.Count}x creature {stack.CreatureId}) at hex ({stack.Position.X}, {stack.Position.Y}) -> world pos {worldPos}");
+            Debug.Log($"BattleStackView: Stack {stack.Id} - GameObject position: {transform.position}, Sprite enabled: {creatureSprite.enabled}, Sprite: {creatureSprite.sprite != null}");
+            Debug.Log($"BattleStackView: Stack {stack.Id} - Sprite bounds: {creatureSprite.bounds}, Sprite scale: {creatureSprite.transform.localScale}");
         }
 
         /// <summary>
@@ -157,7 +164,8 @@ namespace RealmsOfEldor.Controllers
         {
             amountBadge = new GameObject("AmountBadge");
             amountBadge.transform.SetParent(transform);
-            amountBadge.transform.localPosition = new Vector3(BattleHexGrid.HEX_WIDTH * 0.3f, -BattleHexGrid.HEX_HEIGHT * 0.3f, -0.1f);
+            // Position at bottom-right of creature sprite (hex is 1.0 units now)
+            amountBadge.transform.localPosition = new Vector3(0.3f, -0.3f, -0.1f);
 
             // Background sprite
             var badgeSprite = amountBadge.AddComponent<SpriteRenderer>();
@@ -172,7 +180,7 @@ namespace RealmsOfEldor.Controllers
 
             amountText = textObj.AddComponent<TextMeshPro>();
             amountText.text = "0";
-            amountText.fontSize = 4;
+            amountText.fontSize = 0.15f; // Scaled down from 4 to match new world scale
             amountText.alignment = TextAlignmentOptions.Center;
             amountText.color = Color.white;
             amountText.sortingOrder = 12;
@@ -185,7 +193,8 @@ namespace RealmsOfEldor.Controllers
         {
             var indicatorObj = new GameObject("SelectionIndicator");
             indicatorObj.transform.SetParent(transform);
-            indicatorObj.transform.localPosition = new Vector3(0f, -BattleHexGrid.HEX_HEIGHT * 0.4f, 0.1f);
+            // Position below creature (hex is 1.0 units now)
+            indicatorObj.transform.localPosition = new Vector3(0f, -0.4f, 0.1f);
 
             selectionIndicator = indicatorObj.AddComponent<SpriteRenderer>();
             selectionIndicator.sprite = CreateCircleSprite(16);
@@ -199,19 +208,34 @@ namespace RealmsOfEldor.Controllers
         /// </summary>
         private Sprite CreatePlaceholderSprite()
         {
-            var texture = new Texture2D(32, 32);
-            var pixels = new Color[32 * 32];
+            var size = 64;
+            var texture = new Texture2D(size, size);
+            var pixels = new Color[size * size];
 
-            // Create a simple colored square
-            for (var i = 0; i < pixels.Length; i++)
+            // Create a colorful placeholder with border
+            for (var y = 0; y < size; y++)
             {
-                pixels[i] = new Color(0.7f, 0.7f, 0.7f, 1f);
+                for (var x = 0; x < size; x++)
+                {
+                    // Border (bright yellow)
+                    if (x < 2 || x >= size - 2 || y < 2 || y >= size - 2)
+                    {
+                        pixels[y * size + x] = Color.yellow;
+                    }
+                    // Fill (bright magenta for visibility)
+                    else
+                    {
+                        pixels[y * size + x] = Color.magenta;
+                    }
+                }
             }
 
             texture.SetPixels(pixels);
             texture.Apply();
 
-            return Sprite.Create(texture, new Rect(0, 0, 32, 32), new Vector2(0.5f, 0.5f), 32f);
+            // With hex size now 1.0 world unit, we want creature sprites to be about 0.8 units tall
+            // A 64-pixel sprite should be ~0.8 world units, so PPU = 64 / 0.8 = 80
+            return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 80f);
         }
 
         /// <summary>
@@ -250,7 +274,8 @@ namespace RealmsOfEldor.Controllers
             texture.SetPixels(pixels);
             texture.Apply();
 
-            return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
+            // Badge should be small - about 0.2 world units, so 16 pixels / 0.2 = 80 PPU
+            return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 80f);
         }
 
         /// <summary>
@@ -288,7 +313,8 @@ namespace RealmsOfEldor.Controllers
             texture.SetPixels(pixels);
             texture.Apply();
 
-            return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
+            // Selection indicator should be ~1.0 world units (size of hex), so 16 pixels / 1.0 = 16 PPU
+            return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 16f);
         }
 
         /// <summary>

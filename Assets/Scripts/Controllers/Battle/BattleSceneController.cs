@@ -1,5 +1,6 @@
 using UnityEngine;
 using Cysharp.Threading.Tasks;
+using System.Linq;
 using RealmsOfEldor.Core;
 using RealmsOfEldor.Core.Battle;
 using RealmsOfEldor.Data;
@@ -83,13 +84,20 @@ namespace RealmsOfEldor.Controllers.Battle
                 uiPanel.OnRetreatClicked += HandleRetreatClicked;
                 uiPanel.OnSurrenderClicked += HandleSurrenderClicked;
             }
-
-            // Wait for battle to initialize
-            Invoke(nameof(InitializeVisuals), 0.5f);
         }
 
         void Update()
         {
+            // Auto-initialize visuals when battle becomes active
+            if (battleController != null && battleController.IsBattleActive && battleController.State != null && stackRenderer != null)
+            {
+                // Check if we haven't spawned stacks yet
+                if (stackRenderer.StackCount == 0 && battleController.State.GetAllUnits().Any())
+                {
+                    InitializeVisuals();
+                }
+            }
+
             // Auto-process rounds if enabled
             if (autoProcessRounds && battleController != null && battleController.IsBattleActive)
             {

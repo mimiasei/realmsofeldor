@@ -13,13 +13,21 @@ namespace RealmsOfEldor.Controllers
         public const int BATTLE_WIDTH = 17;  // Number of hex columns
         public const int BATTLE_HEIGHT = 11; // Number of hex rows
 
-        // Visual dimensions (can be adjusted for Unity)
-        public const float HEX_WIDTH = 44f;   // Pixel width of hex
-        public const float HEX_HEIGHT = 42f;  // Pixel height of hex
+        // Visual dimensions (in Unity world units, not pixels!)
+        // These values define how large each hex is in world space
+        // The grass background sprite (1184x864 pixels with PPU=1) should fit the battlefield
+        // Battlefield with 17x11 hexes should be smaller than the sprite to show decorative borders
+        // Testing showed scale 0.02 works, giving sprite size ~24x17 world units
+        // So battlefield should be roughly 17-18 units wide (leaving room for borders)
+        // 17 hexes * 1.0 = 17 units width feels about right
+        public const float HEX_WIDTH = 1.0f;   // World units width of hex (was 44)
+        public const float HEX_HEIGHT = 1.0f;  // World units height of hex (was 42)
 
         // Derived constants
         private const float HALF_HEX_WIDTH = HEX_WIDTH * 0.5f;
-        private const float ROW_OFFSET = HEX_HEIGHT; // Vertical distance between rows
+        // For pointy-top hexagons, rows are offset by 3/4 of height (not full height)
+        // because hexagons overlap vertically
+        private const float ROW_OFFSET = HEX_HEIGHT * 0.75f; // Vertical distance between rows
 
         /// <summary>
         /// Converts battlefield hex coordinates to Unity world position.
@@ -96,9 +104,12 @@ namespace RealmsOfEldor.Controllers
         /// </summary>
         public static Vector3 GetBattlefieldCenter()
         {
-            var centerX = (BATTLE_WIDTH - 1) * HEX_WIDTH * 0.5f;
-            var centerY = (BATTLE_HEIGHT - 1) * ROW_OFFSET * 0.5f;
-            return new Vector3(centerX, centerY, 0f);
+            // Calculate center hex coordinates
+            var centerHexX = BATTLE_WIDTH / 2;
+            var centerHexY = BATTLE_HEIGHT / 2;
+
+            // Convert center hex to world position
+            return HexToWorld(centerHexX, centerHexY);
         }
 
         /// <summary>

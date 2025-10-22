@@ -46,8 +46,6 @@ namespace RealmsOfEldor.Controllers.Battle
 
         void Awake()
         {
-            battleCamera = Camera.main;
-
             // Auto-find components if not assigned
             if (battleController == null)
                 battleController = FindFirstObjectByType<BattleController>();
@@ -60,6 +58,29 @@ namespace RealmsOfEldor.Controllers.Battle
 
             if (battleAnimator == null)
                 battleAnimator = FindFirstObjectByType<BattleAnimator>();
+
+            // Get camera from BattleFieldRenderer (which has the correct camera)
+            if (fieldRenderer != null)
+            {
+                battleCamera = fieldRenderer.GetComponent<Camera>();
+                Debug.Log("BattleInputController: Using camera from BattleFieldRenderer");
+            }
+            else
+            {
+                battleCamera = Camera.main;
+                Debug.LogWarning("BattleInputController: BattleFieldRenderer not found, using Camera.main");
+            }
+
+            // Debug camera setup
+            if (battleCamera != null)
+            {
+                Debug.Log($"BattleInputController: Camera is {(battleCamera.orthographic ? "Orthographic" : "Perspective")}");
+                Debug.Log($"BattleInputController: Camera position: {battleCamera.transform.position}, ortho size: {battleCamera.orthographicSize}");
+            }
+            else
+            {
+                Debug.LogError("BattleInputController: No battle camera found!");
+            }
         }
 
         void Update()
@@ -69,8 +90,24 @@ namespace RealmsOfEldor.Controllers.Battle
 
             // Only allow player input for attacker side (player)
             var activeUnit = GetActiveUnit();
-            if (activeUnit == null || activeUnit.Side != BattleSide.Attacker)
-                return;
+            if (activeUnit == null)
+            {
+                // No active unit - this might be expected in Battle System Tester
+                // Allow input anyway for testing purposes
+                if (Input.GetMouseButtonDown(0))
+                {
+                    Debug.LogWarning("BattleInputController: No active unit, but allowing click for testing");
+                }
+                // Still allow clicks for testing
+            }
+            else if (activeUnit.Side != BattleSide.Attacker)
+            {
+                if (Input.GetMouseButtonDown(0))
+                {
+                    Debug.LogWarning($"BattleInputController: Active unit is {activeUnit.Side}, not Attacker - blocking input");
+                }
+                return; // Block input for defender turns
+            }
 
             HandleMouseInput();
         }
@@ -83,8 +120,17 @@ namespace RealmsOfEldor.Controllers.Battle
             if (!Input.GetMouseButtonDown(0))
                 return;
 
-            var mousePos = Input.mousePosition;
-            var worldPos = battleCamera.ScreenToWorldPoint(mousePos);
+            // Convert screen position to world position on the Z=0 plane (where battlefield is)
+            var ray = battleCamera.ScreenPointToRay(Input.mousePosition);
+
+            // Calculate intersection with Z=0 plane
+            // Ray equation: P = origin + t * direction
+            // For Z=0: origin.z + t * direction.z = 0
+            // So: t = -origin.z / direction.z
+            var t = -ray.origin.z / ray.direction.z;
+            var worldPos = ray.origin + ray.direction * t;
+
+            Debug.Log($"BattleInputController: Mouse clicked at screen {Input.mousePosition} -> world {worldPos}");
 
             // Try to click on a stack first
             var clickedStack = GetStackAtWorldPosition(worldPos);
@@ -98,7 +144,12 @@ namespace RealmsOfEldor.Controllers.Battle
             var clickedHex = GetHexAtWorldPosition(worldPos);
             if (clickedHex.HasValue)
             {
+                Debug.Log($"BattleInputController: Clicked on hex {clickedHex.Value}");
                 HandleHexClick(clickedHex.Value);
+            }
+            else
+            {
+                Debug.Log($"BattleInputController: Click did not hit a valid hex");
             }
         }
 
@@ -447,6 +498,8 @@ namespace RealmsOfEldor.Controllers.Battle
         private Vector2Int? GetHexAtWorldPosition(Vector3 worldPos)
         {
             var hex = BattleHexGrid.WorldToHex(worldPos);
+            Debug.Log($"BattleInputController: WorldToHex({worldPos}) = ({hex.x}, {hex.y}), valid: {BattleHexGrid.IsValidHex(hex.x, hex.y)}");
+
             if (BattleHexGrid.IsValidHex(hex.x, hex.y))
             {
                 return hex;

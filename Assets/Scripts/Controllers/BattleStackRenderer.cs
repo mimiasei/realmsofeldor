@@ -219,5 +219,10 @@ namespace RealmsOfEldor.Controllers
                 // TODO: Add visual indicator for active stacks
             }
         }
+
+        /// <summary>
+        /// Gets the number of currently rendered stacks.
+        /// </summary>
+        public int StackCount => stackViews.Count;
     }
 }
