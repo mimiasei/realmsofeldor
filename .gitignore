@@ -2,6 +2,7 @@ Library/
 Temp/
 Build/
 inspiration/
+screenshots/
 
 # A* Pathfinding Project - Exclude unnecessary files
 # Keep ONLY: Core, Generators, Pathfinders, TurnBased, Utilities, Editor, Modifiers (.asmdef)
