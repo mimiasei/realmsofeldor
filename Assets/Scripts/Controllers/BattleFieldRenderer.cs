@@ -20,6 +20,13 @@ namespace RealmsOfEldor.Controllers
         [SerializeField] private Sprite roughBackground;
         [SerializeField] private Sprite snowBackground;
 
+        [Header("Camera Mode - Olden Era Style")]
+        [SerializeField] private bool usePerspectiveCamera = true; // 2.5D billboard mode (true for Olden Era style)
+        [SerializeField] private float perspectiveFOV = 40f; // Field of view
+        [SerializeField] private float cameraHeight = 12f; // Height above ground (Y axis)
+        [SerializeField] private float cameraZOffset = -10f; // Distance back from center (negative Z)
+        [SerializeField] private float cameraTiltAngle = 50f; // Tilt angle looking down at ground (Olden Era ~50°)
+
         [Header("Hex Grid")]
         [SerializeField] private GameObject hexGridContainer;
         [SerializeField] private bool showHexGrid = false;
@@ -34,8 +41,18 @@ namespace RealmsOfEldor.Controllers
             Debug.Log("BattleFieldRenderer.Awake() called - starting initialization");
             battleCamera = GetComponent<Camera>();
 
-            // Set camera to orthographic mode for 2D battle view
-            battleCamera.orthographic = true;
+            // Setup camera mode (perspective for 2.5D billboards or orthographic for classic 2D)
+            if (usePerspectiveCamera)
+            {
+                battleCamera.orthographic = false;
+                battleCamera.fieldOfView = perspectiveFOV;
+                Debug.Log($"BattleFieldRenderer: Using perspective camera (FOV: {perspectiveFOV})");
+            }
+            else
+            {
+                battleCamera.orthographic = true;
+                Debug.Log("BattleFieldRenderer: Using orthographic camera");
+            }
 
             // Set camera to render sprites properly (not skybox)
             battleCamera.clearFlags = CameraClearFlags.SolidColor;
@@ -77,14 +94,59 @@ namespace RealmsOfEldor.Controllers
 
         void Start()
         {
+            // Disable CameraController if it exists (it's for adventure map, not battle)
+            var cameraController = GetComponent<CameraController>();
+            if (cameraController != null)
+            {
+                Debug.LogWarning("BattleFieldRenderer: Disabling CameraController - it's for adventure map, not battle scene!");
+                cameraController.enabled = false;
+            }
+
             // Center camera on battlefield
             CenterCamera();
+
+            // Log final camera state after setup
+            Debug.Log("=== CAMERA STATE AFTER CENTERING ===");
+            Debug.Log($"Camera Position: {battleCamera.transform.position}");
+            Debug.Log($"Camera Rotation (Euler): {battleCamera.transform.rotation.eulerAngles}");
+            Debug.Log($"Camera Rotation (Quaternion): {battleCamera.transform.rotation}");
+            Debug.Log($"Camera Projection: {(battleCamera.orthographic ? "Orthographic" : "Perspective")}");
+            if (!battleCamera.orthographic)
+            {
+                Debug.Log($"Camera FOV: {battleCamera.fieldOfView}");
+            }
+            Debug.Log("====================================");
 
             // Setup background (must be after camera is positioned)
             SetupBackground();
 
             // Initialize hex grid (hidden by default)
             InitializeHexGrid();
+
+            // Setup lighting for 2.5D billboard rendering (if using perspective camera)
+            if (usePerspectiveCamera)
+            {
+                SetupLighting();
+            }
+        }
+
+        /// <summary>
+        /// Sets up lighting and shadows for 2.5D billboard rendering.
+        /// </summary>
+        private void SetupLighting()
+        {
+            // Check if lighting setup already exists
+            var existingSetup = GetComponent<BattleLightingSetup>();
+            if (existingSetup == null)
+            {
+                // Add lighting setup component
+                var lightingSetup = gameObject.AddComponent<BattleLightingSetup>();
+                Debug.Log("BattleFieldRenderer: Added BattleLightingSetup component for 2.5D rendering");
+            }
+            else
+            {
+                Debug.Log("BattleFieldRenderer: BattleLightingSetup already exists");
+            }
         }
 
         /// <summary>
@@ -123,52 +185,53 @@ namespace RealmsOfEldor.Controllers
         /// <summary>
         /// Centers the camera on the battlefield to show all hexes.
         /// Fixed camera position like HoMM3 - shows entire battlefield.
+        /// Supports both orthographic (classic 2D) and perspective (2.5D billboard) modes.
         /// </summary>
         private void CenterCamera()
         {
-            // Calculate the bounds of the entire battlefield
-            // Top-left corner: hex (0, 0)
+            // Calculate the bounds of the entire battlefield on X,Z ground plane
             var topLeft = BattleHexGrid.HexToWorld(0, 0);
-            // Bottom-right corner: hex (BATTLE_WIDTH-1, BATTLE_HEIGHT-1)
             var bottomRight = BattleHexGrid.HexToWorld(BattleHexGrid.BATTLE_WIDTH - 1, BattleHexGrid.BATTLE_HEIGHT - 1);
 
-            // Calculate center between these bounds
+            // Calculate center on X,Z plane (Y is height)
             var centerX = (topLeft.x + bottomRight.x) * 0.5f;
-            var centerY = (topLeft.y + bottomRight.y) * 0.5f;
+            var centerZ = (topLeft.z + bottomRight.z) * 0.5f;
 
-            battleCamera.transform.position = new Vector3(centerX, centerY, -10f);
-
-            // Calculate orthographic size to fit entire battlefield
-            var battlefieldWidth = bottomRight.x - topLeft.x + BattleHexGrid.HEX_WIDTH;
-            var battlefieldHeight = bottomRight.y - topLeft.y + BattleHexGrid.HEX_HEIGHT;
-
-            Debug.Log($"BattleFieldRenderer: Calculated battlefield size: {battlefieldWidth}x{battlefieldHeight}");
-
-            // Orthographic size is half of the camera's view height
-            // To fit the battlefield, we need: orthographicSize * 2 >= battlefieldHeight
-            var cameraAspect = battleCamera.aspect;
-            var battlefieldAspect = battlefieldWidth / battlefieldHeight;
-
-            Debug.Log($"BattleFieldRenderer: Camera aspect: {cameraAspect}, Battlefield aspect: {battlefieldAspect}");
-
-            if (battlefieldAspect > cameraAspect)
+            if (usePerspectiveCamera)
             {
-                // Battlefield is wider than camera - fit to width
-                // Camera view width = orthographicSize * 2 * aspect
-                // We need: orthographicSize * 2 * aspect >= battlefieldWidth
-                battleCamera.orthographicSize = (battlefieldWidth / cameraAspect) * 0.5f;
-                Debug.Log($"BattleFieldRenderer: Fitting to WIDTH - ortho size set to {battleCamera.orthographicSize}");
+                // Position camera for 3D perspective view (Olden Era style)
+                // Camera is above (Y+) and behind (Z-) the battlefield center
+                // Looking down at the X,Z ground plane
+                battleCamera.transform.position = new Vector3(centerX, cameraHeight, centerZ + cameraZOffset);
+                battleCamera.transform.rotation = Quaternion.Euler(cameraTiltAngle, 0, 0);
+
+                Debug.Log($"BattleFieldRenderer: Perspective camera at {battleCamera.transform.position}, rotation: {battleCamera.transform.rotation.eulerAngles}, FOV: {perspectiveFOV}°");
+                Debug.Log($"BattleFieldRenderer: Battlefield center at ({centerX}, 0, {centerZ}) on X,Z ground plane");
             }
             else
             {
-                // Battlefield is taller than camera - fit to height
-                battleCamera.orthographicSize = battlefieldHeight * 0.5f;
-                Debug.Log($"BattleFieldRenderer: Fitting to HEIGHT - ortho size set to {battleCamera.orthographicSize}");
-            }
+                // Orthographic camera - top down view
+                battleCamera.transform.position = new Vector3(centerX, 20f, centerZ);
+                battleCamera.transform.rotation = Quaternion.Euler(90f, 0, 0); // Looking straight down
 
-            Debug.Log($"BattleFieldRenderer: Camera positioned at ({centerX:F2}, {centerY:F2}, -10) with orthographic size {battleCamera.orthographicSize:F2}");
-            Debug.Log($"BattleFieldRenderer: Battlefield bounds - TopLeft: {topLeft}, BottomRight: {bottomRight}");
-            Debug.Log($"BattleFieldRenderer: Camera view will show from ({centerX - battleCamera.orthographicSize * battleCamera.aspect:F2}, {centerY - battleCamera.orthographicSize:F2}) to ({centerX + battleCamera.orthographicSize * battleCamera.aspect:F2}, {centerY + battleCamera.orthographicSize:F2})");
+                // Calculate orthographic size to fit entire battlefield
+                var battlefieldWidth = bottomRight.x - topLeft.x + BattleHexGrid.HEX_WIDTH;
+                var battlefieldDepth = bottomRight.z - topLeft.z + BattleHexGrid.HEX_HEIGHT;
+
+                var cameraAspect = battleCamera.aspect;
+                var battlefieldAspect = battlefieldWidth / battlefieldDepth;
+
+                if (battlefieldAspect > cameraAspect)
+                {
+                    battleCamera.orthographicSize = (battlefieldWidth / cameraAspect) * 0.5f;
+                }
+                else
+                {
+                    battleCamera.orthographicSize = battlefieldDepth * 0.5f;
+                }
+
+                Debug.Log($"BattleFieldRenderer: Orthographic top-down camera at {battleCamera.transform.position}, size: {battleCamera.orthographicSize}");
+            }
         }
 
         /// <summary>
@@ -213,9 +276,22 @@ namespace RealmsOfEldor.Controllers
             backgroundRenderer.enabled = true;
             backgroundRenderer.sortingOrder = -100;
 
-            // Position background at camera position (same X,Y, but in front at Z=5)
-            var camPos = battleCamera.transform.position;
-            backgroundRenderer.transform.position = new Vector3(camPos.x, camPos.y, 5f);
+            // Configure shadow receiving for 2.5D rendering
+            backgroundRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; // Ground doesn't cast shadows
+            backgroundRenderer.receiveShadows = true; // Ground receives shadows from units
+
+            // Position background as horizontal ground plane
+            var topLeft = BattleHexGrid.HexToWorld(0, 0);
+            var bottomRight = BattleHexGrid.HexToWorld(BattleHexGrid.BATTLE_WIDTH - 1, BattleHexGrid.BATTLE_HEIGHT - 1);
+            var centerX = (topLeft.x + bottomRight.x) * 0.5f;
+            var centerZ = (topLeft.z + bottomRight.z) * 0.5f;
+
+            // Background is a horizontal plane at ground level (Y=0)
+            // Rotated 90° on X axis to lie flat on X,Z plane
+            backgroundRenderer.transform.position = new Vector3(centerX, 0f, centerZ);
+            backgroundRenderer.transform.rotation = Quaternion.Euler(90f, 0f, 0f); // Rotate to be horizontal
+
+            Debug.Log($"BattleFieldRenderer: Background positioned as horizontal ground plane at ({centerX}, 0, {centerZ}), rotated 90° on X");
 
             // Add BoxCollider2D for click detection on the battlefield
             var bgCollider = backgroundRenderer.GetComponent<BoxCollider2D>();
@@ -230,11 +306,11 @@ namespace RealmsOfEldor.Controllers
             var spriteTexture = sprite.texture;
 
             // Calculate camera's view size
-            var cameraHeight = battleCamera.orthographicSize * 2f; // Full height
-            var cameraWidth = cameraHeight * battleCamera.aspect;   // Full width
+            var cameraViewHeight = battleCamera.orthographicSize * 2f; // Full height
+            var cameraViewWidth = cameraViewHeight * battleCamera.aspect;   // Full width
 
             Debug.Log($"BattleFieldRenderer: Camera orthographic size: {battleCamera.orthographicSize}, aspect: {battleCamera.aspect}");
-            Debug.Log($"BattleFieldRenderer: Camera view size: {cameraWidth}x{cameraHeight}");
+            Debug.Log($"BattleFieldRenderer: Camera view size: {cameraViewWidth}x{cameraViewHeight}");
             Debug.Log($"BattleFieldRenderer: Sprite texture size: {spriteTexture.width}x{spriteTexture.height} pixels");
             Debug.Log($"BattleFieldRenderer: Sprite PPU: {sprite.pixelsPerUnit}");
             Debug.Log($"BattleFieldRenderer: Sprite bounds (world units): {spriteBounds.x}x{spriteBounds.y}");
@@ -245,15 +321,15 @@ namespace RealmsOfEldor.Controllers
             // the battlefield is ~17x11 world units, and we can scale the background to fit the camera
 
             // Scale to fit camera view (camera shows entire battlefield + some extra space)
-            var scaleToFitWidth = cameraWidth / spriteBounds.x;
-            var scaleToFitHeight = cameraHeight / spriteBounds.y;
+            var scaleToFitWidth = cameraViewWidth / spriteBounds.x;
+            var scaleToFitHeight = cameraViewHeight / spriteBounds.y;
 
             // Use the smaller scale to ensure entire sprite fits in view
             var targetScale = Mathf.Min(scaleToFitWidth, scaleToFitHeight);
 
             backgroundRenderer.transform.localScale = Vector3.one * targetScale;
 
-            Debug.Log($"BattleFieldRenderer: Camera view size: {cameraWidth:F2}x{cameraHeight:F2}");
+            Debug.Log($"BattleFieldRenderer: Camera view size: {cameraViewWidth:F2}x{cameraViewHeight:F2}");
             Debug.Log($"BattleFieldRenderer: Sprite size: {spriteBounds.x}x{spriteBounds.y}");
             Debug.Log($"BattleFieldRenderer: Scaling background to fit camera - scale: {targetScale:F4}");
             Debug.Log($"BattleFieldRenderer: Final sprite display size: {spriteBounds.x * targetScale:F2}x{spriteBounds.y * targetScale:F2}");
@@ -268,11 +344,47 @@ namespace RealmsOfEldor.Controllers
         [Header("Runtime Tuning")]
         [SerializeField] private bool manualScaleOverride = false;
         [SerializeField] [Range(0.01f, 2f)] private float manualBackgroundScale = 0.3f;
+
+        [Header("Runtime Camera Adjustment")]
+        [Tooltip("Enable to manually adjust camera during play mode")]
+        [SerializeField] private bool manualCameraAdjustment = false;
+        [SerializeField] [Range(1f, 30f)] private float runtimeCameraHeight = 12f;
+        [SerializeField] [Range(-20f, 5f)] private float runtimeCameraZOffset = -10f;
+        [SerializeField] [Range(20f, 70f)] private float runtimeCameraTilt = 50f;
+        [SerializeField] [Range(15f, 60f)] private float runtimeCameraFOV = 40f;
+
         private float lastBackgroundScale = -1f;
-        private bool hasLoggedAutoScale = false;
+        private Vector3 lastCameraPos = Vector3.zero;
+        private Quaternion lastCameraRot = Quaternion.identity;
+        private float lastFOV = 0f;
 
         void Update()
         {
+            // Allow runtime adjustment of camera
+            if (manualCameraAdjustment && battleCamera != null && Application.isPlaying)
+            {
+                var topLeft = BattleHexGrid.HexToWorld(0, 0);
+                var bottomRight = BattleHexGrid.HexToWorld(BattleHexGrid.BATTLE_WIDTH - 1, BattleHexGrid.BATTLE_HEIGHT - 1);
+                var centerX = (topLeft.x + bottomRight.x) * 0.5f;
+                var centerZ = (topLeft.z + bottomRight.z) * 0.5f;
+
+                var newCameraPos = new Vector3(centerX, runtimeCameraHeight, centerZ + runtimeCameraZOffset);
+                var newCameraRot = Quaternion.Euler(runtimeCameraTilt, 0, 0);
+
+                if (Vector3.Distance(newCameraPos, lastCameraPos) > 0.01f ||
+                    Quaternion.Angle(newCameraRot, lastCameraRot) > 0.1f ||
+                    Mathf.Abs(runtimeCameraFOV - lastFOV) > 0.1f)
+                {
+                    battleCamera.transform.position = newCameraPos;
+                    battleCamera.transform.rotation = newCameraRot;
+                    battleCamera.fieldOfView = runtimeCameraFOV;
+
+                    lastCameraPos = newCameraPos;
+                    lastCameraRot = newCameraRot;
+                    lastFOV = runtimeCameraFOV;
+                }
+            }
+
             // Allow runtime adjustment of background scale (only if manual override enabled)
             if (manualScaleOverride && backgroundRenderer != null && Application.isPlaying)
             {
@@ -280,14 +392,7 @@ namespace RealmsOfEldor.Controllers
                 {
                     backgroundRenderer.transform.localScale = Vector3.one * manualBackgroundScale;
                     lastBackgroundScale = manualBackgroundScale;
-                    Debug.Log($"BattleFieldRenderer: Manual background scale adjusted to {manualBackgroundScale}");
                 }
-            }
-            else if (!hasLoggedAutoScale && backgroundRenderer != null)
-            {
-                // Log once that we're using automatic scaling
-                Debug.Log($"BattleFieldRenderer: Using automatic scale (manualScaleOverride is disabled) - current scale: {backgroundRenderer.transform.localScale}");
-                hasLoggedAutoScale = true;
             }
         }
 
@@ -355,9 +460,11 @@ namespace RealmsOfEldor.Controllers
         {
             var hexObj = new GameObject($"Hex_{hexX}_{hexY}");
             var worldPos = BattleHexGrid.HexToWorld(hexX, hexY);
-            // Set Z to -1 to be in front of background (background is at Z=5, camera at Z=-10)
-            // So Z=-1 puts hexes in front of camera
-            hexObj.transform.position = new Vector3(worldPos.x, worldPos.y, -1f);
+            // Position on ground plane (X,Z at Y=0), slightly above to be visible
+            hexObj.transform.position = new Vector3(worldPos.x, 0.01f, worldPos.z);
+
+            // Rotate hex to lie flat on X,Z plane
+            hexObj.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
 
             // Add LineRenderer for hex border
             var lineRenderer = hexObj.AddComponent<LineRenderer>();
@@ -370,7 +477,7 @@ namespace RealmsOfEldor.Controllers
             lineRenderer.useWorldSpace = false; // Use local space (relative to hexObj position)
             lineRenderer.sortingOrder = 100; // Render above everything
 
-            // Create hex shape (6 vertices)
+            // Create hex shape (6 vertices) - these are in local space, will be rotated by transform
             var hexPoints = GetHexVertices(BattleHexGrid.HEX_WIDTH, BattleHexGrid.HEX_HEIGHT);
             lineRenderer.positionCount = 6;
             lineRenderer.SetPositions(hexPoints);

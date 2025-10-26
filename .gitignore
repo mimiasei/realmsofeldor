@@ -49,6 +49,9 @@ Assets/AstarPathfindingProject/defines.csv.meta
 Assets/AstarPathfindingProject/link.xml
 Assets/AstarPathfindingProject/link.xml.meta
 
+# All .pdf files
+*.pdf
+
 # All .md files
 *.md
 

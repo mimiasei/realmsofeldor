@@ -306,14 +306,12 @@ namespace RealmsOfEldor.Controllers.Battle
 
         private void HandleAttackClicked()
         {
-            Debug.Log("BattleSceneController: Attack clicked");
             inputController?.EnterAttackMode();
             uiPanel?.LogMessage("Select target to attack");
         }
 
         private void HandleDefendClicked()
         {
-            Debug.Log("BattleSceneController: Defend clicked");
             inputController?.DefendSelectedUnit();
             uiPanel?.LogMessage("Unit defending");
             UpdateVisuals();
@@ -321,7 +319,6 @@ namespace RealmsOfEldor.Controllers.Battle
 
         private void HandleWaitClicked()
         {
-            Debug.Log("BattleSceneController: Wait clicked");
             inputController?.WaitSelectedUnit();
             uiPanel?.LogMessage("Unit waiting");
             UpdateVisuals();
@@ -329,7 +326,6 @@ namespace RealmsOfEldor.Controllers.Battle
 
         private void HandleAutoClicked()
         {
-            Debug.Log("BattleSceneController: Auto combat toggled");
             autoProcessRounds = !autoProcessRounds;
 
             // Disable player input during auto-combat
@@ -340,21 +336,18 @@ namespace RealmsOfEldor.Controllers.Battle
 
         private void HandleSpellbookClicked()
         {
-            Debug.Log("BattleSceneController: Spellbook clicked");
             // TODO: Open spellbook UI
             uiPanel?.LogMessage("Spellbook not yet implemented");
         }
 
         private void HandleRetreatClicked()
         {
-            Debug.Log("BattleSceneController: Retreat clicked");
             // TODO: Confirm and execute retreat
             uiPanel?.LogMessage("Retreat not yet implemented");
         }
 
         private void HandleSurrenderClicked()
         {
-            Debug.Log("BattleSceneController: Surrender clicked");
             // TODO: Confirm and execute surrender
             uiPanel?.LogMessage("Surrender not yet implemented");
         }

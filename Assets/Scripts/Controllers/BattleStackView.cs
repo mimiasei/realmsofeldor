@@ -8,11 +8,13 @@ namespace RealmsOfEldor.Controllers
     /// <summary>
     /// Visual representation of a battle stack (creature unit).
     /// Based on VCMI's BattleStacksController creature rendering.
+    /// Uses mesh-based billboard rendering for GPU-accelerated performance.
     /// </summary>
     public class BattleStackView : MonoBehaviour
     {
         [Header("References")]
-        [SerializeField] private SpriteRenderer creatureSprite;
+        [SerializeField] private GameObject creatureSpriteObject;
+        [SerializeField] private MeshRenderer creatureMeshRenderer;
         [SerializeField] private TextMeshPro amountText;
         [SerializeField] private GameObject amountBadge;
         [SerializeField] private SpriteRenderer selectionIndicator;
@@ -24,20 +26,39 @@ namespace RealmsOfEldor.Controllers
 
         private BattleStack cachedStack;
         private bool isSelected = false;
+        private Sprite currentSprite; // Store sprite reference for bounds/texture
 
         void Awake()
         {
             // Auto-create components if not assigned
-            if (creatureSprite == null)
+            if (creatureSpriteObject == null)
             {
-                var spriteObj = new GameObject("CreatureSprite");
-                spriteObj.transform.SetParent(transform);
-                spriteObj.transform.localPosition = Vector3.zero;
-                creatureSprite = spriteObj.AddComponent<SpriteRenderer>();
-                creatureSprite.sortingLayerName = "Default";
-                creatureSprite.sortingOrder = 10; // Render stacks above field
+                creatureSpriteObject = new GameObject("CreatureSprite");
+                creatureSpriteObject.transform.SetParent(transform);
+                creatureSpriteObject.transform.localPosition = Vector3.zero;
 
-                Debug.Log($"BattleStackView.Awake: Created sprite renderer with sorting layer 'Default' and order 10");
+                // Create MeshRenderer + MeshFilter for shader-based billboard (more efficient)
+                var meshFilter = creatureSpriteObject.AddComponent<MeshFilter>();
+                creatureMeshRenderer = creatureSpriteObject.AddComponent<MeshRenderer>();
+
+                // Create a simple quad mesh for the sprite
+                meshFilter.mesh = CreateQuadMesh();
+
+                // Use billboard shader instead of sprite renderer
+                var billboardShader = Shader.Find("RealmsOfEldor/BillboardCylindrical");
+                if (billboardShader != null)
+                {
+                    var material = new Material(billboardShader);
+                    creatureMeshRenderer.material = material;
+                    creatureMeshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                    creatureMeshRenderer.receiveShadows = false;
+                }
+                else
+                {
+                    Debug.LogWarning("BattleStackView: Billboard shader 'RealmsOfEldor/BillboardCylindrical' not found, using default unlit shader");
+                    var material = new Material(Shader.Find("Unlit/Texture"));
+                    creatureMeshRenderer.material = material;
+                }
             }
 
             if (amountBadge == null)
@@ -69,32 +90,40 @@ namespace RealmsOfEldor.Controllers
         {
             cachedStack = stack;
 
-            // Set creature sprite (use placeholder if none provided)
+            // Get sprite to use (provided or placeholder)
             if (creatureIcon != null)
             {
-                creatureSprite.sprite = creatureIcon;
-                Debug.Log($"BattleStackView: Using provided sprite for stack {stack.Id}");
+                currentSprite = creatureIcon;
             }
             else
             {
-                creatureSprite.sprite = CreatePlaceholderSprite();
-                Debug.Log($"BattleStackView: Created placeholder sprite for stack {stack.Id} - enabled: {creatureSprite.enabled}, sprite: {creatureSprite.sprite != null}");
+                currentSprite = CreatePlaceholderSprite();
+            }
+
+            // Apply texture to billboard shader material
+            if (creatureMeshRenderer != null && creatureMeshRenderer.material != null && currentSprite != null)
+            {
+                creatureMeshRenderer.material.mainTexture = currentSprite.texture;
+
+                // Set proper scaling based on sprite bounds
+                var scale = currentSprite.bounds.size; // Size in world units
+                creatureSpriteObject.transform.localScale = new Vector3(scale.x, scale.y, 1f);
+            }
+            else
+            {
+                Debug.LogError($"BattleStackView: Failed to initialize stack {stack.Id} - meshRenderer or material or sprite is null!");
             }
 
             // Update amount text
             UpdateAmount();
 
-            // Position at hex location (Z=0 to be in front of background at Z=5)
+            // Position at hex location on X,Z ground plane
             var worldPos = BattleHexGrid.HexToWorld(stack.Position.X, stack.Position.Y);
-            transform.position = new Vector3(worldPos.x, worldPos.y, 0f); // Z=0 puts stacks in front of background
+            transform.position = worldPos; // worldPos is now (x, 0, z) on ground plane
 
             // Set team color
-            var isAlly = stack.Side == BattleSide.Attacker; // TODO: Make this configurable
+            var isAlly = stack.Side == BattleSide.Attacker;
             selectionIndicator.color = isAlly ? allyColor : enemyColor;
-
-            Debug.Log($"BattleStackView: Initialized stack {stack.Id} ({stack.Count}x creature {stack.CreatureId}) at hex ({stack.Position.X}, {stack.Position.Y}) -> world pos {worldPos}");
-            Debug.Log($"BattleStackView: Stack {stack.Id} - GameObject position: {transform.position}, Sprite enabled: {creatureSprite.enabled}, Sprite: {creatureSprite.sprite != null}");
-            Debug.Log($"BattleStackView: Stack {stack.Id} - Sprite bounds: {creatureSprite.bounds}, Sprite scale: {creatureSprite.transform.localScale}");
         }
 
         /// <summary>
@@ -143,7 +172,6 @@ namespace RealmsOfEldor.Controllers
         public void ShowDamage(int damage)
         {
             // TODO: Implement floating damage text animation
-            Debug.Log($"BattleStackView: Stack {cachedStack?.Id} took {damage} damage");
             UpdateAmount();
         }
 
@@ -153,7 +181,6 @@ namespace RealmsOfEldor.Controllers
         public void PlayDeathAnimation()
         {
             // TODO: Implement death animation (fade out, sprite change, etc.)
-            Debug.Log($"BattleStackView: Stack {cachedStack?.Id} died");
             Destroy(gameObject, 1f); // Destroy after 1 second
         }
 
@@ -332,8 +359,64 @@ namespace RealmsOfEldor.Controllers
         /// </summary>
         void OnMouseDown()
         {
-            Debug.Log($"BattleStackView: Stack {cachedStack?.Id} clicked");
             // TODO: Raise event for stack selection
+        }
+
+        /// <summary>
+        /// Creates a simple quad mesh for the billboard sprite.
+        /// Centered at origin, 1x1 unit size (will be scaled by sprite bounds).
+        /// </summary>
+        private Mesh CreateQuadMesh()
+        {
+            var mesh = new Mesh();
+            mesh.name = "BillboardQuad";
+
+            // Vertices for a quad centered at origin, 1 unit wide/tall
+            // In local space: vertices are offset from center
+            mesh.vertices = new Vector3[]
+            {
+                new Vector3(-0.5f, -0.5f, 0f), // Bottom-left
+                new Vector3(0.5f, -0.5f, 0f),  // Bottom-right
+                new Vector3(-0.5f, 0.5f, 0f),  // Top-left
+                new Vector3(0.5f, 0.5f, 0f)    // Top-right
+            };
+
+            // UVs for texture mapping (0,0 = bottom-left, 1,1 = top-right)
+            mesh.uv = new Vector2[]
+            {
+                new Vector2(0, 0), // Bottom-left
+                new Vector2(1, 0), // Bottom-right
+                new Vector2(0, 1), // Top-left
+                new Vector2(1, 1)  // Top-right
+            };
+
+            // Triangles (two triangles make a quad)
+            mesh.triangles = new int[]
+            {
+                0, 2, 1, // First triangle
+                2, 3, 1  // Second triangle
+            };
+
+            // Normals (pointing forward for lighting)
+            mesh.normals = new Vector3[]
+            {
+                Vector3.forward,
+                Vector3.forward,
+                Vector3.forward,
+                Vector3.forward
+            };
+
+            // Colors (white, will be tinted by material)
+            mesh.colors = new Color[]
+            {
+                Color.white,
+                Color.white,
+                Color.white,
+                Color.white
+            };
+
+            mesh.RecalculateBounds();
+            return mesh;
         }
     }
 }

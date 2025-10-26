@@ -69,10 +69,7 @@ namespace RealmsOfEldor.Controllers
         private void HandleKeyboardPan()
         {
             if (!enableKeyboardPan)
-            {
-                Debug.LogWarning("HandleKeyboardPan: enableKeyboardPan is FALSE");
                 return;
-            }
 
             var moveDir = Vector3.zero;
 

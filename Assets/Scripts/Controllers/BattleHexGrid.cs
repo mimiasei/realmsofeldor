@@ -31,10 +31,12 @@ namespace RealmsOfEldor.Controllers
 
         /// <summary>
         /// Converts battlefield hex coordinates to Unity world position.
+        /// Returns position on the X,Z ground plane (Y=0 is ground level).
+        /// This matches standard 3D coordinate system for perspective camera.
         /// </summary>
         /// <param name="hexX">Hex column (0-16)</param>
         /// <param name="hexY">Hex row (0-10)</param>
-        /// <returns>World position in Unity space</returns>
+        /// <returns>World position in Unity space (X,Z plane, Y=0 ground)</returns>
         public static Vector3 HexToWorld(int hexX, int hexY)
         {
             // Calculate base X position
@@ -46,22 +48,25 @@ namespace RealmsOfEldor.Controllers
                 worldX += HALF_HEX_WIDTH;
             }
 
-            // Calculate Y position (rows go top-to-bottom)
-            var worldY = hexY * ROW_OFFSET;
+            // Calculate Z position (rows go from back to front, top-to-bottom)
+            // Z increases as hexY increases (hexes further down the battlefield)
+            var worldZ = hexY * ROW_OFFSET;
 
-            return new Vector3(worldX, worldY, 0f);
+            // Return position on ground plane (Y=0)
+            return new Vector3(worldX, 0f, worldZ);
         }
 
         /// <summary>
         /// Converts Unity world position to battlefield hex coordinates.
         /// Returns the closest hex to the given world position.
+        /// Expects position on X,Z ground plane.
         /// </summary>
-        /// <param name="worldPos">World position</param>
+        /// <param name="worldPos">World position (uses X and Z, ignores Y)</param>
         /// <returns>Hex coordinates (x, y) or (-1, -1) if out of bounds</returns>
         public static Vector2Int WorldToHex(Vector3 worldPos)
         {
-            // Approximate row from Y coordinate
-            var hexY = Mathf.RoundToInt(worldPos.y / ROW_OFFSET);
+            // Approximate row from Z coordinate (not Y!)
+            var hexY = Mathf.RoundToInt(worldPos.z / ROW_OFFSET);
 
             // Adjust X based on row offset
             var adjustedX = worldPos.x;

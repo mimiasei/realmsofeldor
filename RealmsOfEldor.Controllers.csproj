@@ -48,7 +48,9 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.2.6f2\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\Controllers\Cartographer.cs" />
     <Compile Include="Assets\Scripts\Controllers\Battle\BattleInputController.cs" />
+    <Compile Include="Assets\Scripts\Controllers\BattleLightingSetup.cs" />
     <Compile Include="Assets\Scripts\Controllers\Battle\BattleController.cs" />
     <Compile Include="Assets\Scripts\Controllers\HeroSpawner.cs" />
     <Compile Include="Assets\Scripts\Controllers\Battle\BattleAnimator.cs" />
@@ -56,12 +58,14 @@
     <Compile Include="Assets\Scripts\Controllers\AdventureMapInputController.cs" />
     <Compile Include="Assets\Scripts\Controllers\HeroController.cs" />
     <Compile Include="Assets\Scripts\Controllers\GameInitializer.cs" />
+    <Compile Include="Assets\Scripts\Controllers\BillboardSprite.cs" />
     <Compile Include="Assets\Scripts\Controllers\BattleStackRenderer.cs" />
     <Compile Include="Assets\Scripts\Controllers\GameStateManager.cs" />
     <Compile Include="Assets\Scripts\Controllers\AstarPathfindingAdapter.cs" />
     <Compile Include="Assets\Scripts\Controllers\BattleFieldRenderer.cs" />
     <Compile Include="Assets\Scripts\Controllers\MapTestInitializer.cs" />
     <Compile Include="Assets\Scripts\Controllers\BattleHexGrid.cs" />
+    <Compile Include="Assets\Scripts\Controllers\CartographerBillboard.cs" />
     <Compile Include="Assets\Scripts\Controllers\Battle\BattleTestSetup.cs" />
     <Compile Include="Assets\Scripts\Controllers\PathPreviewRenderer.cs" />
     <Compile Include="Assets\Scripts\Controllers\BattleStackView.cs" />

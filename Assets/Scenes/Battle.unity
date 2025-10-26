@@ -272,7 +272,7 @@ Camera:
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
-  orthographic: 1
+  orthographic: 0
   orthographic size: 8
   m_Depth: -1
   m_CullingMask:
@@ -699,12 +699,22 @@ MonoBehaviour:
   swampBackground: {fileID: 0}
   roughBackground: {fileID: 0}
   snowBackground: {fileID: 0}
+  usePerspectiveCamera: 0
+  perspectiveFOV: 20
+  cameraHeight: 15
+  cameraZOffset: -8
+  cameraTiltAngle: 30
   hexGridContainer: {fileID: 0}
   showHexGrid: 1
   hexLineColor: {r: 0, g: 1, b: 0, a: 0.3}
   hexLineWidth: 0.01
   manualScaleOverride: 0
   manualBackgroundScale: 0.3
+  manualCameraAdjustment: 0
+  runtimeCameraHeight: 15
+  runtimeCameraZOffset: -8
+  runtimeCameraTilt: 30
+  runtimeCameraFOV: 20
 --- !u!20 &1866372029
 Camera:
   m_ObjectHideFlags: 0
@@ -738,7 +748,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 20
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
