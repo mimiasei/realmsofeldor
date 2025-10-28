@@ -15,7 +15,7 @@ namespace RealmsOfEldor.Controllers
         [Header("Required References")]
         [SerializeField] private MapRenderer mapRenderer;
         [SerializeField] private MapEventChannel mapEvents;
-        [SerializeField] private CameraController cameraController;
+        [SerializeField] private Cartographer cartographer;
 
         [Header("Map Settings")]
         [SerializeField] private int mapWidth = 30;
@@ -70,22 +70,12 @@ namespace RealmsOfEldor.Controllers
             // Calculate coastal tiles
             gameMap.CalculateCoastalTiles();
 
-            // Configure camera bounds if camera controller is assigned
-            if (cameraController != null)
+            // Configure cartographer if assigned
+            if (cartographer != null)
             {
-                cameraController.SetMapBounds(mapWidth, mapHeight);
-
-                // Set perspective camera angle
-                var cam = cameraController.GetComponent<Camera>();
-                if (cam != null)
-                {
-                    cam.orthographic = false;
-                    cam.fieldOfView = 20f;
-                    cam.transform.rotation = Quaternion.Euler(-30f, 0f, 0f);
-                    var pos = cam.transform.position;
-                    // Y offset compensates for 30° tilt: -50 * tan(30°) ≈ -29
-                    cam.transform.position = new Vector3(pos.x, pos.y - 29f, -50f);
-                }
+                cartographer.SetMapBounds(mapWidth, mapHeight);
+                cartographer.SetGroundSize(mapWidth, mapHeight);
+                cartographer.EnableControls(true);
             }
 
             // Raise map loaded event - this triggers MapRenderer to render via event subscription

@@ -44,8 +44,8 @@ namespace RealmsOfEldor.Controllers
                 // Create a simple quad mesh for the sprite
                 meshFilter.mesh = CreateQuadMesh();
 
-                // Use billboard shader instead of sprite renderer
-                var billboardShader = Shader.Find("RealmsOfEldor/BillboardCylindrical");
+                // Use Cartographer billboard shader (unified system)
+                var billboardShader = Shader.Find("RealmsOfEldor/CartographerBillboard");
                 if (billboardShader != null)
                 {
                     var material = new Material(billboardShader);
@@ -55,7 +55,7 @@ namespace RealmsOfEldor.Controllers
                 }
                 else
                 {
-                    Debug.LogWarning("BattleStackView: Billboard shader 'RealmsOfEldor/BillboardCylindrical' not found, using default unlit shader");
+                    Debug.LogWarning("BattleStackView: Billboard shader 'RealmsOfEldor/CartographerBillboard' not found, using default unlit shader");
                     var material = new Material(Shader.Find("Unlit/Texture"));
                     creatureMeshRenderer.material = material;
                 }

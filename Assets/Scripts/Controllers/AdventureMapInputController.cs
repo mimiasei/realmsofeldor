@@ -30,7 +30,7 @@ namespace RealmsOfEldor.Controllers
 
         [Header("References")]
         [SerializeField] private MapRenderer mapRenderer;
-        [SerializeField] private CameraController cameraController;
+        [SerializeField] private Cartographer cartographer;
         [SerializeField] private PathPreviewRenderer pathPreviewRenderer;
 
         private GameMap gameMap;
@@ -141,8 +141,8 @@ namespace RealmsOfEldor.Controllers
             // Center on selected hero
             if (Input.GetKeyDown(KeyCode.C))
             {
-                if (selectedHero != null && cameraController != null)
-                    cameraController.CenterOn(mapRenderer.MapToWorldPosition(selectedHero.Position));
+                if (selectedHero != null && cartographer != null)
+                    cartographer.CenterOn(cartographer.MapToWorldPosition(selectedHero.Position.X, selectedHero.Position.Y));
             }
 
             // Arrow key movement (8-directional)
@@ -651,9 +651,9 @@ namespace RealmsOfEldor.Controllers
             uiEvents?.RaiseHeroSelected(hero);
 
             // Center camera on hero
-            if (cameraController != null && mapRenderer != null)
+            if (cartographer != null)
             {
-                cameraController.CenterOn(mapRenderer.MapToWorldPosition(hero.Position));
+                cartographer.CenterOn(cartographer.MapToWorldPosition(hero.Position.X, hero.Position.Y));
             }
         }
 

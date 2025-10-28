@@ -26,8 +26,8 @@ namespace RealmsOfEldor.Editor
             // Create Grid + Tilemaps
             CreateGridAndTilemaps(rootMap);
 
-            // Create Camera with CameraController
-            CreateCamera();
+            // Create Cartographer Camera
+            CreateCartographerCamera();
 
             // Create UI Canvas
             CreateUICanvas();
@@ -95,34 +95,19 @@ namespace RealmsOfEldor.Editor
             Debug.Log("✓ Grid and Tilemaps created (Terrain, Objects, Highlights)");
         }
 
-        private static void CreateCamera()
+        private static void CreateCartographerCamera()
         {
-            var cameraObj = new GameObject("Main Camera");
+            var cameraObj = new GameObject("CartographerCamera");
             var camera = cameraObj.AddComponent<Camera>();
-            camera.orthographic = true;
-            camera.orthographicSize = 5;
-            camera.backgroundColor = new Color(0.1f, 0.1f, 0.1f);
             camera.tag = "MainCamera";
 
-            // Add CameraController
-            var cameraController = cameraObj.AddComponent<CameraController>();
+            // Add Cartographer component (handles 3D camera setup automatically)
+            var cartographer = cameraObj.AddComponent<Cartographer>();
 
-            // Set some default values
-            var type = typeof(CameraController);
-            type.GetField("panSpeed", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?.SetValue(cameraController, 10f);
-            type.GetField("edgePanSpeed", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?.SetValue(cameraController, 8f);
-            type.GetField("scrollSpeed", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?.SetValue(cameraController, 2f);
-            type.GetField("minZoom", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?.SetValue(cameraController, 5f);
-            type.GetField("maxZoom", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?.SetValue(cameraController, 30f);
-            type.GetField("zoomSpeed", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?.SetValue(cameraController, 1f);
+            // Cartographer will configure the camera in its Awake() method
+            // Default values are good for isometric 2.5D rendering
 
-            Debug.Log("✓ Camera with CameraController created");
+            Debug.Log("✓ Cartographer camera created (configures automatically on scene load)");
         }
 
         private static void CreateUICanvas()

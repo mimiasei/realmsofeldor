@@ -46,7 +46,7 @@ namespace RealmsOfEldor.Controllers
 
         [Header("Required References")]
         [SerializeField] private MapRenderer mapRenderer;
-        [SerializeField] private CameraController cameraController;
+        [SerializeField] private Cartographer cartographer; // 2.5D camera system with 3D rendering
 
         [Header("Optional References")]
         [SerializeField] private HeroDatabase heroDatabase;
@@ -225,10 +225,26 @@ namespace RealmsOfEldor.Controllers
                 GenerateNewMap(gameMap);
             }
 
-            // Configure camera
-            if (cameraController != null)
+            // Configure Cartographer camera system
+            if (cartographer != null)
             {
-                cameraController.SetMapBounds(gameMap.Width, gameMap.Height);
+                // Setup Cartographer for 2.5D rendering
+                cartographer.SetGroundSize(gameMap.Width, gameMap.Height);
+                cartographer.SetMapBounds(gameMap.Width, gameMap.Height);
+                cartographer.EnableControls(true);
+
+                // Make sure Cartographer's camera is the main camera
+                Camera cartographerCam = cartographer.GetCamera();
+                if (cartographerCam != null)
+                {
+                    cartographerCam.tag = "MainCamera";
+                }
+
+                Debug.Log($"✓ Configured Cartographer camera for {gameMap.Width}x{gameMap.Height} map");
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ No Cartographer assigned! Assign Cartographer component in GameInitializer.");
             }
 
             // Raise map loaded event (triggers MapRenderer to render)

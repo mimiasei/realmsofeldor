@@ -5,12 +5,11 @@ namespace RealmsOfEldor.Controllers
 {
     /// <summary>
     /// Converts between different coordinate systems used in the game.
-    /// Handles migration from old 2D system (X,Y plane, Z=0) to new 3D system (X,Z plane, Y=height).
+    /// Handles conversion between game logic positions and 3D world coordinates.
     ///
     /// Coordinate Systems:
     /// - Game Logic: Position(x, y) - abstract 2D grid coordinates
-    /// - Old 2D World: Vector3(x, y, 0) - flat 2D on X,Y plane
-    /// - New 3D World: Vector3(x, 0, y) - 3D ground plane on X,Z, Y=height
+    /// - 3D World: Vector3(x, y, z) - 3D ground plane on X,Z (Y=height)
     /// </summary>
     public static class CoordinateConverter
     {
@@ -41,58 +40,8 @@ namespace RealmsOfEldor.Controllers
         }
 
         /// <summary>
-        /// Converts game logic Position to old 2D world position.
-        /// This is the OLD coordinate system, kept for backward compatibility during migration.
-        /// </summary>
-        /// <param name="pos">Game logic position</param>
-        /// <returns>World position on X,Y plane (Z=0)</returns>
-        [System.Obsolete("Use PositionToWorld3D instead for new Cartographer system")]
-        public static Vector3 PositionToWorld2D(Position pos)
-        {
-            return new Vector3(pos.X + 0.5f, pos.Y + 0.5f, 0f);
-        }
-
-        /// <summary>
-        /// Converts old 2D world position to game logic Position.
-        /// Expects position on X,Y plane (Z=0).
-        /// </summary>
-        /// <param name="worldPos">World position (uses X and Y, ignores Z)</param>
-        /// <returns>Game logic position</returns>
-        [System.Obsolete("Use WorldToPosition3D instead for new Cartographer system")]
-        public static Position WorldToPosition2D(Vector3 worldPos)
-        {
-            return new Position(
-                Mathf.FloorToInt(worldPos.x),
-                Mathf.FloorToInt(worldPos.y)
-            );
-        }
-
-        /// <summary>
-        /// Converts old 2D world position to new 3D world position.
-        /// Useful during migration to convert existing positions.
-        /// </summary>
-        /// <param name="worldPos2D">Old world position (X,Y,0)</param>
-        /// <param name="heightOffset">Height in new system</param>
-        /// <returns>New world position (X,height,Z)</returns>
-        public static Vector3 World2DToWorld3D(Vector3 worldPos2D, float heightOffset = 0f)
-        {
-            return new Vector3(worldPos2D.x, heightOffset, worldPos2D.y);
-        }
-
-        /// <summary>
-        /// Converts new 3D world position to old 2D world position.
-        /// Useful for backward compatibility during migration.
-        /// </summary>
-        /// <param name="worldPos3D">New world position (X,Y,Z)</param>
-        /// <returns>Old world position (X,Y,0)</returns>
-        public static Vector3 World3DToWorld2D(Vector3 worldPos3D)
-        {
-            return new Vector3(worldPos3D.x, worldPos3D.z, 0f);
-        }
-
-        /// <summary>
         /// Raycasts from screen point to 3D ground plane (Y=0).
-        /// Used for mouse input in new Cartographer system.
+        /// Used for mouse input in Cartographer system.
         /// </summary>
         /// <param name="camera">Camera to raycast from</param>
         /// <param name="screenPoint">Screen position (usually Input.mousePosition)</param>
@@ -125,30 +74,6 @@ namespace RealmsOfEldor.Controllers
                 // Silently catch raycast exceptions (mouse outside frustum)
                 hitPoint = Vector3.zero;
                 return false;
-            }
-
-            hitPoint = Vector3.zero;
-            return false;
-        }
-
-        /// <summary>
-        /// Raycasts from screen point to old 2D plane (Z=0).
-        /// Used for mouse input in old 2D system.
-        /// </summary>
-        /// <param name="camera">Camera to raycast from</param>
-        /// <param name="screenPoint">Screen position</param>
-        /// <param name="hitPoint">World position where ray hits 2D plane</param>
-        /// <returns>True if ray hit the 2D plane</returns>
-        [System.Obsolete("Use ScreenToWorld3D instead for new Cartographer system")]
-        public static bool ScreenToWorld2D(Camera camera, Vector3 screenPoint, out Vector3 hitPoint)
-        {
-            Ray ray = camera.ScreenPointToRay(screenPoint);
-            Plane flatPlane = new Plane(Vector3.forward, Vector3.zero); // Z=0 plane
-
-            if (flatPlane.Raycast(ray, out float enter))
-            {
-                hitPoint = ray.GetPoint(enter);
-                return true;
             }
 
             hitPoint = Vector3.zero;

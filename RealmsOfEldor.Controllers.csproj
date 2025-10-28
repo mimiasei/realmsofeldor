@@ -71,8 +71,10 @@
     <Compile Include="Assets\Scripts\Controllers\BattleStackView.cs" />
     <Compile Include="Assets\Scripts\Controllers\CameraController.cs" />
     <Compile Include="Assets\Scripts\Controllers\Battle\BattleUIPanel.cs" />
+    <Compile Include="Assets\Scripts\Controllers\TilemapCartographerAdapter.cs" />
     <Compile Include="Assets\Scripts\Controllers\Battle\BattleSceneController.cs" />
     <Compile Include="Assets\Scripts\Controllers\MapRenderer.cs" />
+    <Compile Include="Assets\Scripts\Controllers\CoordinateConverter.cs" />
     <Compile Include="Assets\Scripts\Controllers\MapObjectPrefabGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
