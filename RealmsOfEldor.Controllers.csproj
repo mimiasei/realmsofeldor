@@ -69,7 +69,6 @@
     <Compile Include="Assets\Scripts\Controllers\Battle\BattleTestSetup.cs" />
     <Compile Include="Assets\Scripts\Controllers\PathPreviewRenderer.cs" />
     <Compile Include="Assets\Scripts\Controllers\BattleStackView.cs" />
-    <Compile Include="Assets\Scripts\Controllers\CameraController.cs" />
     <Compile Include="Assets\Scripts\Controllers\Battle\BattleUIPanel.cs" />
     <Compile Include="Assets\Scripts\Controllers\TilemapCartographerAdapter.cs" />
     <Compile Include="Assets\Scripts\Controllers\Battle\BattleSceneController.cs" />

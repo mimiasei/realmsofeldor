@@ -94,13 +94,7 @@ namespace RealmsOfEldor.Controllers
 
         void Start()
         {
-            // Disable CameraController if it exists (it's for adventure map, not battle)
-            var cameraController = GetComponent<CameraController>();
-            if (cameraController != null)
-            {
-                Debug.LogWarning("BattleFieldRenderer: Disabling CameraController - it's for adventure map, not battle scene!");
-                cameraController.enabled = false;
-            }
+            // BattleFieldRenderer manages its own camera - no external camera controller needed
 
             // Center camera on battlefield
             CenterCamera();
