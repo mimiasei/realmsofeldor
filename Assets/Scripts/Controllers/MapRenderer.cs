@@ -636,15 +636,10 @@ namespace RealmsOfEldor.Controllers
             }
         }
 
-        void OnMouseDown()
-        {
-            // Raise event when object is clicked
-            if (mapEvents != null && cachedObject != null)
-            {
-                Debug.Log($"MapObjectView: Object clicked: {cachedObject.Name} at {cachedObject.Position}");
-                mapEvents.RaiseObjectClicked(cachedObject);
-            }
-        }
+        // Note: OnMouseDown removed to prevent Unity's internal SendMouseEvents
+        // from triggering raycasts outside screen bounds.
+        // Object click detection now handled by AdventureMapInputController
+        // using manual raycasting with proper bounds checking.
 
         public void SetObjectReference(MapObject obj)
         {

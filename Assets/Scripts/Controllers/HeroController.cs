@@ -211,54 +211,10 @@ namespace RealmsOfEldor.Controllers
             //     spriteRenderer.color = color;
         }
 
-        /// <summary>
-        /// Handles hero click for selection.
-        /// </summary>
-        void OnMouseDown()
-        {
-            Debug.Log($"Hero clicked: {heroData?.CustomName ?? "no data"}");
-
-            if (uiEvents == null)
-            {
-                Debug.LogError("HeroController: uiEvents is NULL!");
-                return;
-            }
-
-            if (heroData == null)
-            {
-                Debug.LogError("HeroController: heroData is NULL!");
-                return;
-            }
-
-            // If already selected, don't re-raise the event (just ignore the click)
-            if (isSelected)
-            {
-                Debug.Log($"Hero {heroData.CustomName} already selected, ignoring click");
-                return;
-            }
-
-            uiEvents.RaiseHeroSelected(heroData);
-        }
-
-        /// <summary>
-        /// Handles hero hover for tooltips.
-        /// </summary>
-        void OnMouseEnter()
-        {
-            if (uiEvents != null && heroData != null)
-            {
-                var tooltipText = $"{heroData.CustomName} (Lvl {heroData.Level})\nMP: {heroData.Movement}/{heroData.MaxMovement}";
-                uiEvents.RaiseShowTooltip(tooltipText);
-            }
-        }
-
-        void OnMouseExit()
-        {
-            if (uiEvents != null)
-            {
-                uiEvents.RaiseHideTooltip();
-            }
-        }
+        // Note: OnMouse* handlers removed to prevent Unity's internal SendMouseEvents
+        // from triggering raycasts outside screen bounds.
+        // Click/hover detection now handled by AdventureMapInputController
+        // using manual raycasting with proper bounds checking.
 
         // ===== Event Handlers =====
 

@@ -100,10 +100,75 @@ namespace RealmsOfEldor.Controllers
         void Update()
         {
             var settings = gameSettings ?? GameSettings.Instance;
-            if (!settings.enableKeyboardShortcuts || currentState == InputState.Disabled)
+            if (currentState == InputState.Disabled)
                 return;
 
-            HandleKeyboardShortcuts();
+            // Handle mouse input (hero clicks/hovers) with manual raycasting
+            HandleMouseInput();
+
+            if (settings.enableKeyboardShortcuts)
+            {
+                HandleKeyboardShortcuts();
+            }
+        }
+
+        /// <summary>
+        /// Handles mouse input with manual raycasting and bounds checking.
+        /// Replaces OnMouse* handlers to prevent Unity's internal SendMouseEvents
+        /// from triggering raycast errors when mouse is outside screen bounds.
+        /// </summary>
+        private void HandleMouseInput()
+        {
+            var mousePos = Input.mousePosition;
+
+            // Safety check: ensure mouse is within screen bounds
+            if (mousePos.x < 0 || mousePos.x > Screen.width ||
+                mousePos.y < 0 || mousePos.y > Screen.height)
+            {
+                return; // Mouse outside window, skip raycasting
+            }
+
+            // Get main camera
+            var mainCamera = Camera.main;
+            if (mainCamera == null)
+                return;
+
+            // Manual raycast to detect hero and map object clicks
+            if (Input.GetMouseButtonDown(0))
+            {
+                Ray ray = mainCamera.ScreenPointToRay(mousePos);
+                RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
+
+                if (hit.collider != null)
+                {
+                    // Check if we hit a HeroController
+                    var heroController = hit.collider.GetComponent<HeroController>();
+                    if (heroController != null && heroController.HeroData != null)
+                    {
+                        Debug.Log($"Hero clicked: {heroController.HeroData.CustomName}");
+
+                        // If already selected, don't re-raise the event
+                        if (!heroController.IsSelected)
+                        {
+                            uiEvents?.RaiseHeroSelected(heroController.HeroData);
+                        }
+                        return; // Don't process tile click
+                    }
+
+                    // Check if we hit a MapObjectView
+                    var mapObjectView = hit.collider.GetComponent<MapObjectView>();
+                    if (mapObjectView != null && mapObjectView.GetObject() != null)
+                    {
+                        var mapObject = mapObjectView.GetObject();
+                        Debug.Log($"MapObjectView: Object clicked: {mapObject.Name} at {mapObject.Position}");
+                        mapEvents?.RaiseObjectClicked(mapObject);
+                        return; // Don't process tile click
+                    }
+                }
+            }
+
+            // TODO: Add hover detection for tooltips if needed
+            // This would require tracking which hero is currently hovered
         }
 
         /// <summary>

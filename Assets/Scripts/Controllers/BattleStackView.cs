@@ -354,13 +354,10 @@ namespace RealmsOfEldor.Controllers
         /// </summary>
         public int StackId => cachedStack?.Id ?? -1;
 
-        /// <summary>
-        /// Handles mouse click on stack.
-        /// </summary>
-        void OnMouseDown()
-        {
-            // TODO: Raise event for stack selection
-        }
+        // Note: OnMouseDown removed to prevent Unity's internal SendMouseEvents
+        // from triggering raycasts outside screen bounds.
+        // Stack click detection should be handled by BattleInputController
+        // using manual raycasting with proper bounds checking.
 
         /// <summary>
         /// Creates a simple quad mesh for the billboard sprite.
