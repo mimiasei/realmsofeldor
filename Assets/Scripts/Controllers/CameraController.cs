@@ -95,6 +95,14 @@ namespace RealmsOfEldor.Controllers
             if (!enableEdgePan) return;
 
             var mousePos = Input.mousePosition;
+
+            // Safety check: ensure mouse is within screen bounds
+            if (mousePos.x < 0 || mousePos.x > Screen.width ||
+                mousePos.y < 0 || mousePos.y > Screen.height)
+            {
+                return; // Mouse outside window, skip edge panning
+            }
+
             var moveDir = Vector3.zero;
 
             if (mousePos.x < edgePanThreshold)
@@ -119,18 +127,43 @@ namespace RealmsOfEldor.Controllers
         {
             if (!enableMouseDrag) return;
 
+            // Safety check: ensure mouse is within screen bounds
+            var mousePos = Input.mousePosition;
+            if (mousePos.x < 0 || mousePos.x > Screen.width ||
+                mousePos.y < 0 || mousePos.y > Screen.height)
+            {
+                if (isDragging)
+                    isDragging = false;
+                return; // Mouse outside window, skip drag handling
+            }
+
             if (Input.GetMouseButtonDown(2)) // Middle mouse button
             {
-                dragOrigin = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-                isDragging = true;
+                try
+                {
+                    dragOrigin = mainCamera.ScreenToWorldPoint(mousePos);
+                    isDragging = true;
+                }
+                catch (System.Exception)
+                {
+                    // Silently catch raycast exceptions
+                }
             }
 
             if (Input.GetMouseButton(2) && isDragging)
             {
-                var currentPos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-                var diff = dragOrigin - currentPos;
-                var newPos = transform.position + diff;
-                transform.position = ConstrainPosition(newPos);
+                try
+                {
+                    var currentPos = mainCamera.ScreenToWorldPoint(mousePos);
+                    var diff = dragOrigin - currentPos;
+                    var newPos = transform.position + diff;
+                    transform.position = ConstrainPosition(newPos);
+                }
+                catch (System.Exception)
+                {
+                    // Silently catch raycast exceptions
+                    isDragging = false;
+                }
             }
 
             if (Input.GetMouseButtonUp(2))
@@ -372,7 +405,24 @@ namespace RealmsOfEldor.Controllers
         // Utility methods
         public Vector3 GetMouseWorldPosition()
         {
-            return mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            var mousePos = Input.mousePosition;
+
+            // Safety check: ensure mouse is within screen bounds
+            if (mousePos.x < 0 || mousePos.x > Screen.width ||
+                mousePos.y < 0 || mousePos.y > Screen.height)
+            {
+                return Vector3.zero; // Return zero if mouse outside bounds
+            }
+
+            try
+            {
+                return mainCamera.ScreenToWorldPoint(mousePos);
+            }
+            catch (System.Exception)
+            {
+                // Silently catch raycast exceptions
+                return Vector3.zero;
+            }
         }
 
         public bool IsPositionVisible(Vector3 worldPosition)

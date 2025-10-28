@@ -120,8 +120,16 @@ namespace RealmsOfEldor.Controllers.Battle
             if (!Input.GetMouseButtonDown(0))
                 return;
 
+            // Safety check: ensure mouse is within screen bounds
+            var mousePos = Input.mousePosition;
+            if (mousePos.x < 0 || mousePos.x > Screen.width ||
+                mousePos.y < 0 || mousePos.y > Screen.height)
+            {
+                return; // Mouse outside window, ignore
+            }
+
             // Convert screen position to world position on the Z=0 plane (where battlefield is)
-            var ray = battleCamera.ScreenPointToRay(Input.mousePosition);
+            var ray = battleCamera.ScreenPointToRay(mousePos);
 
             // Calculate intersection with Z=0 plane
             // Ray equation: P = origin + t * direction

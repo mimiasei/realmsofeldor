@@ -1,4 +1,6 @@
 using UnityEngine;
+using Cysharp.Threading.Tasks;
+using System.Threading;
 
 namespace RealmsOfEldor.Controllers
 {
@@ -10,6 +12,7 @@ namespace RealmsOfEldor.Controllers
     /// - Billboard sprites that face camera via shader
     /// - Real shadows from Unity's lighting system
     ///
+    /// Includes full camera controls (pan, zoom) from CameraController.
     /// Used by both adventure map and battle scenes for consistent rendering.
     /// </summary>
     [RequireComponent(typeof(Camera))]
@@ -54,13 +57,71 @@ namespace RealmsOfEldor.Controllers
         [Tooltip("Enable shadows")]
         [SerializeField] private bool enableShadows = true;
 
+        [Header("Camera Controls")]
+        [Tooltip("Pan speed with WASD/Arrow keys")]
+        [SerializeField] private float panSpeed = 20f;
+
+        [Tooltip("Pan speed when mouse near screen edges")]
+        [SerializeField] private float edgePanSpeed = 15f;
+
+        [Tooltip("Distance from screen edge to trigger edge pan (pixels)")]
+        [SerializeField] private float edgePanThreshold = 10f;
+
+        [Tooltip("Zoom speed (scroll wheel sensitivity)")]
+        [SerializeField] private float zoomSpeed = 2.5f;
+
+        [Tooltip("Minimum zoom distance (closer to ground)")]
+        [SerializeField] private float minPerspZoom = -50f;
+
+        [Tooltip("Maximum zoom distance (further from ground)")]
+        [SerializeField] private float maxPerspZoom = -10f;
+
+        [Tooltip("How many units before max zoom to start rotation transition")]
+        [SerializeField] private float zoomUnitsBeforeToStartCamRot = 5f;
+
+        [Tooltip("Camera rotation at normal zoom (looking down angle)")]
+        [SerializeField] private float regularCamRot = -30f;
+
+        [Tooltip("Camera rotation at max zoom (steeper angle)")]
+        [SerializeField] private float maxZoomCamRot = -60f;
+
+        [Header("Map Bounds")]
+        [Tooltip("Constrain camera to stay within map bounds")]
+        [SerializeField] private bool constrainToBounds = true;
+
+        [SerializeField] private Vector2 mapMinBounds = Vector2.zero;
+        [SerializeField] private Vector2 mapMaxBounds = new Vector2(100f, 100f);
+
+        [Header("Input Toggles")]
+        [Tooltip("Enable WASD/Arrow key panning")]
+        [SerializeField] private bool enableKeyboardPan = true;
+
+        [Tooltip("Enable panning when mouse near screen edges")]
+        [SerializeField] private bool enableEdgePan = true;
+
+        [Tooltip("Enable middle mouse button drag panning")]
+        [SerializeField] private bool enableMouseDrag = true;
+
+        [Tooltip("Enable scroll wheel zoom")]
+        [SerializeField] private bool enableZoom = true;
+
         private Camera mainCamera;
         private GameObject groundPlane;
         private Light directionalLight;
 
+        // Camera control state
+        private Vector3 dragOrigin;
+        private bool isDragging;
+        private CancellationTokenSource moveCts;
+        private float targetZPosition;
+        private float zoomVelocity;
+
         void Awake()
         {
             mainCamera = GetComponent<Camera>();
+
+            // Initialize target zoom position
+            targetZPosition = transform.position.z;
 
             // Setup camera for isometric 2.5D rendering
             SetupCamera();
@@ -75,6 +136,20 @@ namespace RealmsOfEldor.Controllers
             }
         }
 
+        void OnDestroy()
+        {
+            moveCts?.Cancel();
+            moveCts?.Dispose();
+        }
+
+        void Update()
+        {
+            HandleKeyboardPan();
+            HandleEdgePan();
+            HandleMouseDrag();
+            HandleZoom();
+        }
+
         /// <summary>
         /// Configures camera for Song of Conquest style isometric 2.5D rendering.
         /// </summary>
@@ -87,22 +162,32 @@ namespace RealmsOfEldor.Controllers
             // Ground plane center (what we want to look at)
             Vector3 groundCenter = new Vector3(groundSize.x / 2f, 0f, groundSize.y / 2f);
 
-            // Calculate camera offset from ground center
-            // We want camera ABOVE and BACK from the center
-            float horizontalDistance = Mathf.Abs(cameraDistance); // Make sure it's positive distance
+            // Simple position calculation: place camera above and behind ground center
+            // Using the configured height and distance values
+            float cameraX = groundCenter.x;
+            float cameraY = cameraHeight;
+            float cameraZ = groundCenter.z + cameraDistance; // cameraDistance is negative, so this moves camera back
 
-            // Convert isometric angle to radians for positioning
-            float angleRad = cameraYRotation * Mathf.Deg2Rad;
+            Vector3 cameraPos = new Vector3(cameraX, cameraY, cameraZ);
 
-            // Calculate offset in X and Z based on isometric angle
-            float offsetX = -horizontalDistance * Mathf.Sin(angleRad);
-            float offsetZ = -horizontalDistance * Mathf.Cos(angleRad);
+            // Apply Y rotation (isometric angle) by rotating position around ground center
+            float yawRad = cameraYRotation * Mathf.Deg2Rad;
+            Vector3 offset = cameraPos - groundCenter;
+            float rotatedX = offset.x * Mathf.Cos(yawRad) - offset.z * Mathf.Sin(yawRad);
+            float rotatedZ = offset.x * Mathf.Sin(yawRad) + offset.z * Mathf.Cos(yawRad);
+            cameraPos = groundCenter + new Vector3(rotatedX, offset.y, rotatedZ);
 
-            // Position camera above and offset from center
-            transform.position = groundCenter + new Vector3(offsetX, cameraHeight, offsetZ);
+            // Set camera position
+            transform.position = cameraPos;
 
-            // Point camera at ground center using LookAt
+            // Point camera at ground center
             transform.LookAt(groundCenter);
+
+            // Apply additional tilt if needed (adjust X rotation)
+            Vector3 eulerAngles = transform.eulerAngles;
+            eulerAngles.x = cameraTiltAngle;
+            eulerAngles.y = cameraYRotation;
+            transform.eulerAngles = eulerAngles;
 
             // Make sure camera can see far enough
             mainCamera.nearClipPlane = 0.3f;
@@ -113,12 +198,11 @@ namespace RealmsOfEldor.Controllers
             mainCamera.backgroundColor = new Color(0.1f, 0.1f, 0.15f, 1f);
 
             Debug.Log($"Cartographer: Camera configured:");
-            Debug.Log($"  Position: {transform.position}");
-            Debug.Log($"  Rotation: {transform.rotation.eulerAngles}");
+            Debug.Log($"  Ground size: {groundSize}");
             Debug.Log($"  Ground center: {groundCenter}");
-            Debug.Log($"  Camera offset: ({offsetX:F2}, {cameraHeight}, {offsetZ:F2})");
+            Debug.Log($"  Camera position: {transform.position}");
+            Debug.Log($"  Camera rotation: {transform.rotation.eulerAngles}");
             Debug.Log($"  FOV: {fieldOfView}°, Near: {mainCamera.nearClipPlane}, Far: {mainCamera.farClipPlane}");
-            Debug.Log($"  Camera forward direction: {transform.forward}");
             Debug.Log($"  Distance to ground center: {Vector3.Distance(transform.position, groundCenter):F2}");
         }
 
@@ -390,13 +474,31 @@ namespace RealmsOfEldor.Controllers
         /// </summary>
         public bool GetMouseWorldPosition(out Vector3 worldPos)
         {
-            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-            Plane groundPlane = new Plane(Vector3.up, Vector3.zero); // Plane at Y=0, facing up
-
-            if (groundPlane.Raycast(ray, out float enter))
+            // Safety check: ensure mouse is within screen bounds
+            Vector3 mousePos = Input.mousePosition;
+            if (mousePos.x < 0 || mousePos.x > Screen.width ||
+                mousePos.y < 0 || mousePos.y > Screen.height)
             {
-                worldPos = ray.GetPoint(enter);
-                return true;
+                worldPos = Vector3.zero;
+                return false;
+            }
+
+            try
+            {
+                Ray ray = mainCamera.ScreenPointToRay(mousePos);
+                Plane groundPlane = new Plane(Vector3.up, Vector3.zero); // Plane at Y=0, facing up
+
+                if (groundPlane.Raycast(ray, out float enter))
+                {
+                    worldPos = ray.GetPoint(enter);
+                    return true;
+                }
+            }
+            catch (System.Exception)
+            {
+                // Silently catch any raycast exceptions
+                worldPos = Vector3.zero;
+                return false;
             }
 
             worldPos = Vector3.zero;
@@ -421,6 +523,334 @@ namespace RealmsOfEldor.Controllers
             }
         }
 
+        // ==================== CAMERA CONTROLS (from CameraController) ====================
+
+        /// <summary>
+        /// Handles keyboard WASD/Arrow key panning.
+        /// Note: Movement is on X,Z plane (not X,Y like old 2D system).
+        /// </summary>
+        private void HandleKeyboardPan()
+        {
+            if (!enableKeyboardPan)
+                return;
+
+            var moveDir = Vector3.zero;
+
+            // Map keyboard input to X,Z movement (ground plane)
+            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
+                moveDir.z += 1f; // Forward on ground (was Y in 2D)
+            if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
+                moveDir.z -= 1f; // Backward on ground
+            if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+                moveDir.x -= 1f; // Left
+            if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+                moveDir.x += 1f; // Right
+
+            if (moveDir != Vector3.zero)
+            {
+                var newPos = transform.position + moveDir.normalized * panSpeed * Time.deltaTime;
+                transform.position = ConstrainPosition(newPos);
+            }
+        }
+
+        /// <summary>
+        /// Handles edge panning (mouse near screen edges).
+        /// </summary>
+        private void HandleEdgePan()
+        {
+            if (!enableEdgePan)
+                return;
+
+            var mousePos = Input.mousePosition;
+            var moveDir = Vector3.zero;
+
+            if (mousePos.x < edgePanThreshold)
+                moveDir.x -= 1f;
+            else if (mousePos.x > Screen.width - edgePanThreshold)
+                moveDir.x += 1f;
+
+            if (mousePos.y < edgePanThreshold)
+                moveDir.z -= 1f; // Changed from Y to Z for ground plane
+            else if (mousePos.y > Screen.height - edgePanThreshold)
+                moveDir.z += 1f;
+
+            if (moveDir != Vector3.zero)
+            {
+                var newPos = transform.position + moveDir.normalized * edgePanSpeed * Time.deltaTime;
+                transform.position = ConstrainPosition(newPos);
+            }
+        }
+
+        /// <summary>
+        /// Handles middle mouse button drag panning.
+        /// </summary>
+        private void HandleMouseDrag()
+        {
+            if (!enableMouseDrag)
+                return;
+
+            // Check if mouse is within screen bounds
+            Vector3 mousePos = Input.mousePosition;
+            if (mousePos.x < 0 || mousePos.x > Screen.width || mousePos.y < 0 || mousePos.y > Screen.height)
+            {
+                if (isDragging)
+                    isDragging = false;
+                return;
+            }
+
+            if (Input.GetMouseButtonDown(2)) // Middle mouse button
+            {
+                // Get ground point under mouse
+                if (GetMouseWorldPosition(out Vector3 worldPos))
+                {
+                    dragOrigin = worldPos;
+                    isDragging = true;
+                }
+            }
+
+            if (Input.GetMouseButton(2) && isDragging)
+            {
+                if (GetMouseWorldPosition(out Vector3 currentPos))
+                {
+                    // Calculate difference on X,Z plane only
+                    Vector3 diff = dragOrigin - currentPos;
+                    diff.y = 0; // Don't pan vertically
+
+                    var newPos = transform.position + diff;
+                    transform.position = ConstrainPosition(newPos);
+
+                    // Update drag origin for next frame to avoid accumulation
+                    dragOrigin = currentPos;
+                }
+            }
+
+            if (Input.GetMouseButtonUp(2))
+            {
+                isDragging = false;
+            }
+        }
+
+        /// <summary>
+        /// Handles scroll wheel zoom with smooth camera rotation transition.
+        /// This is the sophisticated zoom system from CameraController with:
+        /// - Smooth damping for zoom feel
+        /// - Automatic rotation change when zooming in close
+        /// - Maintains ground focus point during rotation transitions
+        /// </summary>
+        private void HandleZoom()
+        {
+            if (!enableZoom)
+                return;
+
+            var scrollDelta = Input.mouseScrollDelta.y;
+
+            // Perspective zoom with smooth easing and rotation (exact copy from CameraController)
+            if (scrollDelta != 0)
+            {
+                // Update target Z position (positive scroll = zoom in = increase Z toward 0)
+                targetZPosition += scrollDelta * zoomSpeed;
+                targetZPosition = Mathf.Clamp(targetZPosition, minPerspZoom, maxPerspZoom);
+            }
+
+            // Smooth zoom with quick ease in/out (exponential decay for snappy feel)
+            var currentZ = transform.position.z;
+            var newZ = Mathf.SmoothDamp(currentZ, targetZPosition, ref zoomVelocity, 0.15f, Mathf.Infinity, Time.deltaTime);
+            var deltaZ = newZ - currentZ;
+
+            // Calculate rotation based on zoom level
+            // Rotation stays at regularCamRot until we're close to max zoom, then transitions to maxZoomCamRot
+            float xRotation;
+            var rotationTransitionStart = maxPerspZoom - zoomUnitsBeforeToStartCamRot;
+
+            if (newZ <= rotationTransitionStart)
+            {
+                // Far zoom: regular rotation
+                xRotation = regularCamRot;
+            }
+            else if (newZ >= maxPerspZoom)
+            {
+                // Max zoom: steeper rotation
+                xRotation = maxZoomCamRot;
+            }
+            else
+            {
+                // Transition zone: interpolate from regularCamRot to maxZoomCamRot
+                var t = Mathf.InverseLerp(rotationTransitionStart, maxPerspZoom, newZ);
+                // Apply easing for smooth rotation (ease in/out)
+                t = t * t * (3f - 2f * t); // Smoothstep
+                xRotation = Mathf.Lerp(regularCamRot, maxZoomCamRot, t);
+            }
+
+            var pos = transform.position;
+
+            // Check if rotation is changing
+            var currentRotation = transform.eulerAngles.x;
+            if (currentRotation > 180f) currentRotation -= 360f;
+
+            var isRotationChanging = Mathf.Abs(xRotation - currentRotation) > 0.01f;
+
+            if (isRotationChanging)
+            {
+                // ONLY compensate Y position when rotation is actively changing
+                // This maintains the ground point during rotation transition
+
+                // Calculate where camera is currently looking on the ground (y=0 plane)
+                // Camera looks DOWN and FORWARD. With camera at (x, y, z) and rotation rot:
+                // Ground point Z = camera.z + |camera.y| / tan(|rot|)  [ADAPTED FOR 3D COORDS]
+                var currentTanAngle = Mathf.Tan(Mathf.Abs(currentRotation) * Mathf.Deg2Rad);
+                var groundPointZ = pos.z + pos.y / currentTanAngle;
+
+                // Apply Z movement
+                pos.z = newZ;
+
+                // Recalculate camera Y to maintain same ground point with new rotation
+                // Solve: groundPointZ = pos.z + pos.y / tan(|newRot|)
+                // Therefore: pos.y = (groundPointZ - pos.z) * tan(|newRot|)
+                var newTanAngle = Mathf.Tan(Mathf.Abs(xRotation) * Mathf.Deg2Rad);
+                pos.y = (groundPointZ - pos.z) * newTanAngle;
+            }
+            else
+            {
+                // Rotation is constant: move in straight diagonal line
+                // Y movement is proportional to Z movement at fixed angle
+                var tanAngle = Mathf.Tan(Mathf.Abs(xRotation) * Mathf.Deg2Rad);
+                deltaZ = newZ - currentZ;
+                pos.z = newZ;
+                pos.y += deltaZ * tanAngle; // Move diagonally at constant angle
+            }
+
+            // Apply rotation
+            var rot = transform.eulerAngles;
+            rot.x = xRotation;
+            transform.eulerAngles = rot;
+
+            // Apply position
+            transform.position = ConstrainPosition(pos);
+        }
+
+        /// <summary>
+        /// Constrains camera position to map bounds.
+        /// Adapted for 3D ground plane (X,Z instead of X,Y).
+        /// </summary>
+        private Vector3 ConstrainPosition(Vector3 position)
+        {
+            if (!constrainToBounds)
+                return position;
+
+            // Perspective camera with rotation: calculate what ground area is visible
+            var rotation = transform.eulerAngles.x;
+            if (rotation > 180f) rotation -= 360f;
+
+            // Calculate the ground point where camera center looks (on X,Z plane at Y=0)
+            var tanAngle = Mathf.Tan(Mathf.Abs(rotation) * Mathf.Deg2Rad);
+            var groundCenterZ = position.z + position.y / tanAngle; // ADAPTED: Y/tan instead of Z*tan
+
+            // For X bounds: use horizontal FOV calculation
+            // Distance to ground center along view ray
+            var distanceToGround = position.y / Mathf.Sin(Mathf.Abs(rotation) * Mathf.Deg2Rad);
+            var horizontalFOV = mainCamera.fieldOfView * mainCamera.aspect;
+            var groundWidth = 2f * distanceToGround * Mathf.Tan(horizontalFOV * 0.5f * Mathf.Deg2Rad);
+
+            // X bounds: keep camera so edges don't go outside map
+            var minX = mapMinBounds.x + groundWidth / 2f;
+            var maxX = mapMaxBounds.x - groundWidth / 2f;
+
+            if (minX >= maxX)
+                position.x = (mapMinBounds.x + mapMaxBounds.x) / 2f;
+            else
+                position.x = Mathf.Clamp(position.x, minX, maxX);
+
+            // For Z bounds: constrain based on ground point, not camera position
+            // We want the ground point to stay within map bounds with some buffer
+            var minGroundZ = mapMinBounds.y + 5f; // Use mapBounds.y for Z axis
+            var maxGroundZ = mapMaxBounds.y - 5f;
+
+            if (minGroundZ >= maxGroundZ)
+            {
+                // Map too small, center on it
+                groundCenterZ = (mapMinBounds.y + mapMaxBounds.y) / 2f;
+            }
+            else
+            {
+                groundCenterZ = Mathf.Clamp(groundCenterZ, minGroundZ, maxGroundZ);
+            }
+
+            // Convert ground point back to camera position
+            position.z = groundCenterZ - position.y / tanAngle;
+
+            return position;
+        }
+
+        /// <summary>
+        /// Smooth camera movement to target position.
+        /// </summary>
+        public async UniTask MoveToAsync(Vector3 targetPosition, float duration = 1f, CancellationToken ct = default)
+        {
+            // Cancel any previous movement
+            moveCts?.Cancel();
+            moveCts?.Dispose();
+            moveCts = CancellationTokenSource.CreateLinkedTokenSource(ct, this.GetCancellationTokenOnDestroy());
+
+            var startPos = transform.position;
+            targetPosition = ConstrainPosition(targetPosition);
+            var elapsedTime = 0f;
+
+            try
+            {
+                while (elapsedTime < duration)
+                {
+                    elapsedTime += Time.deltaTime;
+                    var t = Mathf.Clamp01(elapsedTime / duration);
+                    t = Mathf.SmoothStep(0f, 1f, t); // Smooth ease in/out
+                    transform.position = Vector3.Lerp(startPos, targetPosition, t);
+
+                    await UniTask.Yield(PlayerLoopTiming.Update, moveCts.Token);
+                }
+
+                transform.position = targetPosition;
+            }
+            catch (System.OperationCanceledException)
+            {
+                // Movement was cancelled
+            }
+        }
+
+        /// <summary>
+        /// Fire-and-forget wrapper for backwards compatibility.
+        /// </summary>
+        public void MoveTo(Vector3 targetPosition, float duration = 1f)
+        {
+            MoveToAsync(targetPosition, duration).Forget();
+        }
+
+        /// <summary>
+        /// Center camera on a position instantly.
+        /// </summary>
+        public void CenterOn(Vector3 position)
+        {
+            position.z = transform.position.z; // Maintain Z position
+            transform.position = ConstrainPosition(position);
+        }
+
+        /// <summary>
+        /// Set map bounds from map size.
+        /// </summary>
+        public void SetMapBounds(int width, int height)
+        {
+            mapMinBounds = new Vector2(0, 0);
+            mapMaxBounds = new Vector2(width, height);
+        }
+
+        /// <summary>
+        /// Check if a world position is visible in camera view.
+        /// </summary>
+        public bool IsPositionVisible(Vector3 worldPosition)
+        {
+            var viewportPos = mainCamera.WorldToViewportPoint(worldPosition);
+            return viewportPos.x >= 0 && viewportPos.x <= 1 &&
+                   viewportPos.y >= 0 && viewportPos.y <= 1;
+        }
+
         /// <summary>
         /// Context menu helper to recenter camera.
         /// </summary>
@@ -428,6 +858,55 @@ namespace RealmsOfEldor.Controllers
         public void RecenterCamera()
         {
             SetupCamera();
+        }
+
+        /// <summary>
+        /// Updates the ground plane size (useful when map size changes).
+        /// Recreates the ground mesh with new dimensions.
+        /// </summary>
+        public void SetGroundSize(float width, float height)
+        {
+            groundSize = new Vector2(width, height);
+
+            // Recreate ground plane with new size
+            if (groundPlane != null)
+            {
+                Destroy(groundPlane);
+            }
+
+            CreateGroundPlane();
+
+            // Recenter camera to look at new ground center
+            SetupCamera();
+
+            Debug.Log($"Cartographer: Ground size updated to {width}x{height}");
+        }
+
+        /// <summary>
+        /// Enables or disables camera controls.
+        /// </summary>
+        public void EnableControls(bool enabled)
+        {
+            enableKeyboardPan = enabled;
+            enableEdgePan = enabled;
+            enableMouseDrag = enabled;
+            enableZoom = enabled;
+        }
+
+        /// <summary>
+        /// Gets the current ground size.
+        /// </summary>
+        public Vector2 GetGroundSize()
+        {
+            return groundSize;
+        }
+
+        /// <summary>
+        /// Gets the camera component.
+        /// </summary>
+        public Camera GetCamera()
+        {
+            return mainCamera;
         }
     }
 }

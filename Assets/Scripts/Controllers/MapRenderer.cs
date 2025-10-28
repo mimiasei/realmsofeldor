@@ -185,6 +185,7 @@ namespace RealmsOfEldor.Controllers
 
         /// <summary>
         /// Handles mouse input for tile selection.
+        /// Uses 3D ground plane raycasting (Y=0 plane) for Cartographer system.
         /// </summary>
         private void HandleMouseInput()
         {
@@ -212,40 +213,40 @@ namespace RealmsOfEldor.Controllers
                     return;
                 }
 
-                // Convert mouse position to world position
+                // Convert mouse position to world position using 3D ground plane raycast
                 var mousePos = Input.mousePosition;
 
-                // Raycast to hit z=0 plane for perspective projection
-                Ray ray = mainCamera.ScreenPointToRay(mousePos);
-                Plane groundPlane = new Plane(Vector3.forward, Vector3.zero);
+                // Safety check: ensure mouse is within screen bounds before raycasting
+                if (mousePos.x < 0 || mousePos.x > Screen.width ||
+                    mousePos.y < 0 || mousePos.y > Screen.height)
+                {
+                    return; // Mouse outside window, skip input handling
+                }
                 Vector3 worldPos;
 
-                if (groundPlane.Raycast(ray, out float enter))
+                if (CoordinateConverter.ScreenToWorld3D(mainCamera, mousePos, out worldPos))
                 {
-                    worldPos = ray.GetPoint(enter);
+                    Debug.Log($"MapRenderer: Mouse clicked at screen {mousePos}, world {worldPos}");
+
+                    // Convert world position to map position
+                    var mapPos = WorldToMapPosition(worldPos);
+
+                    Debug.Log($"MapRenderer: Converted to map position {mapPos}");
+
+                    // Check if position is valid
+                    if (currentMap.IsInBounds(mapPos))
+                    {
+                        Debug.Log($"MapRenderer: Position is in bounds, raising OnTileSelected for {mapPos}");
+                        mapEvents.RaiseTileSelected(mapPos);
+                    }
+                    else
+                    {
+                        Debug.Log($"MapRenderer: Position {mapPos} is OUT OF BOUNDS (map size: {currentMap.Width}x{currentMap.Height})");
+                    }
                 }
                 else
                 {
-                    // Fallback for orthographic
-                    worldPos = mainCamera.ScreenToWorldPoint(mousePos);
-                }
-
-                Debug.Log($"MapRenderer: Mouse clicked at screen {mousePos}, world {worldPos}");
-
-                // Convert world position to map position
-                var mapPos = WorldToMapPosition(worldPos);
-
-                Debug.Log($"MapRenderer: Converted to map position {mapPos}");
-
-                // Check if position is valid
-                if (currentMap.IsInBounds(mapPos))
-                {
-                    Debug.Log($"MapRenderer: Position is in bounds, raising OnTileSelected for {mapPos}");
-                    mapEvents.RaiseTileSelected(mapPos);
-                }
-                else
-                {
-                    Debug.Log($"MapRenderer: Position {mapPos} is OUT OF BOUNDS (map size: {currentMap.Width}x{currentMap.Height})");
+                    Debug.LogWarning("MapRenderer: Failed to raycast mouse position to ground plane");
                 }
             }
         }
@@ -393,6 +394,32 @@ namespace RealmsOfEldor.Controllers
 
                 Debug.Log($"MapRenderer: Instantiated {obj.Name} at world position {instance.transform.position}");
 
+                // Add CartographerBillboard component for 2.5D rendering
+                var billboard = instance.GetComponent<CartographerBillboard>();
+                if (billboard == null)
+                {
+                    // Check if object has a SpriteRenderer with a sprite
+                    var spriteRenderer = instance.GetComponent<SpriteRenderer>();
+                    if (spriteRenderer != null && spriteRenderer.sprite != null)
+                    {
+                        // Convert SpriteRenderer to CartographerBillboard
+                        var sprite = spriteRenderer.sprite;
+                        var tint = spriteRenderer.color;
+
+                        // Remove old SpriteRenderer
+                        Destroy(spriteRenderer);
+
+                        // Add billboard component
+                        billboard = instance.AddComponent<CartographerBillboard>();
+                        billboard.SetSprite(sprite);
+                        billboard.SetTint(tint);
+                        billboard.SetHeightOffset(0.5f); // Slight offset from ground
+                        billboard.SetCastShadows(true); // Enable shadows
+
+                        Debug.Log($"MapRenderer: Converted {obj.Name} to CartographerBillboard");
+                    }
+                }
+
                 // Add MapObjectView component to link instance to data
                 var view = instance.GetComponent<MapObjectView>();
                 if (view == null)
@@ -507,9 +534,10 @@ namespace RealmsOfEldor.Controllers
             objectInstances.Clear();
         }
 
-        // Position conversion
+        // Position conversion (updated for 3D Cartographer system)
         public Vector3Int PositionToTilePosition(Position pos)
         {
+            // Tilemap still uses X,Y coordinates internally, but will be rotated/positioned in 3D
             return new Vector3Int(pos.X, pos.Y, 0);
         }
 
@@ -518,24 +546,42 @@ namespace RealmsOfEldor.Controllers
             return new Position(tilePos.x, tilePos.y);
         }
 
+        /// <summary>
+        /// Converts game logic position to 3D world position.
+        /// Returns position on X,Z ground plane (Y=0) for Cartographer system.
+        /// </summary>
         public Vector3 MapToWorldPosition(Position pos)
         {
             if (terrainTilemap != null)
             {
+                // Get tilemap's 2D position, then convert to 3D ground plane
                 var tilePos = PositionToTilePosition(pos);
-                return terrainTilemap.GetCellCenterWorld(tilePos);
+                var tilemap2DPos = terrainTilemap.GetCellCenterWorld(tilePos);
+
+                // Convert from tilemap's 2D space (X,Y,0) to 3D ground plane (X,0,Z)
+                return CoordinateConverter.World2DToWorld3D(tilemap2DPos, 0f);
             }
-            return new Vector3(pos.X, pos.Y, 0);
+
+            // Fallback: direct conversion using CoordinateConverter
+            return CoordinateConverter.PositionToWorld3D(pos, 0f);
         }
 
+        /// <summary>
+        /// Converts 3D world position to game logic position.
+        /// Expects position on X,Z ground plane.
+        /// </summary>
         public Position WorldToMapPosition(Vector3 worldPos)
         {
             if (terrainTilemap != null)
             {
-                var tilePos = terrainTilemap.WorldToCell(worldPos);
+                // Convert 3D ground plane position to tilemap's 2D space
+                var tilemap2DPos = CoordinateConverter.World3DToWorld2D(worldPos);
+                var tilePos = terrainTilemap.WorldToCell(tilemap2DPos);
                 return TilePositionToPosition(tilePos);
             }
-            return new Position(Mathf.RoundToInt(worldPos.x), Mathf.RoundToInt(worldPos.y));
+
+            // Fallback: direct conversion using CoordinateConverter
+            return CoordinateConverter.WorldToPosition3D(worldPos);
         }
 
         // Debug visualization
