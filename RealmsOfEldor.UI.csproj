@@ -54,6 +54,7 @@
     <Compile Include="Assets\Scripts\UI\HeroPanelUI.cs" />
     <Compile Include="Assets\Scripts\UI\MainMenuUI.cs" />
     <Compile Include="Assets\Scripts\UI\TurnControlUI.cs" />
+    <Compile Include="Assets\Scripts\UI\ZoomIndicatorUI.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\UI\RealmsOfEldor.UI.asmdef" />

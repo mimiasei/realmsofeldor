@@ -556,13 +556,16 @@ namespace RealmsOfEldor.Controllers
 
             Debug.Log($"Starting animation for {path.Count - 1} tiles");
 
-            // Build waypoint array (skip first, it's current position)
+            // Build waypoint array in 3D coordinates (skip first, it's current position)
             var waypoints = new Vector3[path.Count - 1];
             for (int i = 1; i < path.Count; i++)
             {
-                var worldPos = path[i].ToVector3();
-                worldPos.x += 0.5f; // Center on tile
-                worldPos.y += 0.5f;
+                // Convert map position to 3D world position (X,Z ground plane)
+                var worldPos = new Vector3(
+                    path[i].X + 0.5f,  // Center on tile X
+                    0f,                 // Ground level
+                    path[i].Y + 0.5f   // Center on tile Z
+                );
                 waypoints[i - 1] = worldPos;
             }
 

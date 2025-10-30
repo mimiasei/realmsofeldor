@@ -109,10 +109,13 @@ namespace RealmsOfEldor.Controllers
                 return;
             }
 
-            // Convert tile position to world position (centered on tile)
-            var worldPosition = hero.Position.ToVector3();
-            worldPosition.x += 0.5f; // Center on tile
-            worldPosition.y += 0.5f; // Center on tile
+            // Convert tile position to 3D world position (X,Z ground plane)
+            // In 3D: X = horizontal left/right, Y = height above ground, Z = horizontal forward/back
+            var worldPosition = new Vector3(
+                hero.Position.X + 0.5f,  // Center on tile X
+                0f,                       // Ground level (Y=0)
+                hero.Position.Y + 0.5f   // Center on tile Z (map Y becomes world Z)
+            );
 
             // Instantiate hero prefab
             var heroGO = Instantiate(heroPrefab, worldPosition, Quaternion.identity, heroContainer);

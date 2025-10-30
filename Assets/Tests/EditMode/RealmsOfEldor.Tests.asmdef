@@ -5,7 +5,10 @@
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "RealmsOfEldor.Core",
-        "RealmsOfEldor.Data"
+        "RealmsOfEldor.Data",
+        "RealmsOfEldor.Controllers",
+        "RealmsOfEldor.Database",
+        "RealmsOfEldor.Utilities"
     ],
     "includePlatforms": [
         "Editor"

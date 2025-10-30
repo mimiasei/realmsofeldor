@@ -14,8 +14,10 @@ namespace RealmsOfEldor.Controllers
     ///
     /// Includes full camera controls (pan, zoom) from CameraController.
     /// Used by both adventure map and battle scenes for consistent rendering.
+    ///
+    /// Architecture: Parent rig (this GameObject) handles X/Z panning,
+    /// child Camera handles Y/Z zoom and X rotation (tilt).
     /// </summary>
-    [RequireComponent(typeof(Camera))]
     public class Cartographer : MonoBehaviour
     {
         [Header("Ground Plane")]
@@ -29,11 +31,11 @@ namespace RealmsOfEldor.Controllers
         [SerializeField] private Vector2 groundTextureTiling = new Vector2(10f, 10f);
 
         [Header("Camera Settings - Song of Conquest Style")]
-        [Tooltip("Isometric camera angle (typically 45° for isometric)")]
-        [SerializeField] private float cameraYRotation = 45f;
+        [Tooltip("Camera tilt at 100% zoom / close-up (shallow angle, e.g., -30°)")]
+        [SerializeField] private float cameraTiltAngle = -30f;
 
-        [Tooltip("Camera tilt looking down at ground (30-50° typical)")]
-        [SerializeField] private float cameraTiltAngle = 40f;
+        [Tooltip("Camera tilt at 0% zoom / zoomed out (steep angle, e.g., -60°)")]
+        [SerializeField] private float maxZoomCamRot = -60f;
 
         [Tooltip("Field of view (20-30° for minimal distortion)")]
         [SerializeField] private float fieldOfView = 25f;
@@ -41,8 +43,8 @@ namespace RealmsOfEldor.Controllers
         [Tooltip("Camera height above ground")]
         [SerializeField] private float cameraHeight = 30f;
 
-        [Tooltip("Camera distance back from center (negative Z)")]
-        [SerializeField] private float cameraDistance = -40f;
+        [Tooltip("Initial camera Z position on scene start (should be between minPerspZoom and maxPerspZoom)")]
+        [SerializeField] private float initialZoomPosition = -20f;
 
         [Header("Lighting")]
         [Tooltip("Enable automatic directional light setup")]
@@ -67,8 +69,11 @@ namespace RealmsOfEldor.Controllers
         [Tooltip("Distance from screen edge to trigger edge pan (pixels)")]
         [SerializeField] private float edgePanThreshold = 10f;
 
-        [Tooltip("Zoom speed (scroll wheel sensitivity)")]
-        [SerializeField] private float zoomSpeed = 2.5f;
+        [Tooltip("Zoom acceleration (how quickly zoom momentum builds up)")]
+        [SerializeField] private float zoomAcceleration = 15f;
+
+        [Tooltip("Zoom deceleration / friction (how quickly momentum slows down, 0-1)")]
+        [SerializeField] private float zoomFriction = 0.92f;
 
         [Tooltip("Minimum zoom distance (closer to ground)")]
         [SerializeField] private float minPerspZoom = -50f;
@@ -79,15 +84,9 @@ namespace RealmsOfEldor.Controllers
         [Tooltip("How many units before max zoom to start rotation transition")]
         [SerializeField] private float zoomUnitsBeforeToStartCamRot = 5f;
 
-        [Tooltip("Camera rotation at normal zoom (looking down angle)")]
-        [SerializeField] private float regularCamRot = -30f;
-
-        [Tooltip("Camera rotation at max zoom (steeper angle)")]
-        [SerializeField] private float maxZoomCamRot = -60f;
-
         [Header("Map Bounds")]
         [Tooltip("Constrain camera to stay within map bounds")]
-        [SerializeField] private bool constrainToBounds = true;
+        [SerializeField] private bool constrainToBounds = false;
 
         [SerializeField] private Vector2 mapMinBounds = Vector2.zero;
         [SerializeField] private Vector2 mapMaxBounds = new Vector2(100f, 100f);
@@ -96,8 +95,8 @@ namespace RealmsOfEldor.Controllers
         [Tooltip("Enable WASD/Arrow key panning")]
         [SerializeField] private bool enableKeyboardPan = true;
 
-        [Tooltip("Enable panning when mouse near screen edges")]
-        [SerializeField] private bool enableEdgePan = true;
+        [Tooltip("Enable panning when mouse near screen edges (DISABLE if camera jitters)")]
+        [SerializeField] private bool enableEdgePan = false;
 
         [Tooltip("Enable middle mouse button drag panning")]
         [SerializeField] private bool enableMouseDrag = true;
@@ -106,6 +105,8 @@ namespace RealmsOfEldor.Controllers
         [SerializeField] private bool enableZoom = true;
 
         private Camera mainCamera;
+        private Transform cameraTransform; // The actual camera transform (child)
+        private Transform rigTransform; // Parent rig for panning (this GameObject's transform)
         private GameObject groundPlane;
         private Light directionalLight;
 
@@ -115,16 +116,33 @@ namespace RealmsOfEldor.Controllers
         private CancellationTokenSource moveCts;
         private float targetZPosition;
         private float zoomVelocity;
+        private float zoomMomentum; // Current momentum for zoom
+        private float targetRotation; // Target rotation during transition
+        private float rotationVelocity; // SmoothDamp velocity for rotation
 
         void Awake()
         {
-            mainCamera = GetComponent<Camera>();
+            // IMPORTANT: Validate cameraTiltAngle before setup
+            if (cameraTiltAngle > 0)
+            {
+                Debug.LogError($"Cartographer: Camera Tilt Angle is POSITIVE ({cameraTiltAngle}°), but should be NEGATIVE to look down at ground! Auto-correcting to {-cameraTiltAngle}°.");
+                cameraTiltAngle = -Mathf.Abs(cameraTiltAngle);
+            }
 
-            // Initialize target zoom position
-            targetZPosition = transform.position.z;
+            // Create parent-child hierarchy for separating pan and zoom
+            // This script's GameObject becomes the parent rig (handles X/Z panning)
+            // Camera becomes child (handles local Y/Z zoom and X rotation)
+            // NOTE: SetupCameraHierarchy() creates the camera component on child
+            SetupCameraHierarchy();
 
             // Setup camera for isometric 2.5D rendering
             SetupCamera();
+
+            // Initialize target zoom position AFTER SetupCamera() has positioned the camera
+            targetZPosition = cameraTransform.localPosition.z;
+
+            Debug.Log($"Cartographer: Initial camera local Z: {cameraTransform.localPosition.z}, target Z: {targetZPosition}");
+            Debug.Log($"Cartographer: Zoom range: {minPerspZoom} to {maxPerspZoom}, rotation transition at: {maxPerspZoom - zoomUnitsBeforeToStartCamRot}");
 
             // Create the 3D ground plane
             CreateGroundPlane();
@@ -151,7 +169,39 @@ namespace RealmsOfEldor.Controllers
         }
 
         /// <summary>
+        /// Sets up the camera hierarchy: parent rig for panning, child camera for zoom.
+        /// This separates pan (X/Z world movement) from zoom (local Y/Z movement).
+        /// </summary>
+        private void SetupCameraHierarchy()
+        {
+            // This GameObject becomes the rig (parent) - it already has Cartographer script
+            rigTransform = transform;
+            rigTransform.name = "CameraRig";
+
+            // Create child GameObject for the camera
+            GameObject cameraChild = new GameObject("Camera");
+            cameraTransform = cameraChild.transform;
+            cameraTransform.SetParent(rigTransform);
+            cameraTransform.localPosition = Vector3.zero;
+            cameraTransform.localRotation = Quaternion.identity;
+
+            // Destroy the old camera component on parent (if it exists)
+            Camera oldCamera = rigTransform.GetComponent<Camera>();
+            if (oldCamera != null)
+            {
+                Destroy(oldCamera);
+            }
+
+            // Create new camera component on child
+            mainCamera = cameraChild.AddComponent<Camera>();
+            mainCamera.eventMask = 0; // Disable mouse events
+
+            Debug.Log($"Cartographer: Camera hierarchy created - Rig: {rigTransform.name}, Camera: {cameraTransform.name}");
+        }
+
+        /// <summary>
         /// Configures camera for Song of Conquest style isometric 2.5D rendering.
+        /// Positions parent rig at ground center (X/Z), child camera handles height/zoom (local Y/Z) and rotation.
         /// </summary>
         private void SetupCamera()
         {
@@ -160,34 +210,23 @@ namespace RealmsOfEldor.Controllers
             mainCamera.fieldOfView = fieldOfView;
 
             // Ground plane center (what we want to look at)
+            // Ground mesh is centered but positioned so map tiles align at (0,0)
+            // So center is at half the ground size
             Vector3 groundCenter = new Vector3(groundSize.x / 2f, 0f, groundSize.y / 2f);
 
-            // Simple position calculation: place camera above and behind ground center
-            // Using the configured height and distance values
-            float cameraX = groundCenter.x;
-            float cameraY = cameraHeight;
-            float cameraZ = groundCenter.z + cameraDistance; // cameraDistance is negative, so this moves camera back
+            // Position parent rig at ground center (X/Z only, Y stays at 0)
+            rigTransform.position = new Vector3(groundCenter.x, 0f, groundCenter.z);
 
-            Vector3 cameraPos = new Vector3(cameraX, cameraY, cameraZ);
+            // Position child camera with local Y (height) and local Z (zoom distance)
+            // initialZoomPosition is negative, positioning camera behind the rig
+            cameraTransform.localPosition = new Vector3(0f, cameraHeight, initialZoomPosition);
 
-            // Apply Y rotation (isometric angle) by rotating position around ground center
-            float yawRad = cameraYRotation * Mathf.Deg2Rad;
-            Vector3 offset = cameraPos - groundCenter;
-            float rotatedX = offset.x * Mathf.Cos(yawRad) - offset.z * Mathf.Sin(yawRad);
-            float rotatedZ = offset.x * Mathf.Sin(yawRad) + offset.z * Mathf.Cos(yawRad);
-            cameraPos = groundCenter + new Vector3(rotatedX, offset.y, rotatedZ);
-
-            // Set camera position
-            transform.position = cameraPos;
-
-            // Point camera at ground center
-            transform.LookAt(groundCenter);
-
-            // Apply additional tilt if needed (adjust X rotation)
-            Vector3 eulerAngles = transform.eulerAngles;
-            eulerAngles.x = cameraTiltAngle;
-            eulerAngles.y = cameraYRotation;
-            transform.eulerAngles = eulerAngles;
+            // Rotate child camera (not rig) - only X tilt
+            // IMPORTANT: Negate cameraTiltAngle because Unity's Euler X rotation is inverted:
+            // - Positive X = look down
+            // - Negative X = look up
+            // Our cameraTiltAngle is negative (semantic: "downward angle"), so we negate it to get positive Euler X
+            cameraTransform.localRotation = Quaternion.Euler(-cameraTiltAngle, 0f, 0f);
 
             // Make sure camera can see far enough
             mainCamera.nearClipPlane = 0.3f;
@@ -200,10 +239,28 @@ namespace RealmsOfEldor.Controllers
             Debug.Log($"Cartographer: Camera configured:");
             Debug.Log($"  Ground size: {groundSize}");
             Debug.Log($"  Ground center: {groundCenter}");
-            Debug.Log($"  Camera position: {transform.position}");
-            Debug.Log($"  Camera rotation: {transform.rotation.eulerAngles}");
+            Debug.Log($"  Rig position (world): {rigTransform.position}");
+            Debug.Log($"  Camera local position: {cameraTransform.localPosition} (height: {cameraHeight}, initial Z: {initialZoomPosition})");
+            Debug.Log($"  Camera world position: {cameraTransform.position}");
+            Debug.Log($"  Camera local rotation (euler): {cameraTransform.localRotation.eulerAngles}");
+            Debug.Log($"  Camera tilt: close={cameraTiltAngle}°, far={maxZoomCamRot}°");
             Debug.Log($"  FOV: {fieldOfView}°, Near: {mainCamera.nearClipPlane}, Far: {mainCamera.farClipPlane}");
-            Debug.Log($"  Distance to ground center: {Vector3.Distance(transform.position, groundCenter):F2}");
+            Debug.Log($"  Distance to ground center: {Vector3.Distance(cameraTransform.position, groundCenter):F2}");
+            Debug.Log($"  Map bounds: {mapMinBounds} to {mapMaxBounds}");
+            Debug.Log($"  Constrain to bounds: {constrainToBounds}");
+
+            // Test raycast to verify camera can see ground
+            Ray testRay = mainCamera.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0f));
+            Plane testPlane = new Plane(Vector3.up, Vector3.zero);
+            if (testPlane.Raycast(testRay, out float testEnter))
+            {
+                Vector3 testHit = testRay.GetPoint(testEnter);
+                Debug.Log($"  ✓ Center screen raycast hits ground at: {testHit}");
+            }
+            else
+            {
+                Debug.LogWarning($"  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.");
+            }
         }
 
         /// <summary>
@@ -215,7 +272,10 @@ namespace RealmsOfEldor.Controllers
             groundPlane = new GameObject("GroundPlane");
             // DO NOT parent to camera - ground must stay at world origin!
             // groundPlane.transform.SetParent(transform);
-            groundPlane.transform.position = Vector3.zero;
+
+            // Position ground plane so it starts at (0, 0, 0) and extends to (groundSize.x, 0, groundSize.y)
+            // The mesh is centered at origin, so we offset by half the size to align with map tiles
+            groundPlane.transform.position = new Vector3(groundSize.x / 2f, 0f, groundSize.y / 2f);
             groundPlane.transform.rotation = Quaternion.identity;
 
             // Add mesh components
@@ -507,19 +567,66 @@ namespace RealmsOfEldor.Controllers
 
         /// <summary>
         /// Debug visualization.
+        /// Shows both rig position and camera position in hierarchy.
         /// </summary>
         void OnDrawGizmos()
         {
-            // Draw ground plane bounds
+            // Draw ground plane bounds (positioned to align with map at origin)
             Gizmos.color = Color.yellow;
             Vector3 center = new Vector3(groundSize.x / 2f, 0f, groundSize.y / 2f);
             Gizmos.DrawWireCube(center, new Vector3(groundSize.x, 0.1f, groundSize.y));
 
-            // Draw camera view direction
-            if (mainCamera != null)
+            // Draw camera hierarchy visualization
+            if (mainCamera != null && cameraTransform != null && rigTransform != null)
             {
+                // Draw rig position as orange sphere (parent)
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawWireSphere(rigTransform.position, 0.5f);
+
+                // Draw camera position as green sphere (child)
+                Gizmos.color = Color.green;
+                Gizmos.DrawWireSphere(cameraTransform.position, 1f);
+
+                // Draw line connecting rig to camera
+                Gizmos.color = Color.gray;
+                Gizmos.DrawLine(rigTransform.position, cameraTransform.position);
+
+                // Draw camera forward ray (what camera is looking at)
                 Gizmos.color = Color.cyan;
-                Gizmos.DrawRay(transform.position, transform.forward * 10f);
+                Gizmos.DrawRay(cameraTransform.position, cameraTransform.forward * 20f);
+
+                // Draw camera up direction
+                Gizmos.color = Color.blue;
+                Gizmos.DrawRay(cameraTransform.position, cameraTransform.up * 5f);
+
+                // Draw camera right direction
+                Gizmos.color = Color.red;
+                Gizmos.DrawRay(cameraTransform.position, cameraTransform.right * 5f);
+
+                // Draw line from camera to ground center
+                Gizmos.color = Color.magenta;
+                Gizmos.DrawLine(cameraTransform.position, center);
+
+                // Raycast from camera center to show where it's looking (Play mode only)
+                if (Application.isPlaying && Screen.width > 0 && Screen.height > 0)
+                {
+                    try
+                    {
+                        Ray centerRay = mainCamera.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0f));
+                        Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
+                        if (groundPlane.Raycast(centerRay, out float enter))
+                        {
+                            Vector3 hitPoint = centerRay.GetPoint(enter);
+                            Gizmos.color = Color.white;
+                            Gizmos.DrawWireSphere(hitPoint, 0.5f);
+                            Gizmos.DrawLine(cameraTransform.position, hitPoint);
+                        }
+                    }
+                    catch (System.Exception)
+                    {
+                        // Silently catch raycast errors in gizmos
+                    }
+                }
             }
         }
 
@@ -527,7 +634,7 @@ namespace RealmsOfEldor.Controllers
 
         /// <summary>
         /// Handles keyboard WASD/Arrow key panning.
-        /// Note: Movement is on X,Z plane (not X,Y like old 2D system).
+        /// Moves parent rig on X/Z plane (not child camera).
         /// </summary>
         private void HandleKeyboardPan()
         {
@@ -538,7 +645,7 @@ namespace RealmsOfEldor.Controllers
 
             // Map keyboard input to X,Z movement (ground plane)
             if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
-                moveDir.z += 1f; // Forward on ground (was Y in 2D)
+                moveDir.z += 1f; // Forward on ground
             if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
                 moveDir.z -= 1f; // Backward on ground
             if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
@@ -546,22 +653,31 @@ namespace RealmsOfEldor.Controllers
             if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
                 moveDir.x += 1f; // Right
 
+            // Only move if there's actual input
             if (moveDir != Vector3.zero)
             {
-                var newPos = transform.position + moveDir.normalized * panSpeed * Time.deltaTime;
-                transform.position = ConstrainPosition(newPos);
+                var newPos = rigTransform.position + moveDir.normalized * panSpeed * Time.deltaTime;
+                rigTransform.position = ConstrainPosition(newPos);
             }
         }
 
         /// <summary>
         /// Handles edge panning (mouse near screen edges).
+        /// Moves parent rig on X/Z plane (not child camera).
         /// </summary>
         private void HandleEdgePan()
         {
             if (!enableEdgePan)
                 return;
 
+            // Bounds check: only pan if mouse is actually within screen
             var mousePos = Input.mousePosition;
+            if (mousePos.x < 0 || mousePos.x > Screen.width ||
+                mousePos.y < 0 || mousePos.y > Screen.height)
+            {
+                return; // Mouse outside screen, don't edge pan
+            }
+
             var moveDir = Vector3.zero;
 
             if (mousePos.x < edgePanThreshold)
@@ -570,19 +686,21 @@ namespace RealmsOfEldor.Controllers
                 moveDir.x += 1f;
 
             if (mousePos.y < edgePanThreshold)
-                moveDir.z -= 1f; // Changed from Y to Z for ground plane
+                moveDir.z -= 1f; // Z for ground plane
             else if (mousePos.y > Screen.height - edgePanThreshold)
                 moveDir.z += 1f;
 
+            // Only move if there's actual edge detection
             if (moveDir != Vector3.zero)
             {
-                var newPos = transform.position + moveDir.normalized * edgePanSpeed * Time.deltaTime;
-                transform.position = ConstrainPosition(newPos);
+                var newPos = rigTransform.position + moveDir.normalized * edgePanSpeed * Time.deltaTime;
+                rigTransform.position = ConstrainPosition(newPos);
             }
         }
 
         /// <summary>
         /// Handles middle mouse button drag panning.
+        /// Moves parent rig on X/Z plane (not child camera).
         /// </summary>
         private void HandleMouseDrag()
         {
@@ -616,8 +734,8 @@ namespace RealmsOfEldor.Controllers
                     Vector3 diff = dragOrigin - currentPos;
                     diff.y = 0; // Don't pan vertically
 
-                    var newPos = transform.position + diff;
-                    transform.position = ConstrainPosition(newPos);
+                    var newPos = rigTransform.position + diff;
+                    rigTransform.position = ConstrainPosition(newPos);
 
                     // Update drag origin for next frame to avoid accumulation
                     dragOrigin = currentPos;
@@ -631,9 +749,11 @@ namespace RealmsOfEldor.Controllers
         }
 
         /// <summary>
-        /// Handles scroll wheel zoom with smooth camera rotation transition.
-        /// This is the sophisticated zoom system from CameraController with:
-        /// - Smooth damping for zoom feel
+        /// Handles scroll wheel zoom with momentum-based acceleration.
+        /// Now works with parent-child hierarchy: only moves child camera in local Y/Z.
+        /// Features:
+        /// - Momentum builds up when scrolling (acceleration)
+        /// - Coasts to a smooth stop after scrolling stops (friction)
         /// - Automatic rotation change when zooming in close
         /// - Maintains ground focus point during rotation transitions
         /// </summary>
@@ -644,50 +764,86 @@ namespace RealmsOfEldor.Controllers
 
             var scrollDelta = Input.mouseScrollDelta.y;
 
-            // Perspective zoom with smooth easing and rotation (exact copy from CameraController)
+            // Add momentum from scroll input (acceleration)
             if (scrollDelta != 0)
             {
-                // Update target Z position (positive scroll = zoom in = increase Z toward 0)
-                targetZPosition += scrollDelta * zoomSpeed;
-                targetZPosition = Mathf.Clamp(targetZPosition, minPerspZoom, maxPerspZoom);
+                zoomMomentum += scrollDelta * zoomAcceleration * Time.deltaTime;
             }
 
-            // Smooth zoom with quick ease in/out (exponential decay for snappy feel)
-            var currentZ = transform.position.z;
-            var newZ = Mathf.SmoothDamp(currentZ, targetZPosition, ref zoomVelocity, 0.15f, Mathf.Infinity, Time.deltaTime);
+            // Apply friction to momentum (deceleration)
+            zoomMomentum *= zoomFriction;
+
+            // Stop if momentum is negligible
+            if (Mathf.Abs(zoomMomentum) < 0.001f)
+            {
+                zoomMomentum = 0f;
+                return;
+            }
+
+            // Work with LOCAL position of child camera
+            var currentLocalPos = cameraTransform.localPosition;
+            var currentZ = currentLocalPos.z;
+
+            // Apply momentum to local Z position
+            var newZ = currentZ + zoomMomentum;
+            newZ = Mathf.Clamp(newZ, minPerspZoom, maxPerspZoom);
+
+            // Stop momentum if we hit the bounds
+            if (newZ == minPerspZoom || newZ == maxPerspZoom)
+            {
+                zoomMomentum = 0f;
+            }
+
             var deltaZ = newZ - currentZ;
 
-            // Calculate rotation based on zoom level
-            // Rotation stays at regularCamRot until we're close to max zoom, then transitions to maxZoomCamRot
-            float xRotation;
+            // Skip if no meaningful change
+            if (Mathf.Abs(deltaZ) < 0.001f)
+                return;
+
+            // Calculate TARGET rotation based on zoom level
+            // Z values are NEGATIVE: minPerspZoom (e.g., -50) is far (0% zoom), maxPerspZoom (e.g., -10) is close (100% zoom)
+            // At 0% zoom (far): use maxZoomCamRot (steep angle like -60°, looking more down)
+            // At 100% zoom (close): use cameraTiltAngle (shallow angle like -30°, looking more forward)
             var rotationTransitionStart = maxPerspZoom - zoomUnitsBeforeToStartCamRot;
 
             if (newZ <= rotationTransitionStart)
             {
-                // Far zoom: regular rotation
-                xRotation = regularCamRot;
+                // Far zoom (0%): use steep angle to see more of the map
+                targetRotation = maxZoomCamRot;
             }
             else if (newZ >= maxPerspZoom)
             {
-                // Max zoom: steeper rotation
-                xRotation = maxZoomCamRot;
+                // Max zoom (100%, closest): use shallow angle for close-up view
+                targetRotation = cameraTiltAngle;
             }
             else
             {
-                // Transition zone: interpolate from regularCamRot to maxZoomCamRot
+                // Transition zone: interpolate from steep (maxZoomCamRot) to shallow (cameraTiltAngle)
                 var t = Mathf.InverseLerp(rotationTransitionStart, maxPerspZoom, newZ);
                 // Apply easing for smooth rotation (ease in/out)
                 t = t * t * (3f - 2f * t); // Smoothstep
-                xRotation = Mathf.Lerp(regularCamRot, maxZoomCamRot, t);
+                targetRotation = Mathf.Lerp(maxZoomCamRot, cameraTiltAngle, t);
             }
 
-            var pos = transform.position;
+            // Work with local position
+            var localPos = currentLocalPos;
 
-            // Check if rotation is changing
-            var currentRotation = transform.eulerAngles.x;
+            // Get current rotation and smoothly move toward target
+            var currentRotation = cameraTransform.localRotation.eulerAngles.x;
             if (currentRotation > 180f) currentRotation -= 360f;
 
-            var isRotationChanging = Mathf.Abs(xRotation - currentRotation) > 0.01f;
+            // Smoothly interpolate rotation using SmoothDamp to match momentum feel
+            // This creates a smooth acceleration/deceleration that matches the zoom momentum
+            var smoothedRotation = Mathf.SmoothDampAngle(
+                currentRotation,
+                Mathf.Abs(targetRotation),
+                ref rotationVelocity,
+                0.15f, // Smooth time - matches the "feel" of momentum
+                Mathf.Infinity,
+                Time.deltaTime
+            );
+
+            var isRotationChanging = Mathf.Abs(smoothedRotation - currentRotation) > 0.01f;
 
             if (isRotationChanging)
             {
@@ -695,59 +851,86 @@ namespace RealmsOfEldor.Controllers
                 // This maintains the ground point during rotation transition
 
                 // Calculate where camera is currently looking on the ground (y=0 plane)
-                // Camera looks DOWN and FORWARD. With camera at (x, y, z) and rotation rot:
-                // Ground point Z = camera.z + |camera.y| / tan(|rot|)  [ADAPTED FOR 3D COORDS]
+                // Use CURRENT Z position (before applying newZ) for accurate ground point calculation
+                // Camera looks DOWN and FORWARD. With camera at local (0, y, z) and rotation rot:
+                // Ground point Z = camera.localZ + |camera.localY| / tan(|rot|)
                 var currentTanAngle = Mathf.Tan(Mathf.Abs(currentRotation) * Mathf.Deg2Rad);
-                var groundPointZ = pos.z + pos.y / currentTanAngle;
 
-                // Apply Z movement
-                pos.z = newZ;
+                // Safety check: prevent division by zero or very small values
+                if (Mathf.Abs(currentTanAngle) < 0.001f)
+                    currentTanAngle = 0.001f * Mathf.Sign(currentTanAngle);
 
-                // Recalculate camera Y to maintain same ground point with new rotation
-                // Solve: groundPointZ = pos.z + pos.y / tan(|newRot|)
-                // Therefore: pos.y = (groundPointZ - pos.z) * tan(|newRot|)
-                var newTanAngle = Mathf.Tan(Mathf.Abs(xRotation) * Mathf.Deg2Rad);
-                pos.y = (groundPointZ - pos.z) * newTanAngle;
+                // IMPORTANT: Use currentZ (not localPos.z) to calculate ground point BEFORE zoom movement
+                var groundPointZ = currentZ + localPos.y / currentTanAngle;
+
+                // Now apply Z movement
+                localPos.z = newZ;
+
+                // Recalculate camera Y to maintain same ground point with new (smoothed) rotation
+                // Solve: groundPointZ = newZ + newY / tan(|smoothedRot|)
+                // Therefore: newY = (groundPointZ - newZ) * tan(|smoothedRot|)
+                var newTanAngle = Mathf.Tan(Mathf.Abs(smoothedRotation) * Mathf.Deg2Rad);
+
+                // Safety check: prevent division by zero or very small values
+                if (Mathf.Abs(newTanAngle) < 0.001f)
+                    newTanAngle = 0.001f * Mathf.Sign(newTanAngle);
+
+                localPos.y = (groundPointZ - newZ) * newTanAngle;
             }
             else
             {
                 // Rotation is constant: move in straight diagonal line
                 // Y movement is proportional to Z movement at fixed angle
-                var tanAngle = Mathf.Tan(Mathf.Abs(xRotation) * Mathf.Deg2Rad);
+                // For a downward-looking camera: when Z increases (moves forward), Y must decrease
+                var tanAngle = Mathf.Tan(Mathf.Abs(smoothedRotation) * Mathf.Deg2Rad);
+
+                // Safety check: prevent division by zero or very small values
+                if (Mathf.Abs(tanAngle) < 0.001f)
+                    tanAngle = 0.001f * Mathf.Sign(tanAngle);
+
                 deltaZ = newZ - currentZ;
-                pos.z = newZ;
-                pos.y += deltaZ * tanAngle; // Move diagonally at constant angle
+                localPos.z = newZ;
+                localPos.y -= deltaZ * tanAngle; // Move diagonally: forward = down for downward camera
             }
 
-            // Apply rotation
-            var rot = transform.eulerAngles;
-            rot.x = xRotation;
-            transform.eulerAngles = rot;
+            // Apply smoothed rotation with Y and Z locked to 0 (only X tilt changes)
+            // smoothedRotation is already positive (from SmoothDampAngle output)
+            cameraTransform.localRotation = Quaternion.Euler(smoothedRotation, 0f, 0f);
 
-            // Apply position
-            transform.position = ConstrainPosition(pos);
+            // Apply local position to child camera (no world position constraints)
+            cameraTransform.localPosition = localPos;
         }
 
         /// <summary>
-        /// Constrains camera position to map bounds.
-        /// Adapted for 3D ground plane (X,Z instead of X,Y).
+        /// Constrains rig position to map bounds.
+        /// Works with parent rig position on X/Z plane.
         /// </summary>
         private Vector3 ConstrainPosition(Vector3 position)
         {
             if (!constrainToBounds)
                 return position;
 
-            // Perspective camera with rotation: calculate what ground area is visible
-            var rotation = transform.eulerAngles.x;
+            // Get camera rotation from child transform
+            var rotation = cameraTransform.localRotation.eulerAngles.x;
             if (rotation > 180f) rotation -= 360f;
+
+            // Get camera world Y position (height above ground)
+            var cameraWorldY = cameraTransform.position.y;
 
             // Calculate the ground point where camera center looks (on X,Z plane at Y=0)
             var tanAngle = Mathf.Tan(Mathf.Abs(rotation) * Mathf.Deg2Rad);
-            var groundCenterZ = position.z + position.y / tanAngle; // ADAPTED: Y/tan instead of Z*tan
+
+            // Safety check: prevent division by zero or very small values
+            if (Mathf.Abs(tanAngle) < 0.001f)
+                tanAngle = 0.001f * Mathf.Sign(tanAngle);
+
+            // Ground center Z calculation using rig position + camera offset
+            var cameraWorldZ = position.z + cameraTransform.localPosition.z;
+            var groundCenterZ = cameraWorldZ + cameraWorldY / tanAngle;
 
             // For X bounds: use horizontal FOV calculation
             // Distance to ground center along view ray
-            var distanceToGround = position.y / Mathf.Sin(Mathf.Abs(rotation) * Mathf.Deg2Rad);
+            var distanceToGround = cameraWorldY / Mathf.Sin(Mathf.Abs(rotation) * Mathf.Deg2Rad);
             var horizontalFOV = mainCamera.fieldOfView * mainCamera.aspect;
             var groundWidth = 2f * distanceToGround * Mathf.Tan(horizontalFOV * 0.5f * Mathf.Deg2Rad);
 
@@ -760,7 +943,7 @@ namespace RealmsOfEldor.Controllers
             else
                 position.x = Mathf.Clamp(position.x, minX, maxX);
 
-            // For Z bounds: constrain based on ground point, not camera position
+            // For Z bounds: constrain based on ground point, not rig position
             // We want the ground point to stay within map bounds with some buffer
             var minGroundZ = mapMinBounds.y + 5f; // Use mapBounds.y for Z axis
             var maxGroundZ = mapMaxBounds.y - 5f;
@@ -775,14 +958,24 @@ namespace RealmsOfEldor.Controllers
                 groundCenterZ = Mathf.Clamp(groundCenterZ, minGroundZ, maxGroundZ);
             }
 
-            // Convert ground point back to camera position
-            position.z = groundCenterZ - position.y / tanAngle;
+            // Convert ground point back to rig position
+            position.z = groundCenterZ - cameraWorldY / tanAngle - cameraTransform.localPosition.z;
+
+            // Safety check: ensure position is valid (no NaN or Infinity)
+            if (float.IsNaN(position.x) || float.IsInfinity(position.x) ||
+                float.IsNaN(position.y) || float.IsInfinity(position.y) ||
+                float.IsNaN(position.z) || float.IsInfinity(position.z))
+            {
+                Debug.LogError($"ConstrainPosition produced invalid position: {position}. Returning unchanged.");
+                return rigTransform.position; // Return current position if calculation failed
+            }
 
             return position;
         }
 
         /// <summary>
-        /// Smooth camera movement to target position.
+        /// Smooth rig movement to target position.
+        /// Moves parent rig, not child camera.
         /// </summary>
         public async UniTask MoveToAsync(Vector3 targetPosition, float duration = 1f, CancellationToken ct = default)
         {
@@ -791,7 +984,7 @@ namespace RealmsOfEldor.Controllers
             moveCts?.Dispose();
             moveCts = CancellationTokenSource.CreateLinkedTokenSource(ct, this.GetCancellationTokenOnDestroy());
 
-            var startPos = transform.position;
+            var startPos = rigTransform.position;
             targetPosition = ConstrainPosition(targetPosition);
             var elapsedTime = 0f;
 
@@ -802,12 +995,12 @@ namespace RealmsOfEldor.Controllers
                     elapsedTime += Time.deltaTime;
                     var t = Mathf.Clamp01(elapsedTime / duration);
                     t = Mathf.SmoothStep(0f, 1f, t); // Smooth ease in/out
-                    transform.position = Vector3.Lerp(startPos, targetPosition, t);
+                    rigTransform.position = Vector3.Lerp(startPos, targetPosition, t);
 
                     await UniTask.Yield(PlayerLoopTiming.Update, moveCts.Token);
                 }
 
-                transform.position = targetPosition;
+                rigTransform.position = targetPosition;
             }
             catch (System.OperationCanceledException)
             {
@@ -824,12 +1017,12 @@ namespace RealmsOfEldor.Controllers
         }
 
         /// <summary>
-        /// Center camera on a position instantly.
+        /// Center rig on a position instantly (maintains current zoom).
         /// </summary>
         public void CenterOn(Vector3 position)
         {
-            position.z = transform.position.z; // Maintain Z position
-            transform.position = ConstrainPosition(position);
+            position.z = rigTransform.position.z; // Maintain rig Z position
+            rigTransform.position = ConstrainPosition(position);
         }
 
         /// <summary>
@@ -907,6 +1100,24 @@ namespace RealmsOfEldor.Controllers
         public Camera GetCamera()
         {
             return mainCamera;
+        }
+
+        /// <summary>
+        /// Gets the current zoom level as a percentage (0-100).
+        /// 0% = maximum zoom out (minPerspZoom), 100% = maximum zoom in (maxPerspZoom).
+        /// </summary>
+        public float GetZoomPercentage()
+        {
+            var currentZ = cameraTransform.localPosition.z;
+            return Mathf.InverseLerp(minPerspZoom, maxPerspZoom, currentZ) * 100f;
+        }
+
+        /// <summary>
+        /// Gets the current zoom range (min and max Z values).
+        /// </summary>
+        public Vector2 GetZoomRange()
+        {
+            return new Vector2(minPerspZoom, maxPerspZoom);
         }
     }
 }

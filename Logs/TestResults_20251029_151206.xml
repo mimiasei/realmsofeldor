@@ -1,0 +1,833 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="18" result="Failed(Child)" total="18" passed="0" failed="18" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.261809">
+  <test-suite type="TestSuite" id="1092" name="roe" fullname="roe" runstate="Runnable" testcasecount="77" result="Failed" site="Child" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.261809" total="18" passed="0" failed="18" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1085" name="RealmsOfEldor.Tests.dll" fullname="C:/Users/Mikkel Syse Grøsland/Documents/Projects/realmsofeldor/Library/ScriptAssemblies/RealmsOfEldor.Tests.dll" runstate="Runnable" testcasecount="77" result="Failed" site="Child" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.244549" total="18" passed="0" failed="18" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="71012" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1086" name="RealmsOfEldor" fullname="RealmsOfEldor" runstate="Runnable" testcasecount="77" result="Failed" site="Child" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.240880" total="18" passed="0" failed="18" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1087" name="Tests" fullname="RealmsOfEldor.Tests" runstate="Runnable" testcasecount="77" result="Failed" site="Child" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.237359" total="18" passed="0" failed="18" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestFixture" id="1016" name="CartographerTests" fullname="RealmsOfEldor.Tests.CartographerTests" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" testcasecount="18" result="Failed" site="Child" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.233349" total="18" passed="0" failed="18" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-case id="1028" name="Cartographer_Camera_HasCorrectProjectionSettings" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_Camera_HasCorrectProjectionSettings" methodname="Cartographer_Camera_HasCorrectProjectionSettings" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="1942974981" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.031154" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+]]></output>
+            </test-case>
+            <test-case id="1034" name="Cartographer_CoordinateSystem_Uses3DGroundPlane" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_CoordinateSystem_Uses3DGroundPlane" methodname="Cartographer_CoordinateSystem_Uses3DGroundPlane" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="1594795554" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.010441" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+]]></output>
+            </test-case>
+            <test-case id="1030" name="Cartographer_GetCamera_ReturnsCorrectCamera" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_GetCamera_ReturnsCorrectCamera" methodname="Cartographer_GetCamera_ReturnsCorrectCamera" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="1440194508" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.010348" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+]]></output>
+            </test-case>
+            <test-case id="1026" name="Cartographer_GroundPlane_IsCreatedAtCorrectPosition" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_GroundPlane_IsCreatedAtCorrectPosition" methodname="Cartographer_GroundPlane_IsCreatedAtCorrectPosition" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="2132881915" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.010224" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+]]></output>
+            </test-case>
+            <test-case id="1027" name="Cartographer_GroundSize_MatchesConfiguration" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_GroundSize_MatchesConfiguration" methodname="Cartographer_GroundSize_MatchesConfiguration" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="1234973028" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.010381" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+]]></output>
+            </test-case>
+            <test-case id="1019" name="Cartographer_InitialSetup_CanRaycastToGround" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_InitialSetup_CanRaycastToGround" methodname="Cartographer_InitialSetup_CanRaycastToGround" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="452673464" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.010091" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+]]></output>
+            </test-case>
+            <test-case id="1017" name="Cartographer_InitialSetup_HasCorrectPosition" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_InitialSetup_HasCorrectPosition" methodname="Cartographer_InitialSetup_HasCorrectPosition" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="1978170809" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.010289" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+]]></output>
+            </test-case>
+            <test-case id="1018" name="Cartographer_InitialSetup_HasCorrectRotation" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_InitialSetup_HasCorrectRotation" methodname="Cartographer_InitialSetup_HasCorrectRotation" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="943733256" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.010294" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+]]></output>
+            </test-case>
+            <test-case id="1023" name="Cartographer_MapToWorldPosition_ConvertsCorrectly" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_MapToWorldPosition_ConvertsCorrectly" methodname="Cartographer_MapToWorldPosition_ConvertsCorrectly" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="1151051973" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.010160" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+]]></output>
+            </test-case>
+            <test-case id="1024" name="Cartographer_MapToWorldPosition_WithHeight_ConvertsCorrectly" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_MapToWorldPosition_WithHeight_ConvertsCorrectly" methodname="Cartographer_MapToWorldPosition_WithHeight_ConvertsCorrectly" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="251397233" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.010248" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+]]></output>
+            </test-case>
+            <test-case id="1020" name="Cartographer_PositiveTiltAngle_GetsAutoCorrected" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_PositiveTiltAngle_GetsAutoCorrected" methodname="Cartographer_PositiveTiltAngle_GetsAutoCorrected" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="202538768" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.010263" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+]]></output>
+            </test-case>
+            <test-case id="1033" name="Cartographer_RotationTransition_StartsAtCorrectZoom" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_RotationTransition_StartsAtCorrectZoom" methodname="Cartographer_RotationTransition_StartsAtCorrectZoom" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="1229314349" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.010282" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+]]></output>
+            </test-case>
+            <test-case id="1029" name="Cartographer_SetMapBounds_UpdatesBounds" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_SetMapBounds_UpdatesBounds" methodname="Cartographer_SetMapBounds_UpdatesBounds" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="1288322580" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.010341" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+]]></output>
+            </test-case>
+            <test-case id="1025" name="Cartographer_WorldToMapPosition_ConvertsCorrectly" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_WorldToMapPosition_ConvertsCorrectly" methodname="Cartographer_WorldToMapPosition_ConvertsCorrectly" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="1300372198" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.010441" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+]]></output>
+            </test-case>
+            <test-case id="1032" name="Cartographer_YPositionFormula_IsCorrectForDownwardCamera" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_YPositionFormula_IsCorrectForDownwardCamera" methodname="Cartographer_YPositionFormula_IsCorrectForDownwardCamera" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="1858939802" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.010163" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+]]></output>
+            </test-case>
+            <test-case id="1031" name="Cartographer_ZoomBounds_AreValid" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_ZoomBounds_AreValid" methodname="Cartographer_ZoomBounds_AreValid" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="1224185454" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.010353" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+]]></output>
+            </test-case>
+            <test-case id="1021" name="Cartographer_ZoomCalculation_MaintainsGroundFocus" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_ZoomCalculation_MaintainsGroundFocus" methodname="Cartographer_ZoomCalculation_MaintainsGroundFocus" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="623954891" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.010235" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+]]></output>
+            </test-case>
+            <test-case id="1022" name="Cartographer_ZoomRotationTransition_UsesCorrectAngles" fullname="RealmsOfEldor.Tests.CartographerTests.Cartographer_ZoomRotationTransition_UsesCorrectAngles" methodname="Cartographer_ZoomRotationTransition_UsesCorrectAngles" classname="RealmsOfEldor.Tests.CartographerTests" runstate="Runnable" seed="760696422" result="Failed" start-time="2025-10-29 14:09:27Z" end-time="2025-10-29 14:09:27Z" duration="0.010302" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[SetUp : Unhandled log message: '[Error] Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                <stack-trace><![CDATA[UnityEngine.Renderer:get_material ()
+RealmsOfEldor.Controllers.Cartographer:CreateGroundPlane () (at Assets/Scripts/Controllers/Cartographer.cs:278)
+RealmsOfEldor.Controllers.Cartographer:Awake () (at Assets/Scripts/Controllers/Cartographer.cs:145)
+System.Reflection.MethodBase:Invoke (object,object[])
+RealmsOfEldor.Tests.CartographerTests:SetUp () (at Assets/Tests/EditMode/CartographerTests.cs:47)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Cartographer: Camera configured:
+  Ground size: (100.00, 100.00)
+  Ground center: (50.00, 0.00, 50.00)
+  Camera height: 30, distance: -40
+  Camera position BEFORE rotation: (50, 30, 10)
+  Camera position AFTER rotation: (78.28, 30.00, 21.72)
+  Camera FINAL position: (78.28, 30.00, 21.72)
+  Camera rotation (euler): (320.00, 45.00, 0.00)
+  Camera rotation (raw): X=-40°, Y=45°
+  FOV: 25°, Near: 0.3, Far: 1000
+  Distance to ground center: 50.00
+  Map bounds: (0.00, 0.00) to (100.00, 100.00)
+  Constrain to bounds: False
+  ⚠️ Center screen raycast MISSES ground plane! Camera may be pointing wrong direction.
+Cartographer: Initial camera Z: 21.71573, target Z: 21.71573
+Cartographer: Zoom range: -50 to -10, rotation transition at: -15
+Cartographer: Created ground mesh - Vertices: 4, Triangles: 2, Bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Created default ground material using shader: Universal Render Pipeline/Lit
+Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
+Instantiating mesh due to calling MeshFilter.mesh during edit mode. This will leak meshes. Please use MeshFilter.sharedMesh instead.
+Cartographer: Ground plane mesh bounds: Center: (0.00, 0.00, 0.00), Extents: (50.00, 0.00, 50.00)
+Cartographer: Ground plane renderer enabled: True, material: DefaultGroundMaterial (Instance), shader: Universal Render Pipeline/Lit
+Cartographer: Ground plane created at Y=0, size 100x100
+Saving results to: C:/Users/Mikkel Syse Grøsland/AppData/LocalLow/DefaultCompany/roe\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
