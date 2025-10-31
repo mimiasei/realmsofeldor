@@ -563,7 +563,7 @@ namespace RealmsOfEldor.Controllers
                 // Convert map position to 3D world position (X,Z ground plane)
                 var worldPos = new Vector3(
                     path[i].X + 0.5f,  // Center on tile X
-                    0f,                 // Ground level
+                    0.5f,               // Slightly above ground (match hero spawn height)
                     path[i].Y + 0.5f   // Center on tile Z
                 );
                 waypoints[i - 1] = worldPos;

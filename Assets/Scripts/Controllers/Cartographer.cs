@@ -75,11 +75,11 @@ namespace RealmsOfEldor.Controllers
         [Tooltip("Zoom deceleration / friction (how quickly momentum slows down, 0-1)")]
         [SerializeField] private float zoomFriction = 0.92f;
 
-        [Tooltip("Minimum zoom distance (closer to ground)")]
-        [SerializeField] private float minPerspZoom = -50f;
+        [Tooltip("Minimum view distance (far from ground, zoomed out) - hypotenuse of Y and Z")]
+        [SerializeField] private float minViewDistance = 15f;
 
-        [Tooltip("Maximum zoom distance (further from ground)")]
-        [SerializeField] private float maxPerspZoom = -10f;
+        [Tooltip("Maximum view distance (close to ground, zoomed in) - hypotenuse of Y and Z")]
+        [SerializeField] private float maxViewDistance = 55f;
 
         [Tooltip("How many units before max zoom to start rotation transition")]
         [SerializeField] private float zoomUnitsBeforeToStartCamRot = 5f;
@@ -114,8 +114,6 @@ namespace RealmsOfEldor.Controllers
         private Vector3 dragOrigin;
         private bool isDragging;
         private CancellationTokenSource moveCts;
-        private float targetZPosition;
-        private float zoomVelocity;
         private float zoomMomentum; // Current momentum for zoom
         private float targetRotation; // Target rotation during transition
         private float rotationVelocity; // SmoothDamp velocity for rotation
@@ -138,11 +136,13 @@ namespace RealmsOfEldor.Controllers
             // Setup camera for isometric 2.5D rendering
             SetupCamera();
 
-            // Initialize target zoom position AFTER SetupCamera() has positioned the camera
-            targetZPosition = cameraTransform.localPosition.z;
+            // Calculate initial view distance
+            var initialLocalPos = cameraTransform.localPosition;
+            var initialViewDistance = Mathf.Sqrt(initialLocalPos.y * initialLocalPos.y + initialLocalPos.z * initialLocalPos.z);
 
-            Debug.Log($"Cartographer: Initial camera local Z: {cameraTransform.localPosition.z}, target Z: {targetZPosition}");
-            Debug.Log($"Cartographer: Zoom range: {minPerspZoom} to {maxPerspZoom}, rotation transition at: {maxPerspZoom - zoomUnitsBeforeToStartCamRot}");
+            Debug.Log($"Cartographer: Initial camera local position: Y={initialLocalPos.y:F2}, Z={initialLocalPos.z:F2}");
+            Debug.Log($"Cartographer: Initial view distance: {initialViewDistance:F2}");
+            Debug.Log($"Cartographer: View distance range: {minViewDistance} to {maxViewDistance}, rotation transition at: {minViewDistance + zoomUnitsBeforeToStartCamRot}");
 
             // Create the 3D ground plane
             CreateGroundPlane();
@@ -750,12 +750,13 @@ namespace RealmsOfEldor.Controllers
 
         /// <summary>
         /// Handles scroll wheel zoom with momentum-based acceleration.
-        /// Now works with parent-child hierarchy: only moves child camera in local Y/Z.
+        /// Uses view distance (hypotenuse of Y and Z) to limit zoom, allowing flexible camera positioning.
         /// Features:
         /// - Momentum builds up when scrolling (acceleration)
         /// - Coasts to a smooth stop after scrolling stops (friction)
         /// - Automatic rotation change when zooming in close
         /// - Maintains ground focus point during rotation transitions
+        /// - Zoom limits based on distance from ground point, not just Z position
         /// </summary>
         private void HandleZoom()
         {
@@ -773,64 +774,85 @@ namespace RealmsOfEldor.Controllers
             // Apply friction to momentum (deceleration)
             zoomMomentum *= zoomFriction;
 
-            // Stop if momentum is negligible
-            if (Mathf.Abs(zoomMomentum) < 0.001f)
+            // Check if momentum is negligible
+            var hasMomentum = Mathf.Abs(zoomMomentum) >= 0.001f;
+
+            // Get current rotation early for checks
+            float currentRotation = cameraTransform.localRotation.eulerAngles.x;
+            if (currentRotation > 180f) currentRotation -= 360f;
+
+            if (!hasMomentum)
             {
                 zoomMomentum = 0f;
-                return;
+
+                // Even without momentum, continue smoothing rotation if it hasn't reached target yet
+                // Check if rotation needs to continue smoothing
+                var rotationDelta = Mathf.Abs(currentRotation - Mathf.Abs(targetRotation));
+                if (rotationDelta < 0.1f)
+                {
+                    return; // Rotation and zoom both settled
+                }
+                // Otherwise, continue to apply rotation smoothing below
             }
 
             // Work with LOCAL position of child camera
             var currentLocalPos = cameraTransform.localPosition;
+            var currentY = currentLocalPos.y;
             var currentZ = currentLocalPos.z;
 
-            // Apply momentum to local Z position
-            var newZ = currentZ + zoomMomentum;
-            newZ = Mathf.Clamp(newZ, minPerspZoom, maxPerspZoom);
+            // Calculate current view distance (hypotenuse from camera to ground point directly below)
+            // This is the "true" distance from camera to ground, accounting for both height and backward distance
+            var currentViewDistance = Mathf.Sqrt(currentY * currentY + currentZ * currentZ);
 
-            // Stop momentum if we hit the bounds
-            if (newZ == minPerspZoom || newZ == maxPerspZoom)
+            // Apply momentum to view distance (don't clamp yet - let it overshoot for rotation)
+            var targetViewDistance = currentViewDistance + zoomMomentum;
+
+            // Calculate TARGET rotation based on target view distance (before clamping)
+            // This ensures rotation reaches target even when momentum would overshoot
+            // At max distance (far zoom): use maxZoomCamRot (steep angle like -60°, looking more down)
+            // At min distance (close zoom): use cameraTiltAngle (shallow angle like -30°, looking more forward)
+            var rotationTransitionStart = minViewDistance + zoomUnitsBeforeToStartCamRot;
+
+            if (targetViewDistance >= rotationTransitionStart)
             {
-                zoomMomentum = 0f;
-            }
-
-            var deltaZ = newZ - currentZ;
-
-            // Skip if no meaningful change
-            if (Mathf.Abs(deltaZ) < 0.001f)
-                return;
-
-            // Calculate TARGET rotation based on zoom level
-            // Z values are NEGATIVE: minPerspZoom (e.g., -50) is far (0% zoom), maxPerspZoom (e.g., -10) is close (100% zoom)
-            // At 0% zoom (far): use maxZoomCamRot (steep angle like -60°, looking more down)
-            // At 100% zoom (close): use cameraTiltAngle (shallow angle like -30°, looking more forward)
-            var rotationTransitionStart = maxPerspZoom - zoomUnitsBeforeToStartCamRot;
-
-            if (newZ <= rotationTransitionStart)
-            {
-                // Far zoom (0%): use steep angle to see more of the map
+                // Far zoom: use steep angle to see more of the map
                 targetRotation = maxZoomCamRot;
             }
-            else if (newZ >= maxPerspZoom)
+            else if (targetViewDistance <= minViewDistance)
             {
-                // Max zoom (100%, closest): use shallow angle for close-up view
+                // Max zoom (closest): use shallow angle for close-up view
                 targetRotation = cameraTiltAngle;
             }
             else
             {
-                // Transition zone: interpolate from steep (maxZoomCamRot) to shallow (cameraTiltAngle)
-                var t = Mathf.InverseLerp(rotationTransitionStart, maxPerspZoom, newZ);
+                // Transition zone: interpolate from shallow (cameraTiltAngle) to steep (maxZoomCamRot)
+                var t = Mathf.InverseLerp(minViewDistance, rotationTransitionStart, targetViewDistance);
                 // Apply easing for smooth rotation (ease in/out)
                 t = t * t * (3f - 2f * t); // Smoothstep
-                targetRotation = Mathf.Lerp(maxZoomCamRot, cameraTiltAngle, t);
+                targetRotation = Mathf.Lerp(cameraTiltAngle, maxZoomCamRot, t);
+            }
+
+            // Now clamp view distance for actual position
+            var newViewDistance = Mathf.Clamp(targetViewDistance, minViewDistance, maxViewDistance);
+
+            // Stop momentum if we hit the bounds
+            if (newViewDistance == minViewDistance || newViewDistance == maxViewDistance)
+            {
+                zoomMomentum = 0f;
+            }
+
+            var distanceDelta = newViewDistance - currentViewDistance;
+
+            // If no momentum and no distance change, we're only updating rotation
+            if (!hasMomentum && Mathf.Abs(distanceDelta) < 0.001f)
+            {
+                // Keep view distance constant, only update rotation
+                newViewDistance = currentViewDistance;
+                distanceDelta = 0f;
             }
 
             // Work with local position
             var localPos = currentLocalPos;
-
-            // Get current rotation and smoothly move toward target
-            var currentRotation = cameraTransform.localRotation.eulerAngles.x;
-            if (currentRotation > 180f) currentRotation -= 360f;
 
             // Smoothly interpolate rotation using SmoothDamp to match momentum feel
             // This creates a smooth acceleration/deceleration that matches the zoom momentum
@@ -851,7 +873,6 @@ namespace RealmsOfEldor.Controllers
                 // This maintains the ground point during rotation transition
 
                 // Calculate where camera is currently looking on the ground (y=0 plane)
-                // Use CURRENT Z position (before applying newZ) for accurate ground point calculation
                 // Camera looks DOWN and FORWARD. With camera at local (0, y, z) and rotation rot:
                 // Ground point Z = camera.localZ + |camera.localY| / tan(|rot|)
                 var currentTanAngle = Mathf.Tan(Mathf.Abs(currentRotation) * Mathf.Deg2Rad);
@@ -860,37 +881,38 @@ namespace RealmsOfEldor.Controllers
                 if (Mathf.Abs(currentTanAngle) < 0.001f)
                     currentTanAngle = 0.001f * Mathf.Sign(currentTanAngle);
 
-                // IMPORTANT: Use currentZ (not localPos.z) to calculate ground point BEFORE zoom movement
-                var groundPointZ = currentZ + localPos.y / currentTanAngle;
+                // Calculate ground point BEFORE zoom movement
+                var groundPointZ = currentZ + currentY / currentTanAngle;
 
-                // Now apply Z movement
-                localPos.z = newZ;
+                // Calculate new Y and Z based on new view distance and smoothed rotation
+                // Using right triangle: viewDistance is hypotenuse, Y and Z are the legs
+                // Y / viewDistance = sin(rotation), Z / viewDistance = -cos(rotation)
+                // Note: Z is negative because camera looks in -Z direction in local space
+                var rotRad = Mathf.Abs(smoothedRotation) * Mathf.Deg2Rad;
+                var newY = newViewDistance * Mathf.Sin(rotRad);
+                var newZ = -newViewDistance * Mathf.Cos(rotRad);
 
-                // Recalculate camera Y to maintain same ground point with new (smoothed) rotation
-                // Solve: groundPointZ = newZ + newY / tan(|smoothedRot|)
-                // Therefore: newY = (groundPointZ - newZ) * tan(|smoothedRot|)
+                // Adjust Z to maintain ground point
                 var newTanAngle = Mathf.Tan(Mathf.Abs(smoothedRotation) * Mathf.Deg2Rad);
-
-                // Safety check: prevent division by zero or very small values
                 if (Mathf.Abs(newTanAngle) < 0.001f)
                     newTanAngle = 0.001f * Mathf.Sign(newTanAngle);
 
-                localPos.y = (groundPointZ - newZ) * newTanAngle;
+                // Recalculate to maintain ground point: newZ = groundPointZ - newY / tan(smoothedRot)
+                newZ = groundPointZ - newY / newTanAngle;
+
+                localPos.y = newY;
+                localPos.z = newZ;
             }
             else
             {
-                // Rotation is constant: move in straight diagonal line
-                // Y movement is proportional to Z movement at fixed angle
-                // For a downward-looking camera: when Z increases (moves forward), Y must decrease
-                var tanAngle = Mathf.Tan(Mathf.Abs(smoothedRotation) * Mathf.Deg2Rad);
+                // Rotation is constant: scale Y and Z proportionally to achieve new view distance
+                // Maintain the same angle: newY/newZ = currentY/currentZ
+                var rotRad = Mathf.Abs(smoothedRotation) * Mathf.Deg2Rad;
 
-                // Safety check: prevent division by zero or very small values
-                if (Mathf.Abs(tanAngle) < 0.001f)
-                    tanAngle = 0.001f * Mathf.Sign(tanAngle);
-
-                deltaZ = newZ - currentZ;
-                localPos.z = newZ;
-                localPos.y -= deltaZ * tanAngle; // Move diagonally: forward = down for downward camera
+                // Calculate new Y and Z from view distance and current rotation
+                // Y / viewDistance = sin(rotation), Z / viewDistance = -cos(rotation)
+                localPos.y = newViewDistance * Mathf.Sin(rotRad);
+                localPos.z = -newViewDistance * Mathf.Cos(rotRad);
             }
 
             // Apply smoothed rotation with Y and Z locked to 0 (only X tilt changes)
@@ -1104,20 +1126,31 @@ namespace RealmsOfEldor.Controllers
 
         /// <summary>
         /// Gets the current zoom level as a percentage (0-100).
-        /// 0% = maximum zoom out (minPerspZoom), 100% = maximum zoom in (maxPerspZoom).
+        /// 0% = maximum zoom out (maxViewDistance), 100% = maximum zoom in (minViewDistance).
         /// </summary>
         public float GetZoomPercentage()
         {
-            var currentZ = cameraTransform.localPosition.z;
-            return Mathf.InverseLerp(minPerspZoom, maxPerspZoom, currentZ) * 100f;
+            var localPos = cameraTransform.localPosition;
+            var currentViewDistance = Mathf.Sqrt(localPos.y * localPos.y + localPos.z * localPos.z);
+            // Invert: min distance = 100% zoom, max distance = 0% zoom
+            return (1f - Mathf.InverseLerp(minViewDistance, maxViewDistance, currentViewDistance)) * 100f;
         }
 
         /// <summary>
-        /// Gets the current zoom range (min and max Z values).
+        /// Gets the current view distance from camera to ground point.
         /// </summary>
-        public Vector2 GetZoomRange()
+        public float GetViewDistance()
         {
-            return new Vector2(minPerspZoom, maxPerspZoom);
+            var localPos = cameraTransform.localPosition;
+            return Mathf.Sqrt(localPos.y * localPos.y + localPos.z * localPos.z);
+        }
+
+        /// <summary>
+        /// Gets the view distance range (min and max).
+        /// </summary>
+        public Vector2 GetViewDistanceRange()
+        {
+            return new Vector2(minViewDistance, maxViewDistance);
         }
     }
 }

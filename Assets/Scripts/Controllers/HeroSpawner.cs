@@ -113,7 +113,7 @@ namespace RealmsOfEldor.Controllers
             // In 3D: X = horizontal left/right, Y = height above ground, Z = horizontal forward/back
             var worldPosition = new Vector3(
                 hero.Position.X + 0.5f,  // Center on tile X
-                0f,                       // Ground level (Y=0)
+                0.5f,                     // Slightly above ground (so billboard is visible)
                 hero.Position.Y + 0.5f   // Center on tile Z (map Y becomes world Z)
             );
 

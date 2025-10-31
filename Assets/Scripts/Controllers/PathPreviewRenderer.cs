@@ -17,7 +17,7 @@ namespace RealmsOfEldor.Controllers
         [SerializeField] private LineRenderer lineRenderer;
         [SerializeField] private LineRenderer unreachableLineRenderer; // Red portion
         [SerializeField] private float lineWidth = 0.1f;
-        [SerializeField] private float lineZPosition = 0f; // Z position for line (above terrain)
+        [SerializeField] private float lineHeight = 0.1f; // Y position for line (above ground plane)
 
         [Header("Visual Settings")]
         [SerializeField] private Color reachablePathColor = new Color(0.3f, 1f, 0.3f, 0.8f); // Green
@@ -145,6 +145,7 @@ namespace RealmsOfEldor.Controllers
 
         /// <summary>
         /// Renders a line segment from startIndex to endIndex.
+        /// Uses 3D coordinate system (X, Z ground plane).
         /// </summary>
         private void RenderSingleLine(LineRenderer lr, List<Position> path, int startIndex, int endIndex, Color color)
         {
@@ -161,10 +162,13 @@ namespace RealmsOfEldor.Controllers
 
             for (int i = 0; i < count; i++)
             {
-                var worldPos = path[startIndex + i].ToVector3();
-                worldPos.x += 0.5f; // Center on tile
-                worldPos.y += 0.5f;
-                worldPos.z = lineZPosition;
+                var pos = path[startIndex + i];
+                // Convert map position to 3D world position (X,Z ground plane)
+                var worldPos = new Vector3(
+                    pos.X + 0.5f,      // Center on tile X
+                    lineHeight,         // Slightly above ground plane
+                    pos.Y + 0.5f       // Center on tile Z (map Y becomes world Z)
+                );
                 lr.SetPosition(i, worldPos);
             }
 

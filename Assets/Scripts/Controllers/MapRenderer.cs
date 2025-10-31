@@ -552,17 +552,7 @@ namespace RealmsOfEldor.Controllers
         /// </summary>
         public Vector3 MapToWorldPosition(Position pos)
         {
-            if (terrainTilemap != null)
-            {
-                // Get tilemap's 2D position, then convert to 3D ground plane
-                var tilePos = PositionToTilePosition(pos);
-                var tilemap2DPos = terrainTilemap.GetCellCenterWorld(tilePos);
-
-                // Convert from tilemap's 2D space (X,Y,0) to 3D ground plane (X,0,Z)
-                return new Vector3(tilemap2DPos.x, 0f, tilemap2DPos.y);
-            }
-
-            // Fallback: direct conversion using CoordinateConverter
+            // Use direct conversion - tilemap is rotated so GetCellCenterWorld won't work correctly
             return CoordinateConverter.PositionToWorld3D(pos, 0f);
         }
 
@@ -572,15 +562,7 @@ namespace RealmsOfEldor.Controllers
         /// </summary>
         public Position WorldToMapPosition(Vector3 worldPos)
         {
-            if (terrainTilemap != null)
-            {
-                // Convert 3D ground plane position to tilemap's 2D space
-                var tilemap2DPos = new Vector3(worldPos.x, worldPos.z, 0f);
-                var tilePos = terrainTilemap.WorldToCell(tilemap2DPos);
-                return TilePositionToPosition(tilePos);
-            }
-
-            // Fallback: direct conversion using CoordinateConverter
+            // Use direct conversion - tilemap is rotated so WorldToCell won't work correctly
             return CoordinateConverter.WorldToPosition3D(worldPos);
         }
 

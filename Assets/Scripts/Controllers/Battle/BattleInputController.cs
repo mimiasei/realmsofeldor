@@ -59,16 +59,15 @@ namespace RealmsOfEldor.Controllers.Battle
             if (battleAnimator == null)
                 battleAnimator = FindFirstObjectByType<BattleAnimator>();
 
-            // Get camera from BattleFieldRenderer (which has the correct camera)
-            if (fieldRenderer != null)
+            // Get camera (managed by BattleCameraController, tagged as MainCamera)
+            battleCamera = Camera.main;
+            if (battleCamera == null)
             {
-                battleCamera = fieldRenderer.GetComponent<Camera>();
-                Debug.Log("BattleInputController: Using camera from BattleFieldRenderer");
+                Debug.LogError("BattleInputController: No Main Camera found! Make sure BattleCameraController is tagged as MainCamera.");
             }
             else
             {
-                battleCamera = Camera.main;
-                Debug.LogWarning("BattleInputController: BattleFieldRenderer not found, using Camera.main");
+                Debug.Log($"BattleInputController: Using camera: {battleCamera.name}");
             }
 
             // Debug camera setup

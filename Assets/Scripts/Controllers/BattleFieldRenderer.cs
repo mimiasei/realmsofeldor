@@ -7,10 +7,14 @@ namespace RealmsOfEldor.Controllers
     /// <summary>
     /// Renders the battle field background and optional hex grid overlay.
     /// Based on VCMI's BattleFieldController.
+    /// Camera is now managed by BattleCameraController (not this component).
     /// </summary>
-    [RequireComponent(typeof(Camera))]
     public class BattleFieldRenderer : MonoBehaviour
     {
+        [Header("Camera Reference")]
+        [Tooltip("Reference to the battle camera (managed by BattleCameraController)")]
+        [SerializeField] private Camera battleCamera;
+
         [Header("Background")]
         [SerializeField] private SpriteRenderer backgroundRenderer;
         [SerializeField] private Sprite grasslandBackground;
@@ -20,59 +24,39 @@ namespace RealmsOfEldor.Controllers
         [SerializeField] private Sprite roughBackground;
         [SerializeField] private Sprite snowBackground;
 
-        [Header("Camera Mode - Olden Era Style")]
-        [SerializeField] private bool usePerspectiveCamera = true; // 2.5D billboard mode (true for Olden Era style)
-        [SerializeField] private float perspectiveFOV = 40f; // Field of view
-        [SerializeField] private float cameraHeight = 12f; // Height above ground (Y axis)
-        [SerializeField] private float cameraZOffset = -10f; // Distance back from center (negative Z)
-        [SerializeField] private float cameraTiltAngle = 50f; // Tilt angle looking down at ground (Olden Era ~50°)
-
         [Header("Hex Grid")]
         [SerializeField] private GameObject hexGridContainer;
         [SerializeField] private bool showHexGrid = false;
         [SerializeField] private Color hexLineColor = new Color(0f, 1f, 0f, 0.3f);
         [SerializeField] private float hexLineWidth = 0.01f; // Very thin for new world scale (1 pixel equivalent)
 
-        private Camera battleCamera;
         private GameObject[,] hexOverlays;
 
         void Awake()
         {
             Debug.Log("BattleFieldRenderer.Awake() called - starting initialization");
-            battleCamera = GetComponent<Camera>();
 
-            // Setup camera mode (perspective for 2.5D billboards or orthographic for classic 2D)
-            if (usePerspectiveCamera)
+            // Find battle camera if not assigned (managed by BattleCameraController)
+            if (battleCamera == null)
             {
-                battleCamera.orthographic = false;
-                battleCamera.fieldOfView = perspectiveFOV;
-                Debug.Log($"BattleFieldRenderer: Using perspective camera (FOV: {perspectiveFOV})");
+                battleCamera = Camera.main;
+                if (battleCamera == null)
+                {
+                    Debug.LogError("BattleFieldRenderer: No camera found! Make sure BattleCameraController is set up.");
+                    return;
+                }
+                Debug.Log($"BattleFieldRenderer: Using camera: {battleCamera.name}");
+            }
+
+            // Background renderer is now managed manually in scene (or use BattleGroundPlane instead)
+            // Don't auto-create if missing
+            if (backgroundRenderer != null)
+            {
+                Debug.Log($"BattleFieldRenderer: backgroundRenderer exists at {backgroundRenderer.transform.position}, enabled: {backgroundRenderer.enabled}");
             }
             else
             {
-                battleCamera.orthographic = true;
-                Debug.Log("BattleFieldRenderer: Using orthographic camera");
-            }
-
-            // Set camera to render sprites properly (not skybox)
-            battleCamera.clearFlags = CameraClearFlags.SolidColor;
-            battleCamera.backgroundColor = new Color(0.1f, 0.1f, 0.1f, 1f); // Dark gray
-
-            // Create background renderer if not assigned or if gameobject is null
-            if (backgroundRenderer == null || backgroundRenderer.gameObject == null)
-            {
-                Debug.Log("BattleFieldRenderer: backgroundRenderer is null or destroyed, creating new one");
-                var bgObj = new GameObject("BattleBackground");
-                bgObj.transform.SetParent(transform);
-                bgObj.transform.position = new Vector3(374f, 210f, 10f); // Behind everything (positive Z = behind camera)
-                backgroundRenderer = bgObj.AddComponent<SpriteRenderer>();
-                backgroundRenderer.sortingOrder = -100; // Behind everything
-
-                Debug.Log($"BattleFieldRenderer: Created background renderer at position {bgObj.transform.position}");
-            }
-            else
-            {
-                Debug.Log($"BattleFieldRenderer: backgroundRenderer already exists at {backgroundRenderer.transform.position}, enabled: {backgroundRenderer.enabled}, sprite: {backgroundRenderer.sprite}");
+                Debug.Log("BattleFieldRenderer: No backgroundRenderer assigned (using BattleGroundPlane instead)");
             }
 
 
@@ -94,54 +78,29 @@ namespace RealmsOfEldor.Controllers
 
         void Start()
         {
-            // BattleFieldRenderer manages its own camera - no external camera controller needed
+            // Camera is managed by BattleCameraController, just use it for rendering
 
-            // Center camera on battlefield
-            CenterCamera();
-
-            // Log final camera state after setup
-            Debug.Log("=== CAMERA STATE AFTER CENTERING ===");
-            Debug.Log($"Camera Position: {battleCamera.transform.position}");
-            Debug.Log($"Camera Rotation (Euler): {battleCamera.transform.rotation.eulerAngles}");
-            Debug.Log($"Camera Rotation (Quaternion): {battleCamera.transform.rotation}");
-            Debug.Log($"Camera Projection: {(battleCamera.orthographic ? "Orthographic" : "Perspective")}");
-            if (!battleCamera.orthographic)
+            // Log camera state
+            if (battleCamera != null)
             {
-                Debug.Log($"Camera FOV: {battleCamera.fieldOfView}");
+                Debug.Log("=== BATTLE CAMERA STATE ===");
+                Debug.Log($"Camera Position: {battleCamera.transform.position}");
+                Debug.Log($"Camera Rotation (Euler): {battleCamera.transform.rotation.eulerAngles}");
+                Debug.Log($"Camera Projection: {(battleCamera.orthographic ? "Orthographic" : "Perspective")}");
+                if (!battleCamera.orthographic)
+                {
+                    Debug.Log($"Camera FOV: {battleCamera.fieldOfView}");
+                }
+                Debug.Log("===========================");
             }
-            Debug.Log("====================================");
 
-            // Setup background (must be after camera is positioned)
+            // Setup background
             SetupBackground();
 
             // Initialize hex grid (hidden by default)
             InitializeHexGrid();
-
-            // Setup lighting for 2.5D billboard rendering (if using perspective camera)
-            if (usePerspectiveCamera)
-            {
-                SetupLighting();
-            }
         }
 
-        /// <summary>
-        /// Sets up lighting and shadows for 2.5D billboard rendering.
-        /// </summary>
-        private void SetupLighting()
-        {
-            // Check if lighting setup already exists
-            var existingSetup = GetComponent<BattleLightingSetup>();
-            if (existingSetup == null)
-            {
-                // Add lighting setup component
-                var lightingSetup = gameObject.AddComponent<BattleLightingSetup>();
-                Debug.Log("BattleFieldRenderer: Added BattleLightingSetup component for 2.5D rendering");
-            }
-            else
-            {
-                Debug.Log("BattleFieldRenderer: BattleLightingSetup already exists");
-            }
-        }
 
         /// <summary>
         /// Sets the battlefield background based on terrain type.
@@ -176,66 +135,6 @@ namespace RealmsOfEldor.Controllers
             }
         }
 
-        /// <summary>
-        /// Centers the camera on the battlefield to show all hexes.
-        /// Fixed camera position like HoMM3 - shows entire battlefield.
-        /// Supports both orthographic (classic 2D) and perspective (2.5D billboard) modes.
-        /// </summary>
-        private void CenterCamera()
-        {
-            // Calculate the bounds of the entire battlefield on X,Z ground plane
-            var topLeft = BattleHexGrid.HexToWorld(0, 0);
-            var bottomRight = BattleHexGrid.HexToWorld(BattleHexGrid.BATTLE_WIDTH - 1, BattleHexGrid.BATTLE_HEIGHT - 1);
-
-            // Calculate center on X,Z plane (Y is height)
-            var centerX = (topLeft.x + bottomRight.x) * 0.5f;
-            var centerZ = (topLeft.z + bottomRight.z) * 0.5f;
-
-            if (usePerspectiveCamera)
-            {
-                // Position camera for 3D perspective view (Olden Era style)
-                // Camera is above (Y+) and behind (Z-) the battlefield center
-                // Looking down at the X,Z ground plane
-                battleCamera.transform.position = new Vector3(centerX, cameraHeight, centerZ + cameraZOffset);
-                battleCamera.transform.rotation = Quaternion.Euler(cameraTiltAngle, 0, 0);
-
-                Debug.Log($"BattleFieldRenderer: Perspective camera at {battleCamera.transform.position}, rotation: {battleCamera.transform.rotation.eulerAngles}, FOV: {perspectiveFOV}°");
-                Debug.Log($"BattleFieldRenderer: Battlefield center at ({centerX}, 0, {centerZ}) on X,Z ground plane");
-            }
-            else
-            {
-                // Orthographic camera - top down view
-                battleCamera.transform.position = new Vector3(centerX, 20f, centerZ);
-                battleCamera.transform.rotation = Quaternion.Euler(90f, 0, 0); // Looking straight down
-
-                // Calculate orthographic size to fit entire battlefield
-                var battlefieldWidth = bottomRight.x - topLeft.x + BattleHexGrid.HEX_WIDTH;
-                var battlefieldDepth = bottomRight.z - topLeft.z + BattleHexGrid.HEX_HEIGHT;
-
-                var cameraAspect = battleCamera.aspect;
-                var battlefieldAspect = battlefieldWidth / battlefieldDepth;
-
-                if (battlefieldAspect > cameraAspect)
-                {
-                    battleCamera.orthographicSize = (battlefieldWidth / cameraAspect) * 0.5f;
-                }
-                else
-                {
-                    battleCamera.orthographicSize = battlefieldDepth * 0.5f;
-                }
-
-                Debug.Log($"BattleFieldRenderer: Orthographic top-down camera at {battleCamera.transform.position}, size: {battleCamera.orthographicSize}");
-            }
-        }
-
-        /// <summary>
-        /// Public method to recenter camera (useful for debugging).
-        /// </summary>
-        [ContextMenu("Recenter Camera")]
-        public void RecenterCamera()
-        {
-            CenterCamera();
-        }
 
         /// <summary>
         /// Sets up the background sprite to fill the camera view.
@@ -262,12 +161,13 @@ namespace RealmsOfEldor.Controllers
                 grasslandBackground = backgroundRenderer.sprite;
             }
 
-            // Set sprite and enable renderer
+            // Set sprite (but don't force enable - respect scene settings)
             if (grasslandBackground != null)
             {
                 backgroundRenderer.sprite = grasslandBackground;
             }
-            backgroundRenderer.enabled = true;
+            // Don't force enable - let scene settings control this
+            // backgroundRenderer.enabled = true;
             backgroundRenderer.sortingOrder = -100;
 
             // Configure shadow receiving for 2.5D rendering
@@ -339,46 +239,10 @@ namespace RealmsOfEldor.Controllers
         [SerializeField] private bool manualScaleOverride = false;
         [SerializeField] [Range(0.01f, 2f)] private float manualBackgroundScale = 0.3f;
 
-        [Header("Runtime Camera Adjustment")]
-        [Tooltip("Enable to manually adjust camera during play mode")]
-        [SerializeField] private bool manualCameraAdjustment = false;
-        [SerializeField] [Range(1f, 30f)] private float runtimeCameraHeight = 12f;
-        [SerializeField] [Range(-20f, 5f)] private float runtimeCameraZOffset = -10f;
-        [SerializeField] [Range(20f, 70f)] private float runtimeCameraTilt = 50f;
-        [SerializeField] [Range(15f, 60f)] private float runtimeCameraFOV = 40f;
-
         private float lastBackgroundScale = -1f;
-        private Vector3 lastCameraPos = Vector3.zero;
-        private Quaternion lastCameraRot = Quaternion.identity;
-        private float lastFOV = 0f;
 
         void Update()
         {
-            // Allow runtime adjustment of camera
-            if (manualCameraAdjustment && battleCamera != null && Application.isPlaying)
-            {
-                var topLeft = BattleHexGrid.HexToWorld(0, 0);
-                var bottomRight = BattleHexGrid.HexToWorld(BattleHexGrid.BATTLE_WIDTH - 1, BattleHexGrid.BATTLE_HEIGHT - 1);
-                var centerX = (topLeft.x + bottomRight.x) * 0.5f;
-                var centerZ = (topLeft.z + bottomRight.z) * 0.5f;
-
-                var newCameraPos = new Vector3(centerX, runtimeCameraHeight, centerZ + runtimeCameraZOffset);
-                var newCameraRot = Quaternion.Euler(runtimeCameraTilt, 0, 0);
-
-                if (Vector3.Distance(newCameraPos, lastCameraPos) > 0.01f ||
-                    Quaternion.Angle(newCameraRot, lastCameraRot) > 0.1f ||
-                    Mathf.Abs(runtimeCameraFOV - lastFOV) > 0.1f)
-                {
-                    battleCamera.transform.position = newCameraPos;
-                    battleCamera.transform.rotation = newCameraRot;
-                    battleCamera.fieldOfView = runtimeCameraFOV;
-
-                    lastCameraPos = newCameraPos;
-                    lastCameraRot = newCameraRot;
-                    lastFOV = runtimeCameraFOV;
-                }
-            }
-
             // Allow runtime adjustment of background scale (only if manual override enabled)
             if (manualScaleOverride && backgroundRenderer != null && Application.isPlaying)
             {

@@ -145,13 +145,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 21211578}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1487374061}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!483693784 &21211580
 TilemapRenderer:
   m_ObjectHideFlags: 0
@@ -535,10 +535,10 @@ MonoBehaviour:
   groundMaterial: {fileID: 0}
   groundSize: {x: 100, y: 100}
   groundTextureTiling: {x: 10, y: 10}
-  cameraTiltAngle: 25
-  maxZoomCamRot: -50
-  fieldOfView: 25
-  cameraHeight: 8
+  cameraTiltAngle: 20
+  maxZoomCamRot: -40
+  fieldOfView: 20
+  cameraHeight: 6
   initialZoomPosition: -20
   createDirectionalLight: 1
   sunAngle: {x: 50, y: -30}
@@ -547,11 +547,11 @@ MonoBehaviour:
   panSpeed: 20
   edgePanSpeed: 15
   edgePanThreshold: 10
-  zoomAcceleration: 20
-  zoomFriction: 0.97
-  minPerspZoom: -30
-  maxPerspZoom: -14
-  zoomUnitsBeforeToStartCamRot: 6
+  zoomAcceleration: 12
+  zoomFriction: 0.99
+  minViewDistance: 12
+  maxViewDistance: 55
+  zoomUnitsBeforeToStartCamRot: 8
   constrainToBounds: 1
   mapMinBounds: {x: 0, y: 0}
   mapMaxBounds: {x: 100, y: 100}
@@ -1574,13 +1574,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 641747498}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1487374061}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!483693784 &641747500
 TilemapRenderer:
   m_ObjectHideFlags: 0
@@ -2275,13 +2275,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1293777243}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1487374061}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!483693784 &1293777245
 TilemapRenderer:
   m_ObjectHideFlags: 0
@@ -2458,7 +2458,7 @@ MonoBehaviour:
   lineRenderer: {fileID: 0}
   unreachableLineRenderer: {fileID: 0}
   lineWidth: 0.1
-  lineZPosition: 0
+  lineHeight: 0.1
   reachablePathColor: {r: 0.3, g: 1, b: 0.3, a: 0.8}
   unreachablePathColor: {r: 1, g: 0.3, b: 0.3, a: 0.8}
 --- !u!4 &1344467145
@@ -3067,7 +3067,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1487374060}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -3076,7 +3076,7 @@ Transform:
   - {fileID: 21211579}
   - {fileID: 1293777244}
   m_Father: {fileID: 1138211280}
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1487374062
 MonoBehaviour:
   m_ObjectHideFlags: 0

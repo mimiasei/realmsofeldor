@@ -72,31 +72,42 @@ Shader "RealmsOfEldor/CartographerBillboard"
                 // Calculate direction from billboard to camera
                 float3 toCamera = normalize(cameraPos - worldPos);
 
-                // ISOMETRIC BILLBOARDING (Song of Conquest style):
-                // Billboard rotates to face camera, but maintains its upright orientation.
-                // The sprite rotates around its vertical axis (Y) to face the camera's XZ direction.
+                // X-AXIS ROTATION BILLBOARDING:
+                // Billboards always face the same horizontal direction (no Y rotation).
+                // They tilt (rotate in X) to face the camera's altitude/height.
+                // Camera's horizontal position (XZ) is ignored.
 
-                // Project camera direction onto XZ plane (ignore Y to stay upright)
-                float3 toCameraFlat = float3(toCamera.x, 0, toCamera.z);
-                toCameraFlat = normalize(toCameraFlat);
+                // Right vector is always aligned with world X axis (no Y rotation)
+                float3 right = float3(1, 0, 0);
 
-                // Calculate billboard orientation vectors
-                // Up vector stays vertical (Y+)
-                float3 up = float3(0, 1, 0);
+                // Calculate forward vector by tilting based on camera height
+                // Project toCamera onto the YZ plane (ignore X component) to get the tilt
+                float3 toCameraYZ = normalize(float3(0, toCamera.y, toCamera.z));
 
-                // Right vector is perpendicular to both up and toCamera (cross product)
-                float3 right = normalize(cross(up, toCameraFlat));
+                // Forward points toward camera in YZ plane
+                float3 forward = toCameraYZ;
 
-                // Forward vector is perpendicular to right and up
-                float3 forward = cross(right, up);
+                // Up vector is perpendicular to both right and forward
+                // Use cross(right, forward) to get upward-pointing vector
+                float3 up = normalize(cross(right, forward));
 
                 // Transform vertex from local space to billboard space
-                // input.positionOS.xy are the quad's local coordinates (-0.5 to 0.5)
-                // Apply object scale to the vertex offsets
-                float3 localPos = TransformObjectToWorld(input.positionOS.xyz) - worldPos;
+                // input.positionOS.xyz are the quad's local coordinates in object space
+                // We need to apply the object's scale to get the correct size
+                float3 scale = float3(
+                    length(TransformObjectToWorld(float3(1,0,0)) - worldPos),
+                    length(TransformObjectToWorld(float3(0,1,0)) - worldPos),
+                    length(TransformObjectToWorld(float3(0,0,1)) - worldPos)
+                );
+
+                // Build the billboard by positioning vertices using right and up vectors
+                // Apply X scale to right offset, Y scale to up offset
+                // Quad vertices: Y from -0.5 (bottom) to +0.5 (top)
+                // We want bottom at Y=0, so we shift all vertices UP by 0.5 in world space
+                // This puts bottom at worldPos.y + 0, top at worldPos.y + scale.y
                 float3 billboardPos = worldPos
-                    + right * localPos.x
-                    + up * localPos.y;
+                    + right * input.positionOS.x * scale.x
+                    + up * (input.positionOS.y + 0.5) * scale.y;
 
                 // Transform to clip space
                 output.positionCS = TransformWorldToHClip(billboardPos);
@@ -185,16 +196,24 @@ Shader "RealmsOfEldor/CartographerBillboard"
                 float3 worldPos = TransformObjectToWorld(float3(0, 0, 0));
                 float3 cameraPos = GetCameraPositionWS();
                 float3 toCamera = normalize(cameraPos - worldPos);
-                float3 toCameraFlat = normalize(float3(toCamera.x, 0, toCamera.z));
 
-                float3 up = float3(0, 1, 0);
-                float3 right = normalize(cross(up, toCameraFlat));
+                // X-axis rotation only
+                float3 right = float3(1, 0, 0);
+                float3 toCameraYZ = normalize(float3(0, toCamera.y, toCamera.z));
+                float3 forward = toCameraYZ;
+                float3 up = normalize(cross(right, forward)); // Fixed: correct cross product order
 
-                // Apply object scale
-                float3 localPos = TransformObjectToWorld(input.positionOS.xyz) - worldPos;
+                // Calculate object scale
+                float3 scale = float3(
+                    length(TransformObjectToWorld(float3(1,0,0)) - worldPos),
+                    length(TransformObjectToWorld(float3(0,1,0)) - worldPos),
+                    length(TransformObjectToWorld(float3(0,0,1)) - worldPos)
+                );
+
+                // Build billboard (bottom at ground level)
                 float3 billboardPos = worldPos
-                    + right * localPos.x
-                    + up * localPos.y;
+                    + right * input.positionOS.x * scale.x
+                    + up * (input.positionOS.y + 0.5) * scale.y;
 
                 // Apply shadow bias
                 float3 normalWS = up; // Billboard normal faces up
@@ -260,16 +279,24 @@ Shader "RealmsOfEldor/CartographerBillboard"
                 float3 worldPos = TransformObjectToWorld(float3(0, 0, 0));
                 float3 cameraPos = GetCameraPositionWS();
                 float3 toCamera = normalize(cameraPos - worldPos);
-                float3 toCameraFlat = normalize(float3(toCamera.x, 0, toCamera.z));
 
-                float3 up = float3(0, 1, 0);
-                float3 right = normalize(cross(up, toCameraFlat));
+                // X-axis rotation only
+                float3 right = float3(1, 0, 0);
+                float3 toCameraYZ = normalize(float3(0, toCamera.y, toCamera.z));
+                float3 forward = toCameraYZ;
+                float3 up = normalize(cross(right, forward)); // Fixed: correct cross product order
 
-                // Apply object scale
-                float3 localPos = TransformObjectToWorld(input.positionOS.xyz) - worldPos;
+                // Calculate object scale
+                float3 scale = float3(
+                    length(TransformObjectToWorld(float3(1,0,0)) - worldPos),
+                    length(TransformObjectToWorld(float3(0,1,0)) - worldPos),
+                    length(TransformObjectToWorld(float3(0,0,1)) - worldPos)
+                );
+
+                // Build billboard (bottom at ground level)
                 float3 billboardPos = worldPos
-                    + right * localPos.x
-                    + up * localPos.y;
+                    + right * input.positionOS.x * scale.x
+                    + up * (input.positionOS.y + 0.5) * scale.y;
 
                 output.positionCS = TransformWorldToHClip(billboardPos);
                 output.uv = TRANSFORM_TEX(input.uv, _MainTex);
