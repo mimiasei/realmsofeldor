@@ -15,7 +15,10 @@ namespace RealmsOfEldor.Data
         public string terrainName;
 
         [Header("Visual Properties")]
-        [Tooltip("Array of tile variants for visual variety")]
+        [Tooltip("Array of sprite variants for billboard rendering (3D mode)")]
+        public Sprite[] spriteVariants;
+
+        [Tooltip("Array of tile variants for tilemap rendering (legacy 2D mode) - deprecated")]
         public TileBase[] tileVariants;
 
         [Tooltip("Minimap color for this terrain")]
@@ -35,7 +38,28 @@ namespace RealmsOfEldor.Data
         [Tooltip("Sound when moving onto this terrain")]
         public AudioClip movementSound;
 
-        // Get a random tile variant (for visual variety)
+        // Get a random sprite variant (for 3D billboard rendering)
+        public Sprite GetRandomSpriteVariant()
+        {
+            if (spriteVariants == null || spriteVariants.Length == 0)
+                return null;
+
+            return spriteVariants[Random.Range(0, spriteVariants.Length)];
+        }
+
+        // Get specific sprite variant by index (for 3D billboard rendering)
+        public Sprite GetSpriteVariant(int index)
+        {
+            if (spriteVariants == null || spriteVariants.Length == 0)
+                return null;
+
+            if (index < 0 || index >= spriteVariants.Length)
+                return spriteVariants[0];
+
+            return spriteVariants[index];
+        }
+
+        // Get a random tile variant (for legacy 2D tilemap rendering)
         public TileBase GetRandomTileVariant()
         {
             if (tileVariants == null || tileVariants.Length == 0)
@@ -44,7 +68,7 @@ namespace RealmsOfEldor.Data
             return tileVariants[Random.Range(0, tileVariants.Length)];
         }
 
-        // Get specific tile variant by index
+        // Get specific tile variant by index (for legacy 2D tilemap rendering)
         public TileBase GetTileVariant(int index)
         {
             if (tileVariants == null || tileVariants.Length == 0)

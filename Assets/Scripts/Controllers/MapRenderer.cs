@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 using RealmsOfEldor.Core;
 using RealmsOfEldor.Core.Events;
 using RealmsOfEldor.Data;
@@ -8,16 +7,12 @@ using RealmsOfEldor.Data;
 namespace RealmsOfEldor.Controllers
 {
     /// <summary>
-    /// Renders the game map using Unity Tilemaps.
+    /// Renders the game map using 3D billboards on Cartographer ground plane.
     /// Subscribes to MapEventChannel for updates.
+    /// All terrain and objects are rendered as billboards with CartographerBillboard shader.
     /// </summary>
     public class MapRenderer : MonoBehaviour
     {
-        [Header("Tilemap References")]
-        [SerializeField] private Tilemap terrainTilemap;
-        [SerializeField] private Tilemap objectsTilemap;
-        [SerializeField] private Tilemap highlightTilemap;
-
         [Header("Terrain Configuration")]
         [SerializeField] private Data.TerrainData[] terrainDataArray;
         [SerializeField] private bool autoLoadTerrainData = true;
@@ -30,16 +25,18 @@ namespace RealmsOfEldor.Controllers
         [SerializeField] private GameObject obstaclePrefab;
         [SerializeField] private MapObjectPrefabGenerator prefabGenerator;
 
-        [Header("Highlight Tiles")]
-        [SerializeField] private TileBase selectionTile;
-        [SerializeField] private TileBase reachableTile;
+        [Header("Highlight Settings")]
+        [SerializeField] private Color selectionColor = new Color(1f, 1f, 0f, 0.5f); // Yellow
+        [SerializeField] private Color reachableColor = new Color(0f, 1f, 0f, 0.3f); // Green
 
         [Header("Event Channel")]
         [SerializeField] private MapEventChannel mapEvents;
 
         private GameMap currentMap;
         private Dictionary<TerrainType, Data.TerrainData> terrainLookup;
-        private Dictionary<int, GameObject> objectInstances;
+        private Dictionary<int, GameObject> objectInstances; // Map objects (resources, mines, etc.)
+        private Dictionary<int, GameObject> terrainInstances; // Terrain tiles as billboards
+        private Dictionary<Position, GameObject> highlightInstances; // Selection/reachable highlights
         private Camera mainCamera;
 
         // Public accessor for MapEvents
@@ -49,6 +46,8 @@ namespace RealmsOfEldor.Controllers
         {
             terrainLookup = new Dictionary<TerrainType, Data.TerrainData>();
             objectInstances = new Dictionary<int, GameObject>();
+            terrainInstances = new Dictionary<int, GameObject>();
+            highlightInstances = new Dictionary<Position, GameObject>();
 
             // Auto-load terrain data from Resources if enabled (SSOT: find all TerrainData assets)
             #if UNITY_EDITOR
@@ -124,14 +123,15 @@ namespace RealmsOfEldor.Controllers
         #endif
 
         /// <summary>
-        /// Gets the number of tile variants available for a terrain type.
-        /// Used by GameMap to generate random variants.
+        /// Gets the number of sprite variants available for a terrain type.
+        /// Used by GameMap to generate random variants for billboard rendering.
         /// </summary>
         private int GetVariantCountForTerrain(TerrainType terrain)
         {
             if (terrainLookup.TryGetValue(terrain, out var terrainData))
             {
-                return terrainData.tileVariants?.Length ?? 1;
+                // Use sprite variants for 3D billboard rendering
+                return terrainData.spriteVariants?.Length ?? 1;
             }
             return 1; // Default: 1 variant if terrain data not found
         }
@@ -287,31 +287,28 @@ namespace RealmsOfEldor.Controllers
 
         private void HandleTileSelected(Position pos)
         {
-            if (highlightTilemap != null && selectionTile != null)
-            {
-                highlightTilemap.ClearAllTiles();
-                var tilePos = PositionToTilePosition(pos);
-                highlightTilemap.SetTile(tilePos, selectionTile);
-            }
+            // Clear all previous highlights
+            ClearHighlights();
+
+            // Create selection highlight billboard at position
+            CreateHighlight(pos, selectionColor, "Selection");
         }
 
         private void HandleTilesHighlighted(List<Position> positions)
         {
-            if (highlightTilemap != null && reachableTile != null)
+            // Clear all previous highlights
+            ClearHighlights();
+
+            // Create reachable highlight billboards
+            foreach (var pos in positions)
             {
-                highlightTilemap.ClearAllTiles();
-                foreach (var pos in positions)
-                {
-                    var tilePos = PositionToTilePosition(pos);
-                    highlightTilemap.SetTile(tilePos, reachableTile);
-                }
+                CreateHighlight(pos, reachableColor, "Reachable");
             }
         }
 
         private void HandleSelectionCleared()
         {
-            if (highlightTilemap != null)
-                highlightTilemap.ClearAllTiles();
+            ClearHighlights();
         }
 
         // Rendering methods
@@ -324,12 +321,11 @@ namespace RealmsOfEldor.Controllers
             }
 
             Debug.Log($"MapRenderer: RenderFullMap starting - {currentMap.Width}x{currentMap.Height} tiles");
-            Debug.Log($"MapRenderer: terrainTilemap = {(terrainTilemap != null ? "OK" : "NULL")}");
             Debug.Log($"MapRenderer: terrainLookup has {terrainLookup.Count} entries");
 
             ClearMap();
 
-            // Render all terrain tiles
+            // Render all terrain tiles as billboards
             var tilesRendered = 0;
             for (var x = 0; x < currentMap.Width; x++)
             {
@@ -341,7 +337,7 @@ namespace RealmsOfEldor.Controllers
                 }
             }
 
-            Debug.Log($"MapRenderer: Rendered {tilesRendered} tiles");
+            Debug.Log($"MapRenderer: Rendered {tilesRendered} terrain billboards");
 
             // Render all objects
             foreach (var obj in currentMap.GetAllObjects())
@@ -352,19 +348,47 @@ namespace RealmsOfEldor.Controllers
             Debug.Log($"<color=green>MapRenderer: RenderFullMap complete!</color>");
         }
 
+        /// <summary>
+        /// Updates a single terrain tile, rendering it as a billboard.
+        /// </summary>
         private void UpdateTile(Position pos)
         {
             if (currentMap == null || !currentMap.IsInBounds(pos)) return;
-            if (terrainTilemap == null) return;
 
             var tile = currentMap.GetTile(pos);
-            var tilePos = PositionToTilePosition(pos);
+            var worldPos = MapToWorldPosition(pos);
 
-            // Get terrain data
+            // Generate unique ID for this terrain tile
+            var tileId = pos.X + pos.Y * 10000; // Simple unique ID
+
+            // Remove existing terrain billboard if it exists
+            if (terrainInstances.TryGetValue(tileId, out var existingInstance))
+            {
+                if (existingInstance != null)
+                    Destroy(existingInstance);
+                terrainInstances.Remove(tileId);
+            }
+
+            // Get terrain data and sprite
             if (terrainLookup.TryGetValue(tile.Terrain, out var terrainData))
             {
-                var unityTile = terrainData.GetTileVariant(tile.VisualVariant);
-                terrainTilemap.SetTile(tilePos, unityTile);
+                var sprite = terrainData.GetSpriteVariant(tile.VisualVariant);
+                if (sprite != null)
+                {
+                    // Create billboard for terrain tile
+                    var terrainBillboard = new GameObject($"Terrain_{pos.X}_{pos.Y}");
+                    terrainBillboard.transform.SetParent(transform);
+                    terrainBillboard.transform.position = worldPos;
+
+                    // Add CartographerBillboard component
+                    var billboard = terrainBillboard.AddComponent<CartographerBillboard>();
+                    billboard.SetSprite(sprite);
+                    billboard.SetHeightOffset(0f); // Terrain sits on ground
+                    billboard.SetCastShadows(false); // Terrain doesn't cast shadows
+                    billboard.SetTint(Color.white);
+
+                    terrainInstances[tileId] = terrainBillboard;
+                }
             }
         }
 
@@ -452,7 +476,7 @@ namespace RealmsOfEldor.Controllers
 
         /// <summary>
         /// Adds a visual indicator for guarded objects.
-        /// Creates a small sprite renderer showing guard icon or count.
+        /// Creates a small billboard showing guard icon or count.
         /// </summary>
         private void AddGuardVisualization(GameObject objectInstance, MapObject obj)
         {
@@ -463,19 +487,18 @@ namespace RealmsOfEldor.Controllers
             var guardIndicator = new GameObject("GuardIndicator");
             guardIndicator.transform.SetParent(objectInstance.transform);
 
-            // Position indicator slightly below and to the right of object
-            guardIndicator.transform.localPosition = new Vector3(0.3f, -0.3f, -0.1f);
+            // Position indicator slightly above and to the right of object
+            guardIndicator.transform.localPosition = new Vector3(0.3f, 0.5f, 0f); // Above object in 3D
             guardIndicator.transform.localScale = Vector3.one * 0.4f; // Smaller than object
 
-            // Add SpriteRenderer for guard icon
-            var spriteRenderer = guardIndicator.AddComponent<SpriteRenderer>();
-            spriteRenderer.sortingOrder = 15; // Above objects but below UI
+            // Add CartographerBillboard for guard icon
+            var billboard = guardIndicator.AddComponent<CartographerBillboard>();
+            billboard.SetSprite(CreateGuardSprite());
+            billboard.SetTint(new Color(1f, 0.2f, 0.2f, 0.8f)); // Red with transparency
+            billboard.SetHeightOffset(0f);
+            billboard.SetCastShadows(false);
 
-            // Create a simple colored square as guard indicator (red for danger)
-            spriteRenderer.sprite = CreateGuardSprite();
-            spriteRenderer.color = new Color(1f, 0.2f, 0.2f, 0.8f); // Red with transparency
-
-            // Add TextMesh for guard count
+            // Add TextMesh for guard count (TextMesh is already 3D, so keep it)
             var textObj = new GameObject("GuardCount");
             textObj.transform.SetParent(guardIndicator.transform);
             textObj.transform.localPosition = Vector3.zero;
@@ -487,13 +510,6 @@ namespace RealmsOfEldor.Controllers
             textMesh.alignment = TextAlignment.Center;
             textMesh.anchor = TextAnchor.MiddleCenter;
             textMesh.color = Color.white;
-
-            // Add MeshRenderer for text visibility
-            var meshRenderer = textObj.GetComponent<MeshRenderer>();
-            if (meshRenderer != null)
-            {
-                meshRenderer.sortingOrder = 16; // Above guard sprite
-            }
 
             Debug.Log($"✓ Added guard visualization to {obj.Name}: {obj.Guard.Count}x creature {obj.Guard.CreatureId}");
         }
@@ -517,42 +533,84 @@ namespace RealmsOfEldor.Controllers
             return Sprite.Create(texture, new Rect(0, 0, 16, 16), new Vector2(0.5f, 0.5f), 16f);
         }
 
+        /// <summary>
+        /// Creates a highlight billboard at the specified position.
+        /// </summary>
+        private void CreateHighlight(Position pos, Color color, string type)
+        {
+            if (!currentMap.IsInBounds(pos)) return;
+
+            var worldPos = MapToWorldPosition(pos);
+
+            // Create highlight GameObject
+            var highlight = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            highlight.name = $"{type}Highlight_{pos.X}_{pos.Y}";
+            highlight.transform.SetParent(transform);
+            highlight.transform.position = worldPos + Vector3.up * 0.05f; // Slightly above ground
+            highlight.transform.rotation = Quaternion.Euler(90f, 0f, 0f); // Lie flat on ground
+
+            // Remove default collider
+            var collider = highlight.GetComponent<Collider>();
+            if (collider != null)
+                Destroy(collider);
+
+            // Create unlit material with color
+            var meshRenderer = highlight.GetComponent<MeshRenderer>();
+            var material = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+            material.color = color;
+            material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            material.SetInt("_ZWrite", 0);
+            material.renderQueue = 3000; // Transparent queue
+            meshRenderer.material = material;
+            meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            meshRenderer.receiveShadows = false;
+
+            highlightInstances[pos] = highlight;
+        }
+
+        /// <summary>
+        /// Clears all highlight billboards.
+        /// </summary>
+        private void ClearHighlights()
+        {
+            foreach (var highlight in highlightInstances.Values)
+            {
+                if (highlight != null)
+                    Destroy(highlight);
+            }
+            highlightInstances.Clear();
+        }
+
         private void ClearMap()
         {
-            if (terrainTilemap != null)
-                terrainTilemap.ClearAllTiles();
-            if (objectsTilemap != null)
-                objectsTilemap.ClearAllTiles();
-            if (highlightTilemap != null)
-                highlightTilemap.ClearAllTiles();
+            // Clear terrain billboards
+            foreach (var instance in terrainInstances.Values)
+            {
+                if (instance != null)
+                    Destroy(instance);
+            }
+            terrainInstances.Clear();
 
+            // Clear object billboards
             foreach (var instance in objectInstances.Values)
             {
                 if (instance != null)
                     Destroy(instance);
             }
             objectInstances.Clear();
+
+            // Clear highlights
+            ClearHighlights();
         }
 
-        // Position conversion (updated for 3D Cartographer system)
-        public Vector3Int PositionToTilePosition(Position pos)
-        {
-            // Tilemap still uses X,Y coordinates internally, but will be rotated/positioned in 3D
-            return new Vector3Int(pos.X, pos.Y, 0);
-        }
-
-        public Position TilePositionToPosition(Vector3Int tilePos)
-        {
-            return new Position(tilePos.x, tilePos.y);
-        }
-
+        // Position conversion for 3D Cartographer system
         /// <summary>
         /// Converts game logic position to 3D world position.
         /// Returns position on X,Z ground plane (Y=0) for Cartographer system.
         /// </summary>
         public Vector3 MapToWorldPosition(Position pos)
         {
-            // Use direct conversion - tilemap is rotated so GetCellCenterWorld won't work correctly
             return CoordinateConverter.PositionToWorld3D(pos, 0f);
         }
 
@@ -562,17 +620,16 @@ namespace RealmsOfEldor.Controllers
         /// </summary>
         public Position WorldToMapPosition(Vector3 worldPos)
         {
-            // Use direct conversion - tilemap is rotated so WorldToCell won't work correctly
             return CoordinateConverter.WorldToPosition3D(worldPos);
         }
 
         // Debug visualization
         private void OnDrawGizmos()
         {
-            if (currentMap == null || terrainTilemap == null) return;
+            if (currentMap == null) return;
 
             Gizmos.color = Color.cyan;
-            var cellSize = terrainTilemap.cellSize;
+            var cellSize = Vector3.one; // 1x1 tiles
 
             for (var x = 0; x < currentMap.Width; x++)
             {
@@ -588,7 +645,7 @@ namespace RealmsOfEldor.Controllers
 
     /// <summary>
     /// Component attached to map object instances to link them to their data.
-    /// Handles click detection for map objects.
+    /// Handles click detection for map objects using 3D colliders.
     /// </summary>
     public class MapObjectView : MonoBehaviour
     {
@@ -609,12 +666,12 @@ namespace RealmsOfEldor.Controllers
                 }
             }
 
-            // Ensure we have a collider for click detection
-            var collider = GetComponent<Collider2D>();
+            // Ensure we have a 3D collider for click detection
+            var collider = GetComponent<Collider>();
             if (collider == null)
             {
-                var boxCollider = gameObject.AddComponent<BoxCollider2D>();
-                boxCollider.size = new Vector2(1f, 1f); // Match tile size
+                var boxCollider = gameObject.AddComponent<BoxCollider>();
+                boxCollider.size = new Vector3(1f, 1f, 0.1f); // Match tile size on XZ plane
             }
         }
 
