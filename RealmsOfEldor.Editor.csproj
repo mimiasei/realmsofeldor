@@ -57,6 +57,7 @@
     <Compile Include="Assets\Scripts\Editor\SceneSetup\URPActivationTool.cs" />
     <Compile Include="Assets\Scripts\Editor\MapItemPrefabInspector.cs" />
     <Compile Include="Assets\Scripts\Editor\DataGeneration\TileAssetGenerator.cs" />
+    <Compile Include="Assets\Scripts\Editor\TerrainDataMigrationTool.cs" />
     <Compile Include="Assets\Scripts\Editor\SceneSetup\Phase4SetupWindow.cs" />
     <Compile Include="Assets\Scripts\Editor\BattleTester.cs" />
     <Compile Include="Assets\Scripts\Editor\DataGeneration\TerrainDataGenerator.cs" />

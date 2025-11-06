@@ -53,7 +53,7 @@ namespace RealmsOfEldor.Core
                 for (var y = 0; y < height; y++)
                 {
                     // Use SetTerrain to leverage random variant selection
-                    SetTerrain(new Position(x, y), TerrainType.Grass);
+                    SetTerrain(new Position(x, y), TerrainType.GrassTemperate);
                 }
             }
         }

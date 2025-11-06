@@ -54,6 +54,15 @@ namespace RealmsOfEldor.Controllers
             if (screenPoint.x < 0 || screenPoint.x > Screen.width ||
                 screenPoint.y < 0 || screenPoint.y > Screen.height)
             {
+                Debug.LogWarning($"CoordinateConverter: Screen point {screenPoint} is outside screen bounds ({Screen.width}x{Screen.height})");
+                hitPoint = Vector3.zero;
+                return false;
+            }
+
+            // Verify camera is valid
+            if (camera == null)
+            {
+                Debug.LogError("CoordinateConverter: Camera is null!");
                 hitPoint = Vector3.zero;
                 return false;
             }
@@ -63,15 +72,31 @@ namespace RealmsOfEldor.Controllers
                 Ray ray = camera.ScreenPointToRay(screenPoint);
                 Plane groundPlane = new Plane(Vector3.up, Vector3.zero); // Y=0 ground plane
 
+                Debug.Log($"CoordinateConverter: Camera '{camera.gameObject.name}' at position {camera.transform.position}, rotation {camera.transform.rotation.eulerAngles}");
+                Debug.Log($"CoordinateConverter: Ray from screen {screenPoint}: origin={ray.origin}, direction={ray.direction}");
+
+                // Check if ray direction has negative Y component (pointing down)
+                if (ray.direction.y >= 0)
+                {
+                    Debug.LogWarning($"CoordinateConverter: Ray direction.y is {ray.direction.y:F3} (>= 0), meaning ray is pointing UP or HORIZONTAL, not down! Camera may be misconfigured.");
+                }
+
                 if (groundPlane.Raycast(ray, out float enter))
                 {
                     hitPoint = ray.GetPoint(enter);
+                    Debug.Log($"CoordinateConverter: Ground plane hit at distance={enter}, hitPoint={hitPoint}");
                     return true;
                 }
+                else
+                {
+                    Debug.LogWarning($"CoordinateConverter: Ray did not intersect ground plane. Camera GameObject='{camera.gameObject.name}', pos={camera.transform.position}, forward={camera.transform.forward}, rotation={camera.transform.rotation.eulerAngles}");
+                    Debug.LogWarning($"CoordinateConverter: Ray.direction.y = {ray.direction.y:F3} (must be negative to hit ground below)");
+                }
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
                 // Silently catch raycast exceptions (mouse outside frustum)
+                Debug.LogError($"CoordinateConverter: Exception during raycast: {ex.Message}");
                 hitPoint = Vector3.zero;
                 return false;
             }

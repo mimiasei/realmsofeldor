@@ -10,13 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e8b4a5c3f2d1e9b6c8a5f4d2e1c9b7a, type: 3}
-  m_Name: RoughTerrainData
+  m_Name: SnowTemperateTerrainData
   m_EditorClassIdentifier: RealmsOfEldor.Data::RealmsOfEldor.Data.TerrainData
-  terrainType: 5
-  terrainName: Rough
-  tileVariants:
-  - {fileID: 11400000, guid: be99006402347f646b4f7cd534ad2e8d, type: 2}
-  minimapColor: {r: 0.509434, g: 0.23108019, b: 0, a: 1}
+  terrainType:
+    Biome: 4
+    Moisture: 2
+  terrainName: 
+  spriteVariants: []
+  tileVariants: []
+  minimapColor: {r: 1, g: 1, b: 1, a: 1}
   movementCost: 100
   isPassable: 1
   isWater: 0

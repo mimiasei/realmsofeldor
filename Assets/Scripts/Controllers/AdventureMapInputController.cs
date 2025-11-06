@@ -133,13 +133,14 @@ namespace RealmsOfEldor.Controllers
             if (mainCamera == null)
                 return;
 
-            // Manual raycast to detect hero and map object clicks
+            // Manual raycast to detect hero and map object clicks (3D raycasting)
             if (Input.GetMouseButtonDown(0))
             {
                 Ray ray = mainCamera.ScreenPointToRay(mousePos);
-                RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
+                RaycastHit hit;
 
-                if (hit.collider != null)
+                // Use 3D raycast for 3D colliders
+                if (Physics.Raycast(ray, out hit, 1000f))
                 {
                     // Check if we hit a HeroController
                     var heroController = hit.collider.GetComponent<HeroController>();
@@ -371,8 +372,19 @@ namespace RealmsOfEldor.Controllers
         /// </summary>
         private void ShowPathPreview(Position targetPos)
         {
+            Debug.Log($"ShowPathPreview called: from {selectedHero?.Position} to {targetPos}");
+
             if (selectedHero == null || gameMap == null)
+            {
+                Debug.LogWarning($"ShowPathPreview: selectedHero={selectedHero != null}, gameMap={gameMap != null}");
                 return;
+            }
+
+            if (pathPreviewRenderer == null)
+            {
+                Debug.LogError("ShowPathPreview: pathPreviewRenderer is NULL! Cannot show path preview.");
+                return;
+            }
 
             // Don't show path to current position
             if (selectedHero.Position.Equals(targetPos))
@@ -383,6 +395,7 @@ namespace RealmsOfEldor.Controllers
             }
 
             // Find path
+            Debug.Log($"FindPath: from {selectedHero.Position} to {targetPos}");
             var path = BasicPathfinder.FindPath(gameMap, selectedHero.Position, targetPos);
             if (path == null)
             {
@@ -935,18 +948,26 @@ namespace RealmsOfEldor.Controllers
                 return null;
 
             var gameState = GameStateManager.Instance.State;
-            var currentPlayer = gameState.GetCurrentPlayer();
-            if (currentPlayer == null)
-                return null;
 
-            // Find hero at position from player's hero IDs
-            foreach (var heroId in currentPlayer.HeroIds)
+            // Check ALL players' heroes, not just current player
+            // This allows clicking on any hero to select them
+            foreach (var player in gameState.GetActivePlayers())
             {
-                var hero = gameState.GetHero(heroId);
-                if (hero != null && hero.Position.Equals(pos))
-                    return hero;
+                if (player == null)
+                    continue;
+
+                foreach (var heroId in player.HeroIds)
+                {
+                    var hero = gameState.GetHero(heroId);
+                    if (hero != null && hero.Position.Equals(pos))
+                    {
+                        Debug.Log($"GetHeroAtPosition: Found hero {hero.CustomName} at {pos} (belongs to player {player.Id})");
+                        return hero;
+                    }
+                }
             }
 
+            Debug.Log($"GetHeroAtPosition: No hero found at {pos}");
             return null;
         }
 

@@ -120,11 +120,22 @@ namespace RealmsOfEldor.Controllers
 
         void Awake()
         {
-            // IMPORTANT: Validate cameraTiltAngle before setup
+            // IMPORTANT: Validate camera settings before setup
+            if (cameraHeight <= 0)
+            {
+                Debug.LogError($"Cartographer: Camera Height is {cameraHeight}, but must be POSITIVE (above ground)! Auto-correcting to 30.");
+                cameraHeight = 30f;
+            }
+
             if (cameraTiltAngle > 0)
             {
                 Debug.LogError($"Cartographer: Camera Tilt Angle is POSITIVE ({cameraTiltAngle}°), but should be NEGATIVE to look down at ground! Auto-correcting to {-cameraTiltAngle}°.");
                 cameraTiltAngle = -Mathf.Abs(cameraTiltAngle);
+            }
+
+            if (cameraTiltAngle > -10f)
+            {
+                Debug.LogWarning($"Cartographer: Camera Tilt Angle ({cameraTiltAngle}°) is very shallow. Recommend -30° to -60° for good ground visibility.");
             }
 
             // Create parent-child hierarchy for separating pan and zoom
@@ -178,6 +189,39 @@ namespace RealmsOfEldor.Controllers
             rigTransform = transform;
             rigTransform.name = "CameraRig";
 
+            // Remove MainCamera tag from rig if it has one
+            if (rigTransform.gameObject.CompareTag("MainCamera"))
+            {
+                rigTransform.gameObject.tag = "Untagged";
+                Debug.Log("Cartographer: Removed MainCamera tag from rig");
+            }
+
+            // Check if old camera component exists on rig
+            Camera oldCamera = rigTransform.GetComponent<Camera>();
+            if (oldCamera != null)
+            {
+                // URP adds additional components that depend on Camera
+                // Find and destroy all components that might depend on Camera
+                var allComponents = rigTransform.GetComponents<Component>();
+                foreach (var component in allComponents)
+                {
+                    // Skip the transform, Cartographer script itself, and the Camera (we'll destroy it last)
+                    if (component is Transform || component is Cartographer || component is Camera)
+                        continue;
+
+                    // Check if this is a URP camera data component (by name check, not type)
+                    if (component.GetType().Name.Contains("CameraData"))
+                    {
+                        DestroyImmediate(component);
+                        Debug.Log($"Cartographer: Removed {component.GetType().Name} from rig");
+                    }
+                }
+
+                // Now safe to destroy the Camera
+                DestroyImmediate(oldCamera);
+                Debug.Log("Cartographer: Removed old camera component from rig");
+            }
+
             // Create child GameObject for the camera
             GameObject cameraChild = new GameObject("Camera");
             cameraTransform = cameraChild.transform;
@@ -185,18 +229,14 @@ namespace RealmsOfEldor.Controllers
             cameraTransform.localPosition = Vector3.zero;
             cameraTransform.localRotation = Quaternion.identity;
 
-            // Destroy the old camera component on parent (if it exists)
-            Camera oldCamera = rigTransform.GetComponent<Camera>();
-            if (oldCamera != null)
-            {
-                Destroy(oldCamera);
-            }
-
             // Create new camera component on child
             mainCamera = cameraChild.AddComponent<Camera>();
             mainCamera.eventMask = 0; // Disable mouse events
 
-            Debug.Log($"Cartographer: Camera hierarchy created - Rig: {rigTransform.name}, Camera: {cameraTransform.name}");
+            // IMPORTANT: Tag as MainCamera so Camera.main finds this one
+            cameraChild.tag = "MainCamera";
+
+            Debug.Log($"Cartographer: Camera hierarchy created - Rig: {rigTransform.name}, Camera: {cameraTransform.name}, tagged as MainCamera");
         }
 
         /// <summary>
@@ -222,11 +262,12 @@ namespace RealmsOfEldor.Controllers
             cameraTransform.localPosition = new Vector3(0f, cameraHeight, initialZoomPosition);
 
             // Rotate child camera (not rig) - only X tilt
-            // IMPORTANT: Negate cameraTiltAngle because Unity's Euler X rotation is inverted:
-            // - Positive X = look down
-            // - Negative X = look up
-            // Our cameraTiltAngle is negative (semantic: "downward angle"), so we negate it to get positive Euler X
-            cameraTransform.localRotation = Quaternion.Euler(-cameraTiltAngle, 0f, 0f);
+            // Unity's Euler X rotation:
+            // - Positive X = look DOWN (towards ground)
+            // - Negative X = look UP (towards sky)
+            // cameraTiltAngle is stored as negative (e.g., -30°) for semantic meaning
+            // We need positive Euler X to look down, so we use Mathf.Abs() to convert -30° → 30°
+            cameraTransform.localRotation = Quaternion.Euler(Mathf.Abs(cameraTiltAngle), 0f, 0f);
 
             // Make sure camera can see far enough
             mainCamera.nearClipPlane = 0.3f;
@@ -493,6 +534,47 @@ namespace RealmsOfEldor.Controllers
                 if (renderer != null && renderer.material != null)
                 {
                     renderer.material.mainTexture = texture;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Updates the ground material (for texture splatting shader).
+        /// </summary>
+        public void SetGroundMaterial(Material material)
+        {
+            if (groundPlane != null)
+            {
+                MeshRenderer renderer = groundPlane.GetComponent<MeshRenderer>();
+                if (renderer != null)
+                {
+                    renderer.material = material;
+                    Debug.Log($"Cartographer: Ground material updated to: {material.name}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Updates the splatmap texture for InnoGames/Terrain shader.
+        /// Call this when map changes to regenerate terrain distribution.
+        /// </summary>
+        public void SetSplatmap(Texture2D splatmap)
+        {
+            if (groundPlane != null)
+            {
+                MeshRenderer renderer = groundPlane.GetComponent<MeshRenderer>();
+                if (renderer != null && renderer.material != null)
+                {
+                    // Check if material uses InnoGames/Terrain shader
+                    if (renderer.material.shader.name == "InnoGames/Terrain")
+                    {
+                        renderer.material.SetTexture("_SplatMap", splatmap);
+                        Debug.Log($"Cartographer: Splatmap updated ({splatmap.width}x{splatmap.height})");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"Cartographer: Material shader is '{renderer.material.shader.name}', not 'InnoGames/Terrain'. Splatmap not applied.");
+                    }
                 }
             }
         }
@@ -766,9 +848,10 @@ namespace RealmsOfEldor.Controllers
             var scrollDelta = Input.mouseScrollDelta.y;
 
             // Add momentum from scroll input (acceleration)
+            // INVERTED: Scroll forward (positive) zooms in (negative momentum), scroll back zooms out
             if (scrollDelta != 0)
             {
-                zoomMomentum += scrollDelta * zoomAcceleration * Time.deltaTime;
+                zoomMomentum -= scrollDelta * zoomAcceleration * Time.deltaTime; // Note the minus sign
             }
 
             // Apply friction to momentum (deceleration)

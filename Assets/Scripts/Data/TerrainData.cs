@@ -82,38 +82,34 @@ namespace RealmsOfEldor.Data
 
         private void OnValidate()
         {
-            // Auto-set passable based on terrain type
-            // Only Grass, Dirt, Sand, Rough, and Swamp are passable for pathfinding testing
-            isPassable = terrainType switch
+            // Auto-set passable based on biome type
+            // All biomes except Water are passable
+            isPassable = terrainType.Biome switch
             {
-                TerrainType.Grass => true,
-                TerrainType.Subterranean => true,
-                TerrainType.Dirt => true,
-                TerrainType.Rock => true,
-                TerrainType.Sand => true,
-                TerrainType.Rough => true,
-                TerrainType.Snow => true,
-                TerrainType.Swamp => true,
-                _ => false // Water, Lava are impassable
+                BiomeType.Grass => true,
+                BiomeType.Dirt => true,
+                BiomeType.Rock => true,
+                BiomeType.Sand => true,
+                BiomeType.Snow => true,
+                BiomeType.Swamp => true,
+                BiomeType.Water => false,
+                _ => true
             };
 
             // Auto-set water flag
-            isWater = (terrainType == TerrainType.Water);
+            isWater = (terrainType.Biome == BiomeType.Water);
 
             // Auto-set movement costs for pathfinding testing
             // Different costs encourage pathfinder to find optimal routes
-            movementCost = terrainType switch
+            movementCost = terrainType.Biome switch
             {
-                TerrainType.Grass => 100,       // Fast (baseline)
-                TerrainType.Subterranean => 100,// Fast (baseline)
-                TerrainType.Dirt => 100,        // Fast (baseline)
-                TerrainType.Rock => 110,        // Slightly slower
-                TerrainType.Rough => 125,       // Slow (encourages avoidance)
-                TerrainType.Sand => 150,        // Medium slow
-                TerrainType.Snow => 150,        // Medium slow
-                TerrainType.Swamp => 175,       // Very slow (strong avoidance)
-                TerrainType.Water => 999999,    // Impassable (high cost)
-                TerrainType.Lava => 999999,     // Impassable
+                BiomeType.Grass => 100,       // Fast (baseline)
+                BiomeType.Dirt => 100,        // Fast (baseline)
+                BiomeType.Rock => 110,        // Slightly slower
+                BiomeType.Sand => 150,        // Medium slow
+                BiomeType.Snow => 150,        // Medium slow
+                BiomeType.Swamp => 175,       // Very slow (strong avoidance)
+                BiomeType.Water => 999999,    // Impassable (high cost)
                 _ => 100
             };
         }

@@ -40,8 +40,8 @@ namespace RealmsOfEldor.Core
             if (GameMap.GetTerrainPassability != null)
                 return GameMap.GetTerrainPassability(Terrain);
 
-            // Fallback if delegate not set
-            return Terrain != TerrainType.Water && Terrain != TerrainType.Lava;
+            // Fallback if delegate not set - water is impassable
+            return Terrain.Biome != BiomeType.Water;
         }
 
         public bool IsClear()
@@ -66,7 +66,7 @@ namespace RealmsOfEldor.Core
 
         public bool IsWater()
         {
-            return Terrain == TerrainType.Water;
+            return Terrain.Biome == BiomeType.Water;
         }
 
         // Object management

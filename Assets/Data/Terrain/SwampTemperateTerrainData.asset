@@ -10,14 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e8b4a5c3f2d1e9b6c8a5f4d2e1c9b7a, type: 3}
-  m_Name: RockTerrainData
+  m_Name: SwampTemperateTerrainData
   m_EditorClassIdentifier: RealmsOfEldor.Data::RealmsOfEldor.Data.TerrainData
-  terrainType: 9
-  terrainName: Rock
-  tileVariants:
-  - {fileID: 11400000, guid: 8f5534ede3d24a448b30334e532fcfc4, type: 2}
-  minimapColor: {r: 0.18867922, g: 0.18867922, b: 0.18867922, a: 1}
+  terrainType:
+    Biome: 5
+    Moisture: 2
+  terrainName: 
+  spriteVariants: []
+  tileVariants: []
+  minimapColor: {r: 1, g: 1, b: 1, a: 1}
   movementCost: 100
-  isPassable: 0
+  isPassable: 1
   isWater: 0
   movementSound: {fileID: 0}

@@ -10,13 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e8b4a5c3f2d1e9b6c8a5f4d2e1c9b7a, type: 3}
-  m_Name: SubterraneanTerrainData
+  m_Name: SandTemperateTerrainData
   m_EditorClassIdentifier: RealmsOfEldor.Data::RealmsOfEldor.Data.TerrainData
-  terrainType: 6
-  terrainName: Subterranean
-  tileVariants:
-  - {fileID: 11400000, guid: 6fb7602ffd6dd1842a96303c5f38d6b5, type: 2}
-  minimapColor: {r: 0.3962264, g: 0.20951033, b: 0.1476504, a: 1}
+  terrainType:
+    Biome: 2
+    Moisture: 2
+  terrainName: 
+  spriteVariants: []
+  tileVariants: []
+  minimapColor: {r: 1, g: 1, b: 1, a: 1}
   movementCost: 100
   isPassable: 1
   isWater: 0

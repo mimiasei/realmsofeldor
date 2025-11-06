@@ -116,20 +116,110 @@ namespace RealmsOfEldor.Data
     }
 
     /// <summary>
-    /// Terrain types
+    /// Biome types (base terrain categories)
     /// </summary>
-    public enum TerrainType
+    public enum BiomeType
     {
-        Dirt = 0,
-        Sand = 1,
-        Grass = 2,
-        Snow = 3,
-        Swamp = 4,
-        Rough = 5,
-        Subterranean = 6,
-        Lava = 7,
-        Water = 8,
-        Rock = 9
+        Grass = 0,
+        Dirt = 1,
+        Sand = 2,
+        Rock = 3,
+        Snow = 4,
+        Swamp = 5,
+        Water = 6
+    }
+
+    /// <summary>
+    /// Moisture levels for biome variants
+    /// Inspired by Songs of Conquest's 4x4 biome system
+    /// </summary>
+    public enum MoistureLevel
+    {
+        Arid = 0,       // 0-25% moisture (dry, cracked, sparse)
+        Dry = 1,        // 25-50% moisture (normal, moderate)
+        Temperate = 2,  // 50-75% moisture (balanced, lush)
+        Wet = 3         // 75-100% moisture (moist, rich, overgrown)
+    }
+
+    /// <summary>
+    /// Terrain type combining biome and moisture for natural variation
+    /// Replaces old TerrainType enum with struct for 4x4 biome system
+    /// </summary>
+    [Serializable]
+    public struct TerrainType : IEquatable<TerrainType>
+    {
+        public BiomeType Biome;
+        public MoistureLevel Moisture;
+
+        public TerrainType(BiomeType biome, MoistureLevel moisture)
+        {
+            Biome = biome;
+            Moisture = moisture;    
+        }
+
+        // Convenience factory methods for common terrain types
+        public static TerrainType GrassArid => new TerrainType(BiomeType.Grass, MoistureLevel.Arid);
+        public static TerrainType GrassDry => new TerrainType(BiomeType.Grass, MoistureLevel.Dry);
+        public static TerrainType GrassTemperate => new TerrainType(BiomeType.Grass, MoistureLevel.Temperate);
+        public static TerrainType GrassWet => new TerrainType(BiomeType.Grass, MoistureLevel.Wet);
+
+        public static TerrainType DirtArid => new TerrainType(BiomeType.Dirt, MoistureLevel.Arid);
+        public static TerrainType DirtDry => new TerrainType(BiomeType.Dirt, MoistureLevel.Dry);
+        public static TerrainType DirtTemperate => new TerrainType(BiomeType.Dirt, MoistureLevel.Temperate);
+        public static TerrainType DirtWet => new TerrainType(BiomeType.Dirt, MoistureLevel.Wet);
+
+        public static TerrainType SandArid => new TerrainType(BiomeType.Sand, MoistureLevel.Arid);
+        public static TerrainType SandDry => new TerrainType(BiomeType.Sand, MoistureLevel.Dry);
+        public static TerrainType SandTemperate => new TerrainType(BiomeType.Sand, MoistureLevel.Temperate);
+        public static TerrainType SandWet => new TerrainType(BiomeType.Sand, MoistureLevel.Wet);
+
+        public static TerrainType RockArid => new TerrainType(BiomeType.Rock, MoistureLevel.Arid);
+        public static TerrainType RockDry => new TerrainType(BiomeType.Rock, MoistureLevel.Dry);
+        public static TerrainType RockTemperate => new TerrainType(BiomeType.Rock, MoistureLevel.Temperate);
+        public static TerrainType RockWet => new TerrainType(BiomeType.Rock, MoistureLevel.Wet);
+
+        public static TerrainType SnowArid => new TerrainType(BiomeType.Snow, MoistureLevel.Arid);
+        public static TerrainType SnowDry => new TerrainType(BiomeType.Snow, MoistureLevel.Dry);
+        public static TerrainType SnowTemperate => new TerrainType(BiomeType.Snow, MoistureLevel.Temperate);
+        public static TerrainType SnowWet => new TerrainType(BiomeType.Snow, MoistureLevel.Wet);
+
+        public static TerrainType SwampArid => new TerrainType(BiomeType.Swamp, MoistureLevel.Arid);
+        public static TerrainType SwampDry => new TerrainType(BiomeType.Swamp, MoistureLevel.Dry);
+        public static TerrainType SwampTemperate => new TerrainType(BiomeType.Swamp, MoistureLevel.Temperate);
+        public static TerrainType SwampWet => new TerrainType(BiomeType.Swamp, MoistureLevel.Wet);
+
+        public static TerrainType Water => new TerrainType(BiomeType.Water, MoistureLevel.Wet);
+
+        // Equality comparison
+        public bool Equals(TerrainType other)
+        {
+            return Biome == other.Biome && Moisture == other.Moisture;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is TerrainType other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return ((int)Biome << 16) | (int)Moisture;
+        }
+
+        public static bool operator ==(TerrainType left, TerrainType right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(TerrainType left, TerrainType right)
+        {
+            return !left.Equals(right);
+        }
+
+        public override string ToString()
+        {
+            return $"{Biome} ({Moisture})";
+        }
     }
 
     /// <summary>

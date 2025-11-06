@@ -10,14 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e8b4a5c3f2d1e9b6c8a5f4d2e1c9b7a, type: 3}
-  m_Name: SnowTerrainData
+  m_Name: GrassTemperateTerrainData
   m_EditorClassIdentifier: RealmsOfEldor.Data::RealmsOfEldor.Data.TerrainData
-  terrainType: 3
-  terrainName: Snow
-  tileVariants:
-  - {fileID: 11400000, guid: 1558f85a0ab08494b8c51e1a04279ed3, type: 2}
+  terrainType:
+    Biome: 0
+    Moisture: 2
+  terrainName: 
+  spriteVariants: []
+  tileVariants: []
   minimapColor: {r: 1, g: 1, b: 1, a: 1}
-  movementCost: 150
+  movementCost: 100
   isPassable: 1
   isWater: 0
   movementSound: {fileID: 0}

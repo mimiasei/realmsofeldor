@@ -16,7 +16,7 @@ namespace RealmsOfEldor.Tests
             {
                 for (var x = 0; x < 10; x++)
                 {
-                    map.SetTerrain(new Position(x, y), TerrainType.Grass);
+                    map.SetTerrain(new Position(x, y), TerrainType.GrassTemperate);
                 }
             }
 
@@ -41,7 +41,7 @@ namespace RealmsOfEldor.Tests
                     if (x == 5)
                         map.SetTerrain(new Position(x, y), TerrainType.Water);
                     else
-                        map.SetTerrain(new Position(x, y), TerrainType.Grass);
+                        map.SetTerrain(new Position(x, y), TerrainType.GrassTemperate);
                 }
             }
 
@@ -68,7 +68,7 @@ namespace RealmsOfEldor.Tests
                     if (x == 5)
                         map.SetTerrain(new Position(x, y), TerrainType.Water);
                     else
-                        map.SetTerrain(new Position(x, y), TerrainType.Grass);
+                        map.SetTerrain(new Position(x, y), TerrainType.GrassTemperate);
                 }
             }
 
@@ -91,7 +91,7 @@ namespace RealmsOfEldor.Tests
             {
                 for (var x = 0; x < 10; x++)
                 {
-                    map.SetTerrain(new Position(x, y), TerrainType.Grass);
+                    map.SetTerrain(new Position(x, y), TerrainType.GrassTemperate);
                 }
             }
 
@@ -118,7 +118,7 @@ namespace RealmsOfEldor.Tests
                     if (x == 5)
                         map.SetTerrain(new Position(x, y), TerrainType.Water);
                     else
-                        map.SetTerrain(new Position(x, y), TerrainType.Grass);
+                        map.SetTerrain(new Position(x, y), TerrainType.GrassTemperate);
                 }
             }
 
@@ -146,7 +146,7 @@ namespace RealmsOfEldor.Tests
                     if (x == 5)
                         map.SetTerrain(new Position(x, y), TerrainType.Water);
                     else
-                        map.SetTerrain(new Position(x, y), TerrainType.Grass);
+                        map.SetTerrain(new Position(x, y), TerrainType.GrassTemperate);
                 }
             }
 
@@ -175,7 +175,7 @@ namespace RealmsOfEldor.Tests
                     if ((x >= 4 && x <= 6) && (y >= 4 && y <= 6))
                         map.SetTerrain(new Position(x, y), TerrainType.Water);
                     else
-                        map.SetTerrain(new Position(x, y), TerrainType.Grass);
+                        map.SetTerrain(new Position(x, y), TerrainType.GrassTemperate);
                 }
             }
 
@@ -203,7 +203,7 @@ namespace RealmsOfEldor.Tests
                     if (x == 5)
                         map.SetTerrain(new Position(x, y), TerrainType.Water); // 10 water tiles
                     else
-                        map.SetTerrain(new Position(x, y), TerrainType.Grass); // 90 grass tiles
+                        map.SetTerrain(new Position(x, y), TerrainType.GrassTemperate); // 90 grass tiles
                 }
             }
 
@@ -233,7 +233,7 @@ namespace RealmsOfEldor.Tests
             {
                 for (var x = 0; x < 5; x++)
                 {
-                    map.SetTerrain(new Position(x, y), TerrainType.Grass);
+                    map.SetTerrain(new Position(x, y), TerrainType.GrassTemperate);
                 }
             }
 
@@ -254,7 +254,7 @@ namespace RealmsOfEldor.Tests
             {
                 for (var x = 0; x < 10; x++)
                 {
-                    map.SetTerrain(new Position(x, y), TerrainType.Grass);
+                    map.SetTerrain(new Position(x, y), TerrainType.GrassTemperate);
                 }
             }
 

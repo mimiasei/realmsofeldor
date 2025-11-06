@@ -284,14 +284,8 @@ namespace RealmsOfEldor.Controllers
             }
         }
 
-        void Update()
-        {
-            // Allow runtime updates during Play mode for testing
-            if (Application.isPlaying)
-            {
-                UpdateBillboard();
-            }
-        }
+        // Note: Update() removed - UpdateBillboard() should only be called when properties change
+        // via SetSprite(), SetScale(), etc. Calling it every frame is wasteful and causes spam
 
         void OnDrawGizmos()
         {

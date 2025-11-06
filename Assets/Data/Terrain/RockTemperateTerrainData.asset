@@ -10,14 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e8b4a5c3f2d1e9b6c8a5f4d2e1c9b7a, type: 3}
-  m_Name: SandTerrainData
+  m_Name: RockTemperateTerrainData
   m_EditorClassIdentifier: RealmsOfEldor.Data::RealmsOfEldor.Data.TerrainData
-  terrainType: 1
-  terrainName: Sand
-  tileVariants:
-  - {fileID: 11400000, guid: 6337a6d6a5785fa44a49f723ec294721, type: 2}
-  minimapColor: {r: 0.8018868, g: 0.6202089, b: 0.34420612, a: 1}
-  movementCost: 150
+  terrainType:
+    Biome: 3
+    Moisture: 2
+  terrainName: 
+  spriteVariants: []
+  tileVariants: []
+  minimapColor: {r: 1, g: 1, b: 1, a: 1}
+  movementCost: 100
   isPassable: 1
   isWater: 0
   movementSound: {fileID: 0}

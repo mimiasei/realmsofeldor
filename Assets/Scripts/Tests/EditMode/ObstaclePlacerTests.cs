@@ -306,7 +306,7 @@ namespace RealmsOfEldor.Tests
                     if (x % 2 == 0)
                         map.SetTerrain(new Position(x, y), TerrainType.Water);
                     else
-                        map.SetTerrain(new Position(x, y), TerrainType.Grass);
+                        map.SetTerrain(new Position(x, y), TerrainType.GrassTemperate);
                 }
             }
 
@@ -380,7 +380,7 @@ namespace RealmsOfEldor.Tests
             {
                 for (int y = 0; y < map.Height; y++)
                 {
-                    map.SetTerrain(new Position(x, y), TerrainType.Grass);
+                    map.SetTerrain(new Position(x, y), TerrainType.GrassTemperate);
                 }
             }
         }

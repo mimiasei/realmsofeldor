@@ -12,12 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e8b4a5c3f2d1e9b6c8a5f4d2e1c9b7a, type: 3}
   m_Name: WaterTerrainData
   m_EditorClassIdentifier: RealmsOfEldor.Data::RealmsOfEldor.Data.TerrainData
-  terrainType: 8
-  terrainName: Water
-  tileVariants:
-  - {fileID: 11400000, guid: bfbc8078e9e684548ab131e28a7349a7, type: 2}
-  minimapColor: {r: 0.056737266, g: 0.34078833, b: 0.8018868, a: 1}
+  terrainType:
+    Biome: 6
+    Moisture: 3
+  terrainName: 
+  spriteVariants: []
+  tileVariants: []
+  minimapColor: {r: 1, g: 1, b: 1, a: 1}
   movementCost: 100
   isPassable: 1
-  isWater: 1
+  isWater: 0
   movementSound: {fileID: 0}

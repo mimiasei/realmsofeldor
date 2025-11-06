@@ -29,10 +29,13 @@ namespace RealmsOfEldor.Controllers
 
         void Awake()
         {
+            Debug.Log("PathPreviewRenderer: Awake() called");
+
             // Create LineRenderer for reachable portion if not assigned
             if (lineRenderer == null)
             {
                 lineRenderer = gameObject.AddComponent<LineRenderer>();
+                Debug.Log("PathPreviewRenderer: Created reachable LineRenderer");
             }
 
             // Configure reachable LineRenderer (green)
@@ -40,8 +43,34 @@ namespace RealmsOfEldor.Controllers
             lineRenderer.endWidth = lineWidth;
             lineRenderer.positionCount = 0;
             lineRenderer.useWorldSpace = true;
-            lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
-            lineRenderer.sortingOrder = 20; // Above terrain and objects
+
+            // Use URP Unlit shader for 3D rendering
+            var shader = Shader.Find("Universal Render Pipeline/Unlit");
+            if (shader == null)
+            {
+                Debug.LogWarning("PathPreviewRenderer: URP/Unlit not found, trying Unlit/Color");
+                shader = Shader.Find("Unlit/Color");
+            }
+
+            if (shader == null)
+            {
+                Debug.LogError("PathPreviewRenderer: Could not find any suitable shader! Trying Sprites/Default as fallback");
+                shader = Shader.Find("Sprites/Default");
+            }
+
+            if (shader != null)
+            {
+                lineRenderer.material = new Material(shader);
+                lineRenderer.material.color = reachablePathColor;
+                Debug.Log($"PathPreviewRenderer: Assigned shader '{shader.name}' to reachable line");
+            }
+            else
+            {
+                Debug.LogError("PathPreviewRenderer: No shader found at all!");
+            }
+
+            lineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            lineRenderer.receiveShadows = false;
             lineRenderer.enabled = false;
 
             // Create LineRenderer for unreachable portion (red)
@@ -50,6 +79,7 @@ namespace RealmsOfEldor.Controllers
                 var unreachableGO = new GameObject("UnreachablePathLine");
                 unreachableGO.transform.SetParent(transform);
                 unreachableLineRenderer = unreachableGO.AddComponent<LineRenderer>();
+                Debug.Log("PathPreviewRenderer: Created unreachable LineRenderer");
             }
 
             // Configure unreachable LineRenderer (red)
@@ -57,9 +87,19 @@ namespace RealmsOfEldor.Controllers
             unreachableLineRenderer.endWidth = lineWidth;
             unreachableLineRenderer.positionCount = 0;
             unreachableLineRenderer.useWorldSpace = true;
-            unreachableLineRenderer.material = new Material(Shader.Find("Sprites/Default"));
-            unreachableLineRenderer.sortingOrder = 20;
+
+            if (shader != null)
+            {
+                unreachableLineRenderer.material = new Material(shader);
+                unreachableLineRenderer.material.color = unreachablePathColor;
+                Debug.Log($"PathPreviewRenderer: Assigned shader '{shader.name}' to unreachable line");
+            }
+
+            unreachableLineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            unreachableLineRenderer.receiveShadows = false;
             unreachableLineRenderer.enabled = false;
+
+            Debug.Log("PathPreviewRenderer: Initialization complete");
         }
 
         /// <summary>
@@ -76,8 +116,11 @@ namespace RealmsOfEldor.Controllers
         /// </summary>
         public void ShowPath(List<Position> path, List<int> pathStepCosts, int totalMovementCost, int availableMovement)
         {
+            Debug.Log($"PathPreviewRenderer.ShowPath() called - path={path?.Count ?? 0} positions, cost={totalMovementCost}, available={availableMovement}");
+
             if (path == null || path.Count < 2)
             {
+                Debug.LogWarning("PathPreviewRenderer: Path is null or too short, clearing path");
                 ClearPath();
                 return;
             }
@@ -87,27 +130,31 @@ namespace RealmsOfEldor.Controllers
 
             // Calculate reachable portion of path
             reachablePathIndex = CalculateReachableIndex(path, pathStepCosts, availableMovement);
+            Debug.Log($"PathPreviewRenderer: Reachable index = {reachablePathIndex}");
 
             // If entire path is reachable, show only green line
             if (reachablePathIndex >= path.Count - 1)
             {
+                Debug.Log("PathPreviewRenderer: Entire path reachable - rendering green line only");
                 RenderSingleLine(lineRenderer, path, 0, path.Count, reachablePathColor);
                 unreachableLineRenderer.enabled = false;
             }
             // If at least part of path is reachable, show green + red split
             else if (reachablePathIndex > 0)
             {
+                Debug.Log($"PathPreviewRenderer: Partial path reachable - rendering split at index {reachablePathIndex}");
                 RenderSingleLine(lineRenderer, path, 0, reachablePathIndex + 1, reachablePathColor);
                 RenderSingleLine(unreachableLineRenderer, path, reachablePathIndex, path.Count, unreachablePathColor);
             }
             // If nothing is reachable (edge case), show only red
             else
             {
+                Debug.Log("PathPreviewRenderer: Nothing reachable - rendering red line only");
                 lineRenderer.enabled = false;
                 RenderSingleLine(unreachableLineRenderer, path, 0, path.Count, unreachablePathColor);
             }
 
-            Debug.Log($"PathPreviewRenderer: Showing path with {path.Count} waypoints, reachable={reachablePathIndex + 1}, cost={totalMovementCost}, available={availableMovement}");
+            Debug.Log($"PathPreviewRenderer: Path rendered. lineRenderer.enabled={lineRenderer.enabled}, unreachableLineRenderer.enabled={unreachableLineRenderer.enabled}");
         }
 
         /// <summary>
@@ -150,8 +197,11 @@ namespace RealmsOfEldor.Controllers
         private void RenderSingleLine(LineRenderer lr, List<Position> path, int startIndex, int endIndex, Color color)
         {
             var count = endIndex - startIndex;
+            Debug.Log($"RenderSingleLine: startIndex={startIndex}, endIndex={endIndex}, count={count}, color={color}");
+
             if (count <= 0)
             {
+                Debug.LogWarning($"RenderSingleLine: Invalid count {count}, disabling line");
                 lr.enabled = false;
                 return;
             }
@@ -159,6 +209,12 @@ namespace RealmsOfEldor.Controllers
             lr.positionCount = count;
             lr.startColor = color;
             lr.endColor = color;
+
+            // Set material color too (for URP shaders)
+            if (lr.material != null)
+            {
+                lr.material.color = color;
+            }
 
             for (int i = 0; i < count; i++)
             {
@@ -170,9 +226,15 @@ namespace RealmsOfEldor.Controllers
                     pos.Y + 0.5f       // Center on tile Z (map Y becomes world Z)
                 );
                 lr.SetPosition(i, worldPos);
+
+                if (i == 0)
+                {
+                    Debug.Log($"RenderSingleLine: First position - map=({pos.X},{pos.Y}) world={worldPos}");
+                }
             }
 
             lr.enabled = true;
+            Debug.Log($"RenderSingleLine: Line enabled with {count} positions, width={lr.startWidth}");
         }
 
         /// <summary>

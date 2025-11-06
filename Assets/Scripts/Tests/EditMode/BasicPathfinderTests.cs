@@ -162,7 +162,7 @@ namespace RealmsOfEldor.Tests
 
             // Block the target tile
             var tile = map.GetTile(end);
-            tile = new MapTile(TerrainType.Rock, 0, 0); // Rock is impassable
+            tile = new MapTile(TerrainType.Water, 0, 0); // Water is impassable
             map.SetTile(end, tile);
 
             var path = BasicPathfinder.FindPath(map, start, end);
@@ -380,7 +380,7 @@ namespace RealmsOfEldor.Tests
             var target = new Position(5, 6);
 
             // Block target
-            map.SetTile(target, new MapTile(TerrainType.Rock, 0, 0));
+            map.SetTile(target, new MapTile(TerrainType.Water, 0, 0)); // Water is impassable
 
             var next = BasicPathfinder.GetNextStep(map, start, target);
 

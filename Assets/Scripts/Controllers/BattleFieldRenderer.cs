@@ -113,14 +113,14 @@ namespace RealmsOfEldor.Controllers
                 return;
             }
 
-            Sprite background = terrain switch
+            Sprite background = terrain.Biome switch
             {
-                TerrainType.Grass => grasslandBackground,
-                TerrainType.Dirt => dirtBackground,
-                TerrainType.Sand => sandBackground,
-                TerrainType.Swamp => swampBackground,
-                TerrainType.Rough => roughBackground,
-                TerrainType.Snow => snowBackground,
+                BiomeType.Grass => grasslandBackground,
+                BiomeType.Dirt => dirtBackground,
+                BiomeType.Sand => sandBackground,
+                BiomeType.Swamp => swampBackground,
+                BiomeType.Rock => roughBackground,
+                BiomeType.Snow => snowBackground,
                 _ => grasslandBackground
             };
 

@@ -431,13 +431,13 @@ namespace RealmsOfEldor.Controllers.Battle
         {
             return fieldType switch
             {
-                BattleFieldType.GRASS => TerrainType.Grass,
-                BattleFieldType.DIRT => TerrainType.Dirt,
-                BattleFieldType.SAND => TerrainType.Sand,
-                BattleFieldType.SWAMP => TerrainType.Swamp,
-                BattleFieldType.ROUGH => TerrainType.Rough,
-                BattleFieldType.SNOW => TerrainType.Snow,
-                _ => TerrainType.Grass
+                BattleFieldType.GRASS => TerrainType.GrassTemperate,
+                BattleFieldType.DIRT => TerrainType.DirtTemperate,
+                BattleFieldType.SAND => TerrainType.SandTemperate,
+                BattleFieldType.SWAMP => TerrainType.SwampTemperate,
+                BattleFieldType.ROUGH => TerrainType.RockTemperate,
+                BattleFieldType.SNOW => TerrainType.SnowTemperate,
+                _ => TerrainType.GrassTemperate
             };
         }
 

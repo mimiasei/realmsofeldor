@@ -53,6 +53,24 @@ namespace RealmsOfEldor.Controllers
 
         private void Awake()
         {
+            // Ensure MapRenderer initializes first (to set GameMap delegates)
+            if (mapRenderer == null)
+            {
+                mapRenderer = FindFirstObjectByType<MapRenderer>();
+            }
+
+            // Force MapRenderer Awake by accessing it (if not already called)
+            if (mapRenderer != null)
+            {
+                // MapRenderer.Awake sets GameMap.GetTerrainPassability delegate
+                // This ensures delegates are set before map generation
+                Debug.Log("GameInitializer: Ensuring MapRenderer is initialized");
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ MapRenderer not found! Terrain passability checks will fail.");
+            }
+
             // Find HeroDatabase if not assigned
             if (heroDatabase == null && createStartingHeroes)
             {
@@ -250,6 +268,13 @@ namespace RealmsOfEldor.Controllers
             // Raise map loaded event (triggers MapRenderer to render)
             mapEvents.RaiseMapLoaded(gameMap);
 
+            // Apply texture splatting if integrator is present
+            var textureSplatting = GetComponent<TextureSplattingIntegrator>();
+            if (textureSplatting != null)
+            {
+                textureSplatting.OnMapGenerated(gameMap);
+            }
+
             Debug.Log($"✅ Map initialized: {gameMap.Width}x{gameMap.Height} with {gameMap.GetAllObjects().Count()} objects");
         }
 
@@ -270,11 +295,52 @@ namespace RealmsOfEldor.Controllers
         }
 
         /// <summary>
+        /// Ensures MapRenderer delegates are set before map generation.
+        /// Prevents passability check failures during map generation.
+        /// </summary>
+        private void EnsureMapRendererDelegatesSet()
+        {
+            // Check if delegates are already set
+            if (GameMap.GetTerrainPassability != null && GameMap.GetTerrainVariantCount != null)
+            {
+                Debug.Log("✓ MapRenderer delegates already initialized");
+                return;
+            }
+
+            // If MapRenderer reference not set, try to find it
+            if (mapRenderer == null)
+            {
+                mapRenderer = FindFirstObjectByType<MapRenderer>();
+            }
+
+            // If still not found, log error
+            if (mapRenderer == null)
+            {
+                Debug.LogError("⚠️ MapRenderer not found! Terrain passability checks will fail during map generation.");
+                return;
+            }
+
+            // Delegates are set in MapRenderer.Awake(), which should have already run
+            // But if for some reason they're not set, log a warning
+            if (GameMap.GetTerrainPassability == null || GameMap.GetTerrainVariantCount == null)
+            {
+                Debug.LogWarning("⚠️ MapRenderer found but delegates not set. This should not happen if MapRenderer.Awake() has run.");
+            }
+            else
+            {
+                Debug.Log("✓ MapRenderer delegates verified and ready");
+            }
+        }
+
+        /// <summary>
         /// Initializes map using the VCMI-style modificator pipeline.
         /// This is the new recommended approach.
         /// </summary>
         private void InitializeMapWithModificators(GameMap gameMap)
         {
+            // Ensure MapRenderer delegates are set before map generation
+            EnsureMapRendererDelegatesSet();
+
             var config = MapGenConfig.Instance;
             var pipeline = new ModificatorPipeline(gameMap, config);
 
@@ -368,15 +434,15 @@ namespace RealmsOfEldor.Controllers
                     var roll = Random.value;
 
                     if (roll < 0.40f)
-                        map.SetTerrain(pos, TerrainType.Grass);
+                        map.SetTerrain(pos, TerrainType.GrassTemperate);
                     else if (roll < 0.65f)
-                        map.SetTerrain(pos, TerrainType.Dirt);
+                        map.SetTerrain(pos, TerrainType.DirtTemperate);
                     else if (roll < 0.85f)
-                        map.SetTerrain(pos, TerrainType.Sand);
+                        map.SetTerrain(pos, TerrainType.SandTemperate);
                     else if (roll < 0.95f)
-                        map.SetTerrain(pos, TerrainType.Rough);
+                        map.SetTerrain(pos, TerrainType.RockTemperate);
                     else
-                        map.SetTerrain(pos, TerrainType.Swamp);
+                        map.SetTerrain(pos, TerrainType.SwampTemperate);
                 }
             }
 
@@ -415,7 +481,7 @@ namespace RealmsOfEldor.Controllers
             {
                 for (var x = 0; x < mapWidth; x++)
                 {
-                    map.SetTerrain(new Position(x, y), TerrainType.Grass);
+                    map.SetTerrain(new Position(x, y), TerrainType.GrassTemperate);
                 }
             }
 

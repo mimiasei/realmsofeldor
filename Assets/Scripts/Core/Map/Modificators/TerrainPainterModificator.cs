@@ -23,7 +23,20 @@ namespace RealmsOfEldor.Core.Map
             // Generate random offsets for Perlin noise layers to ensure uniqueness
             var offsetX = (float)random.NextDouble() * 1000f;
             var offsetY = (float)random.NextDouble() * 1000f;
-            var scale = 0.1f; // Controls terrain feature size (lower = larger zones)
+            var moistureOffsetX = (float)random.NextDouble() * 1000f;
+            var moistureOffsetY = (float)random.NextDouble() * 1000f;
+
+            var biomeScale = 0.1f; // Controls biome feature size (lower = larger zones)
+            var moistureScale = 0.05f; // Controls moisture variation (lower = larger moisture zones)
+
+            // Track moisture distribution for logging
+            var moistureCounts = new Dictionary<MoistureLevel, int>
+            {
+                { MoistureLevel.Arid, 0 },
+                { MoistureLevel.Dry, 0 },
+                { MoistureLevel.Temperate, 0 },
+                { MoistureLevel.Wet, 0 }
+            };
 
             // Use multiple Perlin noise octaves for natural-looking terrain
             for (var y = 0; y < height; y++)
@@ -32,25 +45,52 @@ namespace RealmsOfEldor.Core.Map
                 {
                     var pos = new Position(x, y);
 
-                    // Sample Perlin noise at this position
-                    var noiseValue = SampleMultiOctaveNoise(x + offsetX, y + offsetY, scale, 3);
+                    // Sample Perlin noise for biome type
+                    var biomeNoise = SampleMultiOctaveNoise(x + offsetX, y + offsetY, biomeScale, 3);
 
-                    // Map noise value (0-1) to terrain type
-                    // Creates large coherent areas of similar terrain
-                    if (noiseValue < 0.25f)
-                        map.SetTerrain(pos, TerrainType.Grass);   // 25% grass
-                    else if (noiseValue < 0.50f)
-                        map.SetTerrain(pos, TerrainType.Dirt);    // 25% dirt
-                    else if (noiseValue < 0.70f)
-                        map.SetTerrain(pos, TerrainType.Sand);    // 20% sand
-                    else if (noiseValue < 0.85f)
-                        map.SetTerrain(pos, TerrainType.Rough);   // 15% rough
+                    // Sample Perlin noise for moisture level (separate layer)
+                    var moistureNoise = SampleMultiOctaveNoise(x + moistureOffsetX, y + moistureOffsetY, moistureScale, 3);
+
+                    // Determine biome type from noise value
+                    BiomeType biome;
+                    if (biomeNoise < 0.25f)
+                        biome = BiomeType.Grass;   // 25% grass
+                    else if (biomeNoise < 0.50f)
+                        biome = BiomeType.Dirt;    // 25% dirt
+                    else if (biomeNoise < 0.70f)
+                        biome = BiomeType.Sand;    // 20% sand
+                    else if (biomeNoise < 0.85f)
+                        biome = BiomeType.Rock;    // 15% rock (was Rough)
                     else
-                        map.SetTerrain(pos, TerrainType.Swamp);   // 15% swamp
+                        biome = BiomeType.Swamp;   // 15% swamp
+
+                    // Determine moisture level from noise value
+                    // TODO: Phase 2 - Enable all moisture levels once TerrainData assets are created
+                    // For now, use Temperate for all terrain (we only have Temperate TerrainData assets)
+                    MoistureLevel moisture = MoistureLevel.Temperate;
+
+                    // DISABLED until Phase 2:
+                    // if (moistureNoise < 0.25f)
+                    //     moisture = MoistureLevel.Arid;
+                    // else if (moistureNoise < 0.50f)
+                    //     moisture = MoistureLevel.Dry;
+                    // else if (moistureNoise < 0.75f)
+                    //     moisture = MoistureLevel.Temperate;
+                    // else
+                    //     moisture = MoistureLevel.Wet;
+
+                    moistureCounts[moisture]++;
+
+                    // Set terrain with both biome and moisture
+                    map.SetTerrain(pos, new TerrainType(biome, moisture));
                 }
             }
 
-            Debug.Log($"✓ {Name}: Generated zone-based terrain using Perlin noise");
+            Debug.Log($"✓ {Name}: Generated zone-based terrain using Perlin noise with moisture variants");
+            Debug.Log($"  Moisture distribution: Arid={moistureCounts[MoistureLevel.Arid]} ({moistureCounts[MoistureLevel.Arid]*100f/(width*height):F1}%), " +
+                      $"Dry={moistureCounts[MoistureLevel.Dry]} ({moistureCounts[MoistureLevel.Dry]*100f/(width*height):F1}%), " +
+                      $"Temperate={moistureCounts[MoistureLevel.Temperate]} ({moistureCounts[MoistureLevel.Temperate]*100f/(width*height):F1}%), " +
+                      $"Wet={moistureCounts[MoistureLevel.Wet]} ({moistureCounts[MoistureLevel.Wet]*100f/(width*height):F1}%)");
 
             // Add water lakes (impassable obstacles)
             var lakeCount = Mathf.Max(3, (width * height) / 200); // Scale with map size

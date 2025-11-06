@@ -100,17 +100,17 @@ namespace RealmsOfEldor.Controllers
                     var pos = new Position(x, y);
                     var roll = Random.value;
 
-                    // 40% Grass (fast), 25% Dirt (medium), 20% Sand (medium-slow), 10% Rough (slow), 5% Swamp (very slow)
+                    // 40% Grass (fast), 25% Dirt (medium), 20% Sand (medium-slow), 10% Rock (slow), 5% Swamp (very slow)
                     if (roll < 0.40f)
-                        gameMap.SetTerrain(pos, TerrainType.Grass);
+                        gameMap.SetTerrain(pos, TerrainType.GrassTemperate);
                     else if (roll < 0.65f)
-                        gameMap.SetTerrain(pos, TerrainType.Dirt);
+                        gameMap.SetTerrain(pos, TerrainType.DirtTemperate);
                     else if (roll < 0.85f)
-                        gameMap.SetTerrain(pos, TerrainType.Sand);
+                        gameMap.SetTerrain(pos, TerrainType.SandTemperate);
                     else if (roll < 0.95f)
-                        gameMap.SetTerrain(pos, TerrainType.Rough);
+                        gameMap.SetTerrain(pos, TerrainType.RockTemperate);
                     else
-                        gameMap.SetTerrain(pos, TerrainType.Swamp);
+                        gameMap.SetTerrain(pos, TerrainType.SwampTemperate);
                 }
             }
 
@@ -146,7 +146,7 @@ namespace RealmsOfEldor.Controllers
                     var pos = new Position(x, y);
                     if (gameMap.IsInBounds(pos))
                     {
-                        gameMap.SetTerrain(pos, TerrainType.Snow);
+                        gameMap.SetTerrain(pos, TerrainType.SnowTemperate);
                     }
                 }
             }
@@ -159,7 +159,7 @@ namespace RealmsOfEldor.Controllers
                     var pos = new Position(x, y);
                     if (gameMap.IsInBounds(pos))
                     {
-                        gameMap.SetTerrain(pos, TerrainType.Snow);
+                        gameMap.SetTerrain(pos, TerrainType.SnowTemperate);
                     }
                 }
             }
@@ -180,7 +180,7 @@ namespace RealmsOfEldor.Controllers
 
                     if (gameMap.IsInBounds(pos))
                     {
-                        gameMap.SetTerrain(pos, TerrainType.Lava);
+                        gameMap.SetTerrain(pos, TerrainType.Water); // Using Water as impassable (no Lava in new system)
                     }
                 }
             }
@@ -203,9 +203,9 @@ namespace RealmsOfEldor.Controllers
                     {
                         var tile = gameMap.GetTile(pos);
                         // Don't overwrite impassable terrain
-                        if (!tile.IsWater() && tile.Terrain != TerrainType.Snow && tile.Terrain != TerrainType.Lava)
+                        if (!tile.IsWater() && tile.Terrain.Biome != BiomeType.Snow)
                         {
-                            gameMap.SetTerrain(pos, TerrainType.Dirt);
+                            gameMap.SetTerrain(pos, TerrainType.DirtTemperate);
                         }
                     }
                 }
@@ -226,10 +226,10 @@ namespace RealmsOfEldor.Controllers
                         {
                             var tile = gameMap.GetTile(pos);
                             // Don't overwrite impassable or already good terrain
-                            if (!tile.IsWater() && tile.Terrain != TerrainType.Snow &&
-                                tile.Terrain != TerrainType.Lava && tile.Terrain != TerrainType.Dirt)
+                            if (!tile.IsWater() && tile.Terrain.Biome != BiomeType.Snow &&
+                                tile.Terrain.Biome != BiomeType.Dirt)
                             {
-                                gameMap.SetTerrain(pos, TerrainType.Rough);
+                                gameMap.SetTerrain(pos, TerrainType.RockTemperate);
                             }
                         }
                     }
@@ -246,7 +246,7 @@ namespace RealmsOfEldor.Controllers
 
                     if (!tile.IsWater() && tile.IsCoastal && Random.value < 0.4f)
                     {
-                        gameMap.SetTerrain(pos, TerrainType.Swamp);
+                        gameMap.SetTerrain(pos, TerrainType.SwampWet);
                     }
                 }
             }
@@ -264,7 +264,7 @@ namespace RealmsOfEldor.Controllers
                 for (int x = 0; x < mapWidth; x++)
                 {
                     var pos = new Position(x, y);
-                    var terrain = (x + y) % 2 == 0 ? TerrainType.Grass : TerrainType.Dirt;
+                    var terrain = (x + y) % 2 == 0 ? TerrainType.GrassTemperate : TerrainType.DirtTemperate;
                     gameMap.SetTerrain(pos, terrain);
                 }
             }

@@ -22,22 +22,21 @@ namespace RealmsOfEldor.Editor
                 AssetDatabase.CreateFolder("Assets/Data", "Terrain");
             }
 
-            // Generate data for each terrain type
-            CreateTerrainData(TerrainType.Grass, "Grass", folderPath, new Color(0.4f, 0.8f, 0.3f), 100);
-            CreateTerrainData(TerrainType.Dirt, "Dirt", folderPath, new Color(0.6f, 0.4f, 0.2f), 125);
-            CreateTerrainData(TerrainType.Sand, "Sand", folderPath, new Color(0.9f, 0.8f, 0.5f), 150);
-            CreateTerrainData(TerrainType.Snow, "Snow", folderPath, new Color(0.95f, 0.95f, 1.0f), 150);
-            CreateTerrainData(TerrainType.Swamp, "Swamp", folderPath, new Color(0.3f, 0.4f, 0.3f), 175);
-            CreateTerrainData(TerrainType.Rough, "Rough", folderPath, new Color(0.5f, 0.5f, 0.5f), 125);
-            CreateTerrainData(TerrainType.Water, "Water", folderPath, new Color(0.2f, 0.4f, 0.8f), 0, false, true);
-            CreateTerrainData(TerrainType.Rock, "Rock", folderPath, new Color(0.4f, 0.4f, 0.4f), 0, false, false);
-            CreateTerrainData(TerrainType.Lava, "Lava", folderPath, new Color(1.0f, 0.3f, 0.0f), 0, false, false);
-            CreateTerrainData(TerrainType.Subterranean, "Subterranean", folderPath, new Color(0.2f, 0.2f, 0.25f), 100);
+            // Generate data for each biome type with Temperate moisture level (default)
+            // Note: TerrainType is now a struct with BiomeType + MoistureLevel
+            CreateTerrainData(TerrainType.GrassTemperate, "GrassTemperate", folderPath, new Color(0.4f, 0.8f, 0.3f), 100);
+            CreateTerrainData(TerrainType.DirtTemperate, "DirtTemperate", folderPath, new Color(0.6f, 0.4f, 0.2f), 100);
+            CreateTerrainData(TerrainType.SandTemperate, "SandTemperate", folderPath, new Color(0.9f, 0.8f, 0.5f), 150);
+            CreateTerrainData(TerrainType.SnowTemperate, "SnowTemperate", folderPath, new Color(0.95f, 0.95f, 1.0f), 150);
+            CreateTerrainData(TerrainType.SwampTemperate, "SwampTemperate", folderPath, new Color(0.3f, 0.4f, 0.3f), 175);
+            CreateTerrainData(TerrainType.RockTemperate, "RockTemperate", folderPath, new Color(0.5f, 0.5f, 0.5f), 110);
+            CreateTerrainData(TerrainType.Water, "Water", folderPath, new Color(0.2f, 0.4f, 0.8f), 999999, false, true);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log($"<color=green>✓ Generated TerrainData assets for all {System.Enum.GetValues(typeof(TerrainType)).Length} terrain types in {folderPath}</color>");
+            var biomeCount = System.Enum.GetValues(typeof(BiomeType)).Length;
+            Debug.Log($"<color=green>✓ Generated TerrainData assets for {biomeCount} biome types (Temperate moisture) in {folderPath}</color>");
         }
 
         private static void CreateTerrainData(

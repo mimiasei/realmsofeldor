@@ -35,7 +35,7 @@ namespace RealmsOfEldor.Tests
                 for (var y = 0; y < 5; y++)
                 {
                     var tile = map.GetTile(new Position(x, y));
-                    Assert.AreEqual(TerrainType.Grass, tile.Terrain);
+                    Assert.AreEqual(TerrainType.GrassTemperate, tile.Terrain);
                 }
             }
         }
@@ -68,7 +68,7 @@ namespace RealmsOfEldor.Tests
             var map = new GameMap(10, 10);
             var tile = map.GetTile(new Position(3, 5));
 
-            Assert.AreEqual(TerrainType.Grass, tile.Terrain);
+            Assert.AreEqual(TerrainType.GrassTemperate, tile.Terrain);
         }
 
         [Test]
@@ -85,12 +85,12 @@ namespace RealmsOfEldor.Tests
         {
             var map = new GameMap(10, 10);
             var pos = new Position(3, 5);
-            var newTile = new MapTile(TerrainType.Sand, 1, 150);
+            var newTile = new MapTile(TerrainType.SandTemperate, 1, 150);
 
             map.SetTile(pos, newTile);
             var retrievedTile = map.GetTile(pos);
 
-            Assert.AreEqual(TerrainType.Sand, retrievedTile.Terrain);
+            Assert.AreEqual(TerrainType.SandTemperate, retrievedTile.Terrain);
             Assert.AreEqual(1, retrievedTile.VisualVariant);
             Assert.AreEqual(150, retrievedTile.MovementCost);
         }
@@ -264,7 +264,7 @@ namespace RealmsOfEldor.Tests
         {
             var map = new GameMap(10, 10);
             var pos = new Position(5, 5);
-            map.SetTerrain(pos, TerrainType.Rock);
+            map.SetTerrain(pos, TerrainType.Water); // Water is impassable
 
             Assert.IsFalse(map.CanMoveBetween(new Position(4, 4), pos));
         }
@@ -294,7 +294,7 @@ namespace RealmsOfEldor.Tests
         {
             var map = new GameMap(10, 10);
             var pos = new Position(5, 5);
-            map.SetTerrain(pos, TerrainType.Sand, 0, 150);
+            map.SetTerrain(pos, TerrainType.SandTemperate, 0, 150);
 
             var cost = map.GetMovementCost(new Position(4, 4), pos);
 
@@ -306,7 +306,7 @@ namespace RealmsOfEldor.Tests
         {
             var map = new GameMap(10, 10);
             var pos = new Position(5, 5);
-            map.SetTerrain(pos, TerrainType.Rock);
+            map.SetTerrain(pos, TerrainType.Water); // Water is impassable
 
             var cost = map.GetMovementCost(new Position(4, 4), pos);
 

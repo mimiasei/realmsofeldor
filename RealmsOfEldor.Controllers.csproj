@@ -63,12 +63,14 @@
     <Compile Include="Assets\Scripts\Controllers\BattleStackRenderer.cs" />
     <Compile Include="Assets\Scripts\Controllers\GameStateManager.cs" />
     <Compile Include="Assets\Scripts\Controllers\Battle\BattleGroundPlane.cs" />
+    <Compile Include="Assets\Scripts\Controllers\TerrainSplatmapGenerator.cs" />
     <Compile Include="Assets\Scripts\Controllers\AstarPathfindingAdapter.cs" />
     <Compile Include="Assets\Scripts\Controllers\BattleFieldRenderer.cs" />
     <Compile Include="Assets\Scripts\Controllers\MapTestInitializer.cs" />
     <Compile Include="Assets\Scripts\Controllers\BattleHexGrid.cs" />
     <Compile Include="Assets\Scripts\Controllers\CartographerBillboard.cs" />
     <Compile Include="Assets\Scripts\Controllers\Battle\BattleTestSetup.cs" />
+    <Compile Include="Assets\Scripts\Controllers\TextureSplattingIntegrator.cs" />
     <Compile Include="Assets\Scripts\Controllers\Battle\BattleCameraController.cs" />
     <Compile Include="Assets\Scripts\Controllers\PathPreviewRenderer.cs" />
     <Compile Include="Assets\Scripts\Controllers\BattleStackView.cs" />
